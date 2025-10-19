@@ -300,4 +300,4 @@ All criteria from plan must be met:
 
 **Ready for:** Phase 7 Manual Testing (begins ONLY after GitHub installation verified)
 
-**Repository URL:** _To be set after GitHub push_
+**Repository URL:** https://github.com/NotMyself/claude-win11-speckit-update-skill

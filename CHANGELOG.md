@@ -117,5 +117,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/[username]/claude-Win11-SpecKit-Safe-Update-Skill/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/[username]/claude-Win11-SpecKit-Safe-Update-Skill/releases/tag/v0.1.0
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/releases/tag/v0.1.0

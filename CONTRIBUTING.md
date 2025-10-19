@@ -16,8 +16,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. Fork the repository
 2. Clone your fork:
    ```powershell
-   git clone https://github.com/YOUR_USERNAME/claude-Win11-SpecKit-Safe-Update-Skill
-   cd claude-Win11-SpecKit-Safe-Update-Skill
+   git clone https://github.com/YOUR_USERNAME/claude-win11-speckit-update-skill
+   cd claude-win11-speckit-update-skill
    ```
 
 3. Install Pester (if not already installed):
