@@ -14,9 +14,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup PowerShell 7
-      uses: actions/setup-powershell@v1
-
     - name: Install Pester
       shell: pwsh
       run: |
