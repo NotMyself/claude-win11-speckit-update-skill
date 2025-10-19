@@ -26,15 +26,7 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 ## Installation
 
-### Using Claude Code Plugin Command (Recommended)
-
-```bash
-/plugin add https://github.com/NotMyself/claude-win11-speckit-update-skill
-```
-
-After installation, restart VSCode to load the skill.
-
-### Manual Installation
+Skills must be installed manually to the Claude Code skills directory:
 
 ```powershell
 # Navigate to Claude Code skills directory
@@ -43,8 +35,10 @@ cd $env:USERPROFILE\.claude\skills
 # Clone this repository
 git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit-updater
 
-# Restart VSCode
+# Restart VSCode to load the skill
 ```
+
+**Verify installation**: After restarting VSCode, the `/speckit-update` command should be available in Claude Code.
 
 ## Usage
 
