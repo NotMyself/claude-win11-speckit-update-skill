@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PowerShell 7
+      uses: actions/setup-powershell@v1
+
+    - name: Install Pester
+      shell: pwsh
+      run: |
+        Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0
+
+    - name: Run unit tests
+      shell: pwsh
+      run: |
+        ./tests/test-runner.ps1 -Unit
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: tests/TestResults/
