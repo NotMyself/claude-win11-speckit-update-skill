@@ -216,9 +216,11 @@ Describe how you tested your changes
 
 ## Checklist
 - [ ] Tests added/updated
+- [ ] All tests passing (`./tests/test-runner.ps1`)
+- [ ] Lint check passes (no `Import-Module` in `.psm1` files - see constitution)
+- [ ] Code review: Verified no nested module imports
 - [ ] Documentation updated
 - [ ] CHANGELOG.md updated
-- [ ] All tests passing
 ```
 
 ## Code Review Process

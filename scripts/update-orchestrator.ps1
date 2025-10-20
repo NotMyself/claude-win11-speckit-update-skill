@@ -95,15 +95,32 @@ Write-Verbose "Importing PowerShell modules..."
 try {
     $modulesPath = Join-Path $PSScriptRoot "modules"
 
-    # Import modules (suppress unapproved verb warnings only)
+    # Module Dependency Management (Tiered Import Structure)
+    # IMPORTANT: Modules MUST NOT import other modules (creates scope isolation issues)
+    # All imports are managed here in dependency order to ensure functions are available in orchestrator scope
+    #
+    # Dependency Graph:
+    # - TIER 0 (no dependencies): HashUtils, GitHubApiClient, VSCodeIntegration
+    # - TIER 1 (depends on Tier 0): ManifestManager (uses HashUtils, GitHubApiClient)
+    # - TIER 2 (depends on Tier 1): BackupManager (uses ManifestManager), ConflictDetector (uses HashUtils, ManifestManager)
+
+    # TIER 0: Foundation modules (no dependencies)
+    # These must be imported first as other modules depend on them
     Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
-    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
+
+    # TIER 1: Modules depending on Tier 0
+    # ManifestManager uses HashUtils.Get-NormalizedHash and GitHubApiClient functions
     Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue
+
+    # TIER 2: Modules depending on Tier 1
+    # BackupManager uses ManifestManager functions
+    # ConflictDetector uses HashUtils and ManifestManager functions
     Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue
 
-    Write-Verbose "Modules imported successfully"
+    Write-Verbose "Modules imported successfully (6 modules in 3 tiers)"
 }
 catch {
     Write-Error "Failed to import modules: $($_.Exception.Message)"

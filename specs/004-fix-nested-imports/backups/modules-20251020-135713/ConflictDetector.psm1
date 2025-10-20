@@ -14,9 +14,10 @@
     Version: 1.0
 #>
 
-# Dependencies: HashUtils, ManifestManager
-# All module imports are managed by the orchestrator script (update-orchestrator.ps1)
-# Do NOT add Import-Module statements here - they create scope isolation issues
+# Import dependencies
+$modulesPath = $PSScriptRoot
+Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force
+Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force
 
 <#
 .SYNOPSIS

@@ -23,6 +23,76 @@ if (-not (Get-Module -ListAvailable -Name Pester)) {
 
 Import-Module Pester -MinimumVersion 5.0
 
+# Module Import Compliance Check
+# Validates that no .psm1 files contain Import-Module statements (prevents scope isolation bugs)
+function Test-ModuleImportCompliance {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ModulesPath
+    )
+
+    $violations = @()
+    $moduleFiles = Get-ChildItem -Path $ModulesPath -Filter "*.psm1" -ErrorAction SilentlyContinue
+
+    if (-not $moduleFiles) {
+        Write-Warning "No module files found in $ModulesPath"
+        return $true
+    }
+
+    foreach ($file in $moduleFiles) {
+        $content = Get-Content -Path $file.FullName -Raw
+        $lines = $content -split "`n"
+
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            # Skip comment lines
+            if ($lines[$i] -match '^\s*#') { continue }
+
+            # Check for Import-Module statements (case-insensitive)
+            if ($lines[$i] -match '^\s*Import-Module\s') {
+                $violations += [PSCustomObject]@{
+                    File = $file.Name
+                    Line = $i + 1
+                    Content = $lines[$i].Trim()
+                }
+            }
+        }
+    }
+
+    if ($violations.Count -gt 0) {
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Red
+        Write-Host "Module Import Compliance Check FAILED" -ForegroundColor Red
+        Write-Host "========================================" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Found $($violations.Count) violation(s):" -ForegroundColor Red
+        foreach ($violation in $violations) {
+            Write-Host "  $($violation.File):$($violation.Line) - $($violation.Content)" -ForegroundColor Yellow
+        }
+        Write-Host ""
+        Write-Host "Modules MUST NOT import other modules. All imports should be managed by the orchestrator." -ForegroundColor Red
+        Write-Host "See .specify/memory/constitution.md - PowerShell Standards - Module Import Rules" -ForegroundColor Cyan
+        Write-Host ""
+        return $false
+    }
+
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host "✓ Module import compliance check PASSED" -ForegroundColor Green
+    Write-Host "========================================" -ForegroundColor Green
+    Write-Host "No nested imports found in $($moduleFiles.Count) module(s)" -ForegroundColor Green
+    Write-Host ""
+    return $true
+}
+
+# Run lint check before tests
+Write-Host "`nValidating module import compliance..." -ForegroundColor Cyan
+$modulesPath = Join-Path $PSScriptRoot "../scripts/modules"
+if (-not (Test-ModuleImportCompliance -ModulesPath $modulesPath)) {
+    Write-Error "Lint check failed. Fix violations before running tests."
+    exit 1
+}
+
 $config = New-PesterConfiguration
 
 # Set paths
