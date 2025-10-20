@@ -12,9 +12,11 @@
     Dependencies: ManifestManager.psm1 (Get-SpecKitManifest)
 #>
 
-# Dependencies: ManifestManager
-# All module imports are managed by the orchestrator script (update-orchestrator.ps1)
-# Do NOT add Import-Module statements here - they create scope isolation issues
+# Import dependencies
+$ManifestManagerPath = Join-Path $PSScriptRoot "ManifestManager.psm1"
+if (Test-Path $ManifestManagerPath) {
+    Import-Module $ManifestManagerPath -Force
+}
 
 <#
 .SYNOPSIS

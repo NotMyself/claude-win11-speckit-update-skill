@@ -74,6 +74,38 @@ Get-NormalizedHash -FilePath ".\README.md"
 - If you use `Import-Module`, use `Export-ModuleMember`
 - If you use dot-sourcing (`. script.ps1`), do NOT use `Export-ModuleMember`
 
+**Nested Import Prohibition** (Added: 2025-10-20):
+- **Modules MUST NOT import other modules**
+- All `Import-Module` statements MUST be in the orchestrator (`update-orchestrator.ps1`)
+- Nested imports create scope isolation where functions imported within a module are not accessible to the calling script
+- **Enforcement**: Automated lint check in `tests/test-runner.ps1` fails if any `.psm1` file contains `Import-Module`
+- **Pattern**: Orchestrator imports modules in dependency order (Tier 0 → Tier 1 → Tier 2)
+
+**Correct Pattern** (orchestrator manages all imports):
+```powershell
+# scripts/update-orchestrator.ps1
+
+# TIER 0: Foundation modules (no dependencies)
+Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force
+Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force
+Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force
+
+# TIER 1: Modules depending on Tier 0
+Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force
+
+# TIER 2: Modules depending on Tier 1
+Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force
+Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force
+```
+
+**Incorrect Pattern** (nested imports):
+```powershell
+# scripts/modules/ManifestManager.psm1 - ❌ INCORRECT
+Import-Module (Join-Path $PSScriptRoot "HashUtils.psm1") -Force  # DO NOT DO THIS
+```
+
+See [.specify/memory/constitution.md - Module Import Rules](.specify/memory/constitution.md#module-import-rules-added-2025-10-20) for detailed rationale.
+
 ### Entry Point and Orchestration
 
 **[scripts/update-orchestrator.ps1](scripts/update-orchestrator.ps1)** is the main entry point invoked by Claude Code. It coordinates all 15 steps of the update workflow in sequence:

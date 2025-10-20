@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Module Function Availability (#4)**: Fixed nested module import issue causing "command not recognized" errors
+  - **Root Cause**: Modules importing other modules created PowerShell scope isolation where imported functions were not accessible to the orchestrator
+  - **Symptoms**: Errors like "The term 'Get-SpecKitManifest' is not recognized as a name of a cmdlet, function, script file, or executable program"
+  - **Impact**: 21 tests were failing due to this scope isolation bug
+  - **Fix Applied**:
+    - Removed all nested `Import-Module` statements from 3 modules (ManifestManager, BackupManager, ConflictDetector)
+    - Updated orchestrator (`update-orchestrator.ps1`) with tiered import structure documenting dependencies
+    - All module imports now managed centrally by orchestrator in correct dependency order (Tier 0 → Tier 1 → Tier 2)
+  - **Prevention Measures**:
+    - Added automated lint check in `tests/test-runner.ps1` that fails if any `.psm1` file contains `Import-Module`
+    - Created integration tests (`tests/integration/ModuleDependencies.Tests.ps1`) to verify cross-module function calls work correctly
+    - Updated constitution (v1.1.0) with Module Import Rules prohibiting nested imports
+    - Updated CLAUDE.md and CONTRIBUTING.md with nested import prohibition and enforcement details
+  - **Results**: 21 more tests now passing (160→181), lint check prevents future violations
+  - **Breaking Change**: None (internal architecture change only)
+
 ## [0.1.1] - 2025-10-20
 
 ### Fixed

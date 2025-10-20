@@ -126,6 +126,63 @@ Each module MUST:
 - Not rely on implicit exports
 - Include module-level documentation comment
 
+### Module Import Rules (Added: 2025-10-20)
+
+**Rule**: Modules MUST NOT import other modules. All module imports MUST be managed by the orchestrator script (`scripts/update-orchestrator.ps1`).
+
+**Rationale**: Nested `Import-Module` statements create PowerShell scope isolation where imported functions exist in the module's internal scope but are not accessible to the calling script. This causes "command not recognized" errors despite successful imports.
+
+When a module (e.g., `ManifestManager.psm1`) contains `Import-Module HashUtils.psm1`, PowerShell creates this scope hierarchy:
+
+```
+Global Scope
+└── Orchestrator Script Scope
+    └── ManifestManager Module Scope
+        └── HashUtils Module Scope (nested import)
+            └── Get-NormalizedHash function
+```
+
+When the orchestrator calls `Get-NormalizedHash`, PowerShell searches the orchestrator scope and parent scopes but does NOT search child module scopes, resulting in "command not recognized" errors.
+
+**Enforcement**:
+- Automated lint check in `tests/test-runner.ps1` scans all `.psm1` files before test execution
+- Lint check fails with detailed error messages if `Import-Module` statements detected
+- Integration tests in `tests/integration/ModuleDependencies.Tests.ps1` verify cross-module function calls work
+
+**Correct Pattern** (orchestrator-managed imports in dependency order):
+```powershell
+# scripts/update-orchestrator.ps1
+
+# TIER 0: Foundation modules (no dependencies)
+Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
+
+# TIER 1: Modules depending on Tier 0
+Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue
+
+# TIER 2: Modules depending on Tier 1
+Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue
+```
+
+**Incorrect Pattern** (nested imports in module files):
+```powershell
+# scripts/modules/ManifestManager.psm1 - ❌ INCORRECT
+
+# This creates scope isolation!
+Import-Module (Join-Path $PSScriptRoot "HashUtils.psm1") -Force  # ❌ DO NOT DO THIS
+```
+
+**Exception**: None. This rule is absolute.
+
+**Module Dependencies Documentation**: Each module file should document its dependencies in a comment:
+```powershell
+# Dependencies: HashUtils, GitHubApiClient
+# All module imports are managed by the orchestrator script (update-orchestrator.ps1)
+# Do NOT add Import-Module statements here - they create scope isolation issues
+```
+
 ### Error Messages
 
 Error messages MUST:
@@ -284,4 +341,4 @@ For runtime development guidance, consult:
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and PR guidelines
 - [specs/001-safe-update/spec.md](../../specs/001-safe-update/spec.md) - Full specification
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20
+**Version**: 1.1.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20 | **Amendment**: Added Module Import Rules (prohibits nested imports in modules)
