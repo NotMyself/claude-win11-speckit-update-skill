@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-10-20
+
 ### Fixed
 - **Module Function Availability (#4)**: Fixed nested module import issue causing "command not recognized" errors
   - **Root Cause**: Modules importing other modules created PowerShell scope isolation where imported functions were not accessible to the orchestrator
