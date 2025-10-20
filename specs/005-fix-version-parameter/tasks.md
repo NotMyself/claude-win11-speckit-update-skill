@@ -25,11 +25,11 @@
 
 **Purpose**: Create test fixtures and directory structure for mock GitHub API responses
 
-- [ ] T001 Create mock-responses directory at tests/fixtures/mock-responses/
-- [ ] T002 [P] Create valid-release.json fixture with complete GitHub release structure in tests/fixtures/mock-responses/valid-release.json
-- [ ] T003 [P] Create missing-tag-name.json fixture with malformed release response in tests/fixtures/mock-responses/missing-tag-name.json
-- [ ] T004 [P] Create empty-response.json fixture with null response in tests/fixtures/mock-responses/empty-response.json
-- [ ] T005 [P] Create invalid-version-format.json fixture with non-semantic version in tests/fixtures/mock-responses/invalid-version-format.json
+- [X] T001 Create mock-responses directory at tests/fixtures/mock-responses/
+- [X] T002 [P] Create valid-release.json fixture with complete GitHub release structure in tests/fixtures/mock-responses/valid-release.json
+- [X] T003 [P] Create missing-tag-name.json fixture with malformed release response in tests/fixtures/mock-responses/missing-tag-name.json
+- [X] T004 [P] Create empty-response.json fixture with null response in tests/fixtures/mock-responses/empty-response.json
+- [X] T005 [P] Create invalid-version-format.json fixture with non-semantic version in tests/fixtures/mock-responses/invalid-version-format.json
 
 ---
 
@@ -39,12 +39,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Enhance Invoke-GitHubApiRequest function with structured error handling for HTTP status codes in scripts/modules/GitHubApiClient.psm1
-- [ ] T007 Add error classification helper function Get-ErrorClassification in scripts/modules/GitHubApiClient.psm1
-- [ ] T008 [P] Standardize parameter naming in Get-OfficialSpecKitCommands from -SpecKitVersion to -Version in scripts/modules/GitHubApiClient.psm1
-- [ ] T009 [P] Add Write-Verbose logging to all validation checkpoints in scripts/modules/GitHubApiClient.psm1
-- [ ] T010 Update function comment-based help to document new error handling behavior in scripts/modules/GitHubApiClient.psm1
-- [ ] T011 [P] Add timeout parameter (30 seconds) to Invoke-RestMethod calls in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T006 Enhance Invoke-GitHubApiRequest function with structured error handling for HTTP status codes in scripts/modules/GitHubApiClient.psm1
+- [X] T007 Add error classification helper function Get-ErrorClassification in scripts/modules/GitHubApiClient.psm1
+- [X] T008 [P] Standardize parameter naming in Get-OfficialSpecKitCommands from -SpecKitVersion to -Version in scripts/modules/ManifestManager.psm1
+- [X] T009 [P] Add Write-Verbose logging to all validation checkpoints in scripts/modules/GitHubApiClient.psm1
+- [X] T010 Update function comment-based help to document new error handling behavior in scripts/modules/ManifestManager.psm1
+- [X] T011 [P] Add timeout parameter (30 seconds) to Invoke-RestMethod calls in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -60,20 +60,20 @@
 
 **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T012 [P] [US1] Add unit test for Get-LatestSpecKitRelease with successful response in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T013 [P] [US1] Add unit test for Get-LatestSpecKitRelease with null response in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T014 [P] [US1] Add unit test for Get-LatestSpecKitRelease with missing tag_name property in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T012 [P] [US1] Add unit test for Get-LatestSpecKitRelease with successful response in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T013 [P] [US1] Add unit test for Get-LatestSpecKitRelease with null response in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T014 [P] [US1] Add unit test for Get-LatestSpecKitRelease with missing tag_name property in tests/unit/GitHubApiClient.Tests.ps1
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Add response validation to Get-LatestSpecKitRelease to check for null response in scripts/modules/GitHubApiClient.psm1
-- [ ] T016 [US1] Add property validation to Get-LatestSpecKitRelease to check for tag_name existence in scripts/modules/GitHubApiClient.psm1
-- [ ] T017 [US1] Add property validation to Get-LatestSpecKitRelease to check for assets array existence in scripts/modules/GitHubApiClient.psm1
-- [ ] T018 [US1] Add tag_name format validation using regex pattern in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
-- [ ] T019 [US1] Add defensive null check for $targetRelease after Get-LatestSpecKitRelease call in scripts/update-orchestrator.ps1 (after line 229)
-- [ ] T020 [US1] Add defensive property check for $targetRelease.tag_name in scripts/update-orchestrator.ps1 (after line 229)
-- [ ] T021 [US1] Add Write-Verbose logging after successful validation in scripts/update-orchestrator.ps1
-- [ ] T022 [US1] Update error exit code to 3 for GitHub API failures in scripts/update-orchestrator.ps1
+- [X] T015 [US1] Add response validation to Get-LatestSpecKitRelease to check for null response in scripts/modules/GitHubApiClient.psm1
+- [X] T016 [US1] Add property validation to Get-LatestSpecKitRelease to check for tag_name existence in scripts/modules/GitHubApiClient.psm1
+- [X] T017 [US1] Add property validation to Get-LatestSpecKitRelease to check for assets array existence in scripts/modules/GitHubApiClient.psm1
+- [X] T018 [US1] Add tag_name format validation using regex pattern in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
+- [X] T019 [US1] Add defensive null check for $targetRelease after Get-LatestSpecKitRelease call in scripts/update-orchestrator.ps1 (after line 229)
+- [X] T020 [US1] Add defensive property check for $targetRelease.tag_name in scripts/update-orchestrator.ps1 (after line 229)
+- [X] T021 [US1] Add Write-Verbose logging after successful validation in scripts/update-orchestrator.ps1
+- [X] T022 [US1] Update error exit code to 3 for GitHub API failures in scripts/update-orchestrator.ps1
 
 **Checkpoint**: At this point, automatic latest version fetching should work reliably with validation
 
@@ -87,22 +87,22 @@
 
 ### Tests for User Story 2
 
-- [ ] T023 [P] [US2] Add unit test for network failure scenario in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T024 [P] [US2] Add unit test for rate limit exceeded (HTTP 403) scenario in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T025 [P] [US2] Add unit test for not found (HTTP 404) scenario in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T026 [P] [US2] Add unit test for server error (HTTP 500-599) scenario in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T027 [P] [US2] Add unit test for invalid JSON response scenario in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T023 [P] [US2] Add unit test for network failure scenario in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T024 [P] [US2] Add unit test for rate limit exceeded (HTTP 403) scenario in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T025 [P] [US2] Add unit test for not found (HTTP 404) scenario in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T026 [P] [US2] Add unit test for server error (HTTP 500-599) scenario in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T027 [P] [US2] Add unit test for invalid JSON response scenario in tests/unit/GitHubApiClient.Tests.ps1
 
 ### Implementation for User Story 2
 
-- [ ] T028 [US2] Add rate limit reset time extraction from X-RateLimit-Reset header in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T029 [US2] Add specific error message for HTTP 403 rate limit with reset time in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T030 [US2] Add specific error message for HTTP 404 not found with URI in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T031 [US2] Add specific error message for HTTP 500-599 server errors in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T032 [US2] Add specific error message for network failures (no Response object) in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T033 [US2] Add specific error message for empty response validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
-- [ ] T034 [US2] Add specific error message for missing tag_name validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
-- [ ] T035 [US2] Add specific error message for invalid tag_name format validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
+- [X] T028 [US2] Add rate limit reset time extraction from X-RateLimit-Reset header in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T029 [US2] Add specific error message for HTTP 403 rate limit with reset time in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T030 [US2] Add specific error message for HTTP 404 not found with URI in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T031 [US2] Add specific error message for HTTP 500-599 server errors in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T032 [US2] Add specific error message for network failures (no Response object) in Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T033 [US2] Add specific error message for empty response validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
+- [X] T034 [US2] Add specific error message for missing tag_name validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
+- [X] T035 [US2] Add specific error message for invalid tag_name format validation failure in Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
 
 **Checkpoint**: At this point, all error scenarios should provide clear, actionable messages
 
@@ -116,16 +116,16 @@
 
 ### Tests for User Story 3
 
-- [ ] T036 [P] [US3] Add unit test for Get-SpecKitRelease with valid version in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T037 [P] [US3] Add unit test for Get-SpecKitRelease with invalid version (404) in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T036 [P] [US3] Add unit test for Get-SpecKitRelease with valid version in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T037 [P] [US3] Add unit test for Get-SpecKitRelease with invalid version (404) in tests/unit/GitHubApiClient.Tests.ps1
 - [ ] T038 [P] [US3] Add integration test for explicit version workflow in tests/integration/UpdateOrchestrator.Tests.ps1
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Add same validation logic to Get-SpecKitRelease for consistency with Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
-- [ ] T040 [US3] Verify explicit version path in orchestrator has same defensive null checks in scripts/update-orchestrator.ps1 (after line 226)
-- [ ] T041 [US3] Add Write-Verbose logging for explicit version specification in scripts/update-orchestrator.ps1
-- [ ] T042 [US3] Update Get-OfficialSpecKitCommands call site to use -Version parameter name in scripts/update-orchestrator.ps1 (line 271)
+- [X] T039 [US3] Add same validation logic to Get-SpecKitRelease for consistency with Get-LatestSpecKitRelease in scripts/modules/GitHubApiClient.psm1
+- [X] T040 [US3] Verify explicit version path in orchestrator has same defensive null checks in scripts/update-orchestrator.ps1 (after line 226)
+- [X] T041 [US3] Add Write-Verbose logging for explicit version specification in scripts/update-orchestrator.ps1
+- [X] T042 [US3] Update Get-OfficialSpecKitCommands call site to use -Version parameter name in scripts/update-orchestrator.ps1 (line 291)
 
 **Checkpoint**: All user stories should now be independently functional - automatic detection, clear errors, and explicit override all work
 

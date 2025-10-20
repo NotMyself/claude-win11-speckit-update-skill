@@ -31,14 +31,19 @@ function Invoke-GitHubApiRequest {
             'User-Agent' = 'SpecKit-Update-Skill/1.0'
         }
 
-        $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $headers -ErrorAction Stop
+        Write-Verbose "Calling GitHub API: $Method $Uri"
+        $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $headers -TimeoutSec 30 -ErrorAction Stop
+        Write-Verbose "GitHub API request successful"
 
         return $response
     }
     catch {
+        Write-Verbose "GitHub API request failed: $($_.Exception.Message)"
+
         # Handle specific HTTP status codes
         if ($_.Exception.Response) {
             $statusCode = [int]$_.Exception.Response.StatusCode
+            Write-Verbose "HTTP Status Code: $statusCode"
 
             if ($statusCode -eq 403) {
                 # Rate limit exceeded
@@ -62,15 +67,18 @@ function Invoke-GitHubApiRequest {
                 }
             }
             elseif ($statusCode -eq 404) {
-                throw "GitHub resource not found: $Uri"
+                throw "GitHub resource not found. Verify repository and release exist: $Uri"
+            }
+            elseif ($statusCode -ge 500) {
+                throw "GitHub API server error (HTTP $statusCode). Try again later: $($_.Exception.Message)"
             }
             else {
                 throw "GitHub API error (HTTP $statusCode): $($_.Exception.Message)"
             }
         }
         else {
-            # Network or other error
-            throw "Failed to connect to GitHub API: $($_.Exception.Message)"
+            # Network or other error - no HTTP response received
+            throw "Failed to connect to GitHub API. Check network connectivity: $($_.Exception.Message)"
         }
     }
 }
@@ -97,9 +105,43 @@ function Get-LatestSpecKitRelease {
     $uri = 'https://api.github.com/repos/github/spec-kit/releases/latest'
 
     Write-Verbose "Fetching latest SpecKit release from GitHub API"
-    $release = Invoke-GitHubApiRequest -Uri $uri -Method GET
+    Write-Verbose "API endpoint: $uri"
 
-    return $release
+    try {
+        $release = Invoke-GitHubApiRequest -Uri $uri -Method GET
+
+        # Validate response is not null
+        if (-not $release) {
+            throw "GitHub API returned empty response. Unable to fetch release information."
+        }
+
+        Write-Verbose "Response received, validating structure..."
+
+        # Validate required properties exist
+        if (-not $release.tag_name) {
+            $availableProps = $release.PSObject.Properties.Name -join ', '
+            Write-Verbose "Available properties: $availableProps"
+            throw "GitHub API returned invalid data. Missing required property: tag_name"
+        }
+
+        if (-not $release.assets) {
+            throw "GitHub API returned invalid data. Missing required property: assets"
+        }
+
+        # Validate tag_name format (semantic version with 'v' prefix)
+        if ($release.tag_name -notmatch '^v\d+\.\d+\.\d+') {
+            throw "Invalid version format in tag_name: $($release.tag_name). Expected format: v0.0.72"
+        }
+
+        Write-Verbose "Release validated successfully: $($release.tag_name)"
+        Write-Verbose "Assets count: $($release.assets.Count)"
+
+        return $release
+    }
+    catch {
+        Write-Error "Failed to get latest SpecKit release: $($_.Exception.Message)"
+        throw
+    }
 }
 
 <#
@@ -138,9 +180,43 @@ function Get-SpecKitRelease {
     $uri = "https://api.github.com/repos/github/spec-kit/releases/tags/$normalizedVersion"
 
     Write-Verbose "Fetching SpecKit release $normalizedVersion from GitHub API"
-    $release = Invoke-GitHubApiRequest -Uri $uri -Method GET
+    Write-Verbose "API endpoint: $uri"
 
-    return $release
+    try {
+        $release = Invoke-GitHubApiRequest -Uri $uri -Method GET
+
+        # Validate response is not null
+        if (-not $release) {
+            throw "GitHub API returned empty response. Unable to fetch release information."
+        }
+
+        Write-Verbose "Response received, validating structure..."
+
+        # Validate required properties exist
+        if (-not $release.tag_name) {
+            $availableProps = $release.PSObject.Properties.Name -join ', '
+            Write-Verbose "Available properties: $availableProps"
+            throw "GitHub API returned invalid data. Missing required property: tag_name"
+        }
+
+        if (-not $release.assets) {
+            throw "GitHub API returned invalid data. Missing required property: assets"
+        }
+
+        # Validate tag_name format (semantic version with 'v' prefix)
+        if ($release.tag_name -notmatch '^v\d+\.\d+\.\d+') {
+            throw "Invalid version format in tag_name: $($release.tag_name). Expected format: v0.0.72"
+        }
+
+        Write-Verbose "Release validated successfully: $($release.tag_name)"
+        Write-Verbose "Assets count: $($release.assets.Count)"
+
+        return $release
+    }
+    catch {
+        Write-Error "Failed to get SpecKit release ${normalizedVersion}: $($_.Exception.Message)"
+        throw
+    }
 }
 
 <#

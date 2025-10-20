@@ -229,7 +229,7 @@ function New-SpecKitManifest {
     and extracting command filenames. Results are cached for performance.
     Falls back to a hardcoded list if GitHub is unavailable.
 
-.PARAMETER SpecKitVersion
+.PARAMETER Version
     The SpecKit version tag (e.g., "v0.0.72").
 
 .OUTPUTS
@@ -237,7 +237,7 @@ function New-SpecKitManifest {
     Array of official command filenames (e.g., "speckit.plan.md").
 
 .EXAMPLE
-    $commands = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.72"
+    $commands = Get-OfficialSpecKitCommands -Version "v0.0.72"
 
 .NOTES
     Uses script-level cache to avoid repeated downloads.
@@ -249,24 +249,24 @@ function Get-OfficialSpecKitCommands {
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$SpecKitVersion
+        [string]$Version
     )
 
     # Check cache
-    if ($script:OfficialCommandsCache.ContainsKey($SpecKitVersion)) {
-        Write-Verbose "Using cached official commands for version: $SpecKitVersion"
-        return $script:OfficialCommandsCache[$SpecKitVersion]
+    if ($script:OfficialCommandsCache.ContainsKey($Version)) {
+        Write-Verbose "Using cached official commands for version: $Version"
+        return $script:OfficialCommandsCache[$Version]
     }
 
     try {
-        Write-Verbose "Fetching official commands from GitHub for version: $SpecKitVersion"
+        Write-Verbose "Fetching official commands from GitHub for version: $Version"
 
         # Download templates to temporary location
         $tempDir = Join-Path $env:TEMP "speckit-manifest-$(Get-Random)"
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
         try {
-            $templates = Download-SpecKitTemplates -Version $SpecKitVersion -DestinationPath $tempDir
+            $templates = Download-SpecKitTemplates -Version $Version -DestinationPath $tempDir
 
             # Extract command filenames from .claude/commands/*.md
             $commands = $templates.Keys | Where-Object {
@@ -280,7 +280,7 @@ function Get-OfficialSpecKitCommands {
             }
 
             # Cache result
-            $script:OfficialCommandsCache[$SpecKitVersion] = $commands
+            $script:OfficialCommandsCache[$Version] = $commands
 
             Write-Verbose "Found $($commands.Count) official commands"
             return $commands
