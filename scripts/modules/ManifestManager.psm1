@@ -258,6 +258,23 @@ function Get-OfficialSpecKitCommands {
         return $script:OfficialCommandsCache[$Version]
     }
 
+    # For placeholder version (v0.0.0), skip GitHub and use fallback immediately
+    if ($Version -eq "v0.0.0") {
+        Write-Verbose "Placeholder version detected, using fallback command list"
+        $fallbackCommands = @(
+            "speckit.constitution.md",
+            "speckit.specify.md",
+            "speckit.clarify.md",
+            "speckit.plan.md",
+            "speckit.tasks.md",
+            "speckit.implement.md",
+            "speckit.analyze.md",
+            "speckit.checklist.md"
+        )
+        $script:OfficialCommandsCache[$Version] = $fallbackCommands
+        return $fallbackCommands
+    }
+
     try {
         Write-Verbose "Fetching official commands from GitHub for version: $Version"
 

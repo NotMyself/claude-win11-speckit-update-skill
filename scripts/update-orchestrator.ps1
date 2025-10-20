@@ -296,7 +296,7 @@ try {
     $templates = Download-SpecKitTemplates -Version $targetRelease.tag_name -DestinationPath $projectRoot
 
     # Get all file states
-    $fileStates = Get-AllFileStates -Manifest $manifest -UpstreamTemplates $templates -ProjectRoot $projectRoot
+    $fileStates = Get-AllFileStates -Manifest $manifest -UpstreamTemplates $templates
 
     # Find custom commands
     $officialCommands = Get-OfficialSpecKitCommands -Version $targetRelease.tag_name
