@@ -189,7 +189,7 @@ Describe "ManifestManager" {
                     return @("speckit.specify.md", "speckit.plan.md")
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 $manifest | Should -Not -BeNullOrEmpty
                 $manifest.version | Should -Be "1.0"
@@ -209,7 +209,7 @@ Describe "ManifestManager" {
                     return @("speckit.specify.md", "speckit.plan.md")
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72" -AssumeAllCustomized
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72" -AssumeAllCustomized
 
                 $manifest.tracked_files | ForEach-Object {
                     $_.customized | Should -Be $true
@@ -227,7 +227,7 @@ Describe "ManifestManager" {
                     return @("speckit.specify.md", "speckit.plan.md")
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 # Should have custom-deploy.md in custom_files
                 $manifest.custom_files | Should -Contain ".claude/commands/custom-deploy.md"
@@ -249,7 +249,7 @@ Describe "ManifestManager" {
                     return @("speckit.specify.md")
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 $manifest.tracked_files | ForEach-Object {
                     $_.original_hash | Should -Match "^sha256:[A-F0-9]+$"
@@ -272,7 +272,7 @@ Describe "ManifestManager" {
                     return @()
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 # Should not include manifest.json or backup files
                 $manifest.tracked_files.path | Should -Not -Contain ".specify/manifest.json"
@@ -290,7 +290,7 @@ Describe "ManifestManager" {
                     return @()
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 $manifest.initialized_at | Should -Not -BeNullOrEmpty
                 $manifest.last_updated | Should -Not -BeNullOrEmpty
@@ -311,7 +311,7 @@ Describe "ManifestManager" {
                     return @()
                 }
 
-                New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 $manifestPath = Join-Path $testDir ".specify\manifest.json"
                 Test-Path $manifestPath | Should -Be $true
@@ -319,6 +319,95 @@ Describe "ManifestManager" {
                 # Should be valid JSON
                 $content = Get-Content $manifestPath -Raw
                 { $content | ConvertFrom-Json } | Should -Not -Throw
+            }
+            finally {
+                Remove-Item $testDir -Recurse -Force
+            }
+        }
+
+        It "Requires Version parameter (cannot be null or empty)" {
+            $testDir = New-TestProject -WithCommands
+            try {
+                Mock Get-OfficialSpecKitCommands {
+                    return @()
+                }
+
+                # Should throw when Version is null
+                { New-SpecKitManifest -ProjectRoot $testDir -Version $null } | Should -Throw
+
+                # Should throw when Version is empty string
+                { New-SpecKitManifest -ProjectRoot $testDir -Version "" } | Should -Throw
+            }
+            finally {
+                Remove-Item $testDir -Recurse -Force
+            }
+        }
+
+        It "Passes Version parameter to Get-OfficialSpecKitCommands" {
+            $testDir = New-TestProject -WithCommands
+            try {
+                # Mock with parameter verification
+                Mock Get-OfficialSpecKitCommands {
+                    param($Version)
+                    $Version | Should -Be "v0.0.72"
+                    return @("speckit.specify.md")
+                }
+
+                New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
+
+                # Verify mock was called
+                Should -Invoke Get-OfficialSpecKitCommands -Times 1
+            }
+            finally {
+                Remove-Item $testDir -Recurse -Force
+            }
+        }
+
+        It "Works in first-time update scenario (no existing manifest)" {
+            $testDir = New-TestProject -WithCommands -WithSpecifyFiles
+            try {
+                # Ensure no manifest exists
+                $manifestPath = Join-Path $testDir ".specify\manifest.json"
+                if (Test-Path $manifestPath) {
+                    Remove-Item $manifestPath -Force
+                }
+
+                Mock Get-OfficialSpecKitCommands {
+                    return @("speckit.specify.md", "speckit.plan.md")
+                }
+
+                # Should succeed even without existing manifest
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
+
+                $manifest | Should -Not -BeNullOrEmpty
+                $manifest.speckit_version | Should -Be "v0.0.72"
+                Test-Path $manifestPath | Should -Be $true
+            }
+            finally {
+                Remove-Item $testDir -Recurse -Force
+            }
+        }
+
+        It "Works with AssumeAllCustomized flag in first-time scenario" {
+            $testDir = New-TestProject -WithCommands -WithSpecifyFiles
+            try {
+                # Ensure no manifest exists
+                $manifestPath = Join-Path $testDir ".specify\manifest.json"
+                if (Test-Path $manifestPath) {
+                    Remove-Item $manifestPath -Force
+                }
+
+                Mock Get-OfficialSpecKitCommands {
+                    return @("speckit.specify.md")
+                }
+
+                # Should create manifest with all files marked as customized
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72" -AssumeAllCustomized
+
+                $manifest | Should -Not -BeNullOrEmpty
+                $manifest.tracked_files | ForEach-Object {
+                    $_.customized | Should -Be $true
+                }
             }
             finally {
                 Remove-Item $testDir -Recurse -Force
@@ -336,7 +425,7 @@ Describe "ManifestManager" {
                 }
             }
 
-            $commands = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.99"
+            $commands = Get-OfficialSpecKitCommands -Version "v0.0.99"
 
             $commands | Should -Not -BeNullOrEmpty
             $commands | Should -Contain "speckit.constitution.md"
@@ -352,10 +441,10 @@ Describe "ManifestManager" {
             }
 
             # First call
-            $commands1 = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.98"
+            $commands1 = Get-OfficialSpecKitCommands -Version "v0.0.98"
 
             # Second call should use cache (Download-SpecKitTemplates called only once)
-            $commands2 = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.98"
+            $commands2 = Get-OfficialSpecKitCommands -Version "v0.0.98"
 
             Should -Invoke Download-SpecKitTemplates -ModuleName ManifestManager -Times 1 -Exactly
             $commands1 | Should -Be $commands2
@@ -366,7 +455,7 @@ Describe "ManifestManager" {
                 throw "Network error"
             }
 
-            $commands = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.97"
+            $commands = Get-OfficialSpecKitCommands -Version "v0.0.97"
 
             # Should still return a list (fallback)
             $commands | Should -Not -BeNullOrEmpty
@@ -382,7 +471,7 @@ Describe "ManifestManager" {
                 }
             }
 
-            $commands = Get-OfficialSpecKitCommands -SpecKitVersion "v0.0.96"
+            $commands = Get-OfficialSpecKitCommands -Version "v0.0.96"
 
             $commands | Should -Contain "speckit.specify.md"
             $commands | Should -Contain "speckit.plan.md"
@@ -560,7 +649,7 @@ Describe "ManifestManager" {
                     return @("speckit.specify.md")
                 }
 
-                $manifest = New-SpecKitManifest -ProjectRoot $testDir -SpecKitVersion "v0.0.72"
+                $manifest = New-SpecKitManifest -ProjectRoot $testDir -Version "v0.0.72"
 
                 # File should not be customized initially
                 $file = $manifest.tracked_files | Where-Object { $_.path -eq ".claude/commands/speckit.specify.md" }

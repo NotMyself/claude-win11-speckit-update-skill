@@ -96,7 +96,7 @@ function Get-SpecKitManifest {
 .PARAMETER ProjectRoot
     The root directory of the SpecKit project. Defaults to current directory.
 
-.PARAMETER SpecKitVersion
+.PARAMETER Version
     The SpecKit version tag (e.g., "v0.0.72") to associate with this manifest.
 
 .PARAMETER AssumeAllCustomized
@@ -108,7 +108,7 @@ function Get-SpecKitManifest {
     The newly created manifest object.
 
 .EXAMPLE
-    New-SpecKitManifest -ProjectRoot $PWD -SpecKitVersion "v0.0.72" -AssumeAllCustomized
+    New-SpecKitManifest -ProjectRoot $PWD -Version "v0.0.72" -AssumeAllCustomized
 
 .NOTES
     Creates the manifest file at .specify/manifest.json.
@@ -123,7 +123,7 @@ function New-SpecKitManifest {
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$SpecKitVersion,
+        [string]$Version,
 
         [Parameter()]
         [switch]$AssumeAllCustomized
@@ -132,10 +132,10 @@ function New-SpecKitManifest {
     try {
         $manifestPath = Join-Path $ProjectRoot ".specify/manifest.json"
 
-        Write-Verbose "Creating new manifest for SpecKit version: $SpecKitVersion"
+        Write-Verbose "Creating new manifest for SpecKit version: $Version"
 
         # Get official commands for this version
-        $officialCommands = Get-OfficialSpecKitCommands -SpecKitVersion $SpecKitVersion
+        $officialCommands = Get-OfficialSpecKitCommands -Version $Version
 
         # Initialize collections
         $trackedFiles = @()
@@ -194,7 +194,7 @@ function New-SpecKitManifest {
         $now = (Get-Date).ToUniversalTime().ToString("o")
         $manifest = @{
             version = "1.0"
-            speckit_version = $SpecKitVersion
+            speckit_version = $Version
             initialized_at = $now
             last_updated = $now
             agent = "claude-code"
@@ -309,7 +309,7 @@ function Get-OfficialSpecKitCommands {
         )
 
         # Cache fallback result too
-        $script:OfficialCommandsCache[$SpecKitVersion] = $fallbackCommands
+        $script:OfficialCommandsCache[$Version] = $fallbackCommands
 
         return $fallbackCommands
     }

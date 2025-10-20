@@ -182,26 +182,18 @@ try {
     Write-Verbose "Step 2: No rollback requested, continuing with update"
 
     # ========================================
-    # STEP 3: Load or Create Manifest
+    # STEP 3: Load Manifest (or prepare to create one)
     # ========================================
     Write-Verbose "Step 3: Loading manifest..."
     Write-Host "Loading manifest..." -ForegroundColor Cyan
 
     $manifest = Get-SpecKitManifest -ProjectRoot $projectRoot
+    $needsManifestCreation = $false
 
     if (-not $manifest) {
-        Write-Host "No manifest found. Creating new manifest..." -ForegroundColor Yellow
+        Write-Host "No manifest found. Will create after fetching target version..." -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
-        Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
-        Write-Host ""
-
-        # Create manifest assuming all files are customized
-        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -AssumeAllCustomized
-
-        Write-Host "Manifest created successfully" -ForegroundColor Green
-        Write-Host "Current version marked as: $($manifest.speckit_version)" -ForegroundColor Green
-        Write-Host ""
+        $needsManifestCreation = $true
     }
     else {
         Write-Host "Manifest loaded: $($manifest.speckit_version)" -ForegroundColor Green
@@ -263,6 +255,25 @@ try {
         Write-Host "  - Invalid version specified" -ForegroundColor Yellow
         Write-Host ""
         exit 3
+    }
+
+    # ========================================
+    # STEP 3.5: Create Manifest if needed (now that we have target version)
+    # ========================================
+    if ($needsManifestCreation) {
+        Write-Verbose "Creating manifest with target version: $($targetRelease.tag_name)"
+        Write-Host ""
+        Write-Host "Creating new manifest for version: $($targetRelease.tag_name)" -ForegroundColor Yellow
+        Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
+        Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
+        Write-Host ""
+
+        # Create manifest with target version, assuming all files are customized
+        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version $targetRelease.tag_name -AssumeAllCustomized
+
+        Write-Host "Manifest created successfully" -ForegroundColor Green
+        Write-Host "Current version marked as: $($manifest.speckit_version)" -ForegroundColor Green
+        Write-Host ""
     }
 
     # Check if already up to date
