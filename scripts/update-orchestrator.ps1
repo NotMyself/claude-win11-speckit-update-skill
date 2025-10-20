@@ -258,21 +258,21 @@ try {
     }
 
     # ========================================
-    # STEP 3.5: Create Manifest if needed (now that we have target version)
+    # STEP 3.5: Create Manifest if needed (with placeholder version)
     # ========================================
     if ($needsManifestCreation) {
-        Write-Verbose "Creating manifest with target version: $($targetRelease.tag_name)"
+        Write-Verbose "Creating new manifest with placeholder version v0.0.0"
         Write-Host ""
-        Write-Host "Creating new manifest for version: $($targetRelease.tag_name)" -ForegroundColor Yellow
+        Write-Host "Creating new manifest (version unknown - will update to $($targetRelease.tag_name))" -ForegroundColor Yellow
         Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
         Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
         Write-Host ""
 
-        # Create manifest with target version, assuming all files are customized
-        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version $targetRelease.tag_name -AssumeAllCustomized
+        # Create manifest with placeholder version (unknown starting point), assuming all files are customized
+        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version "v0.0.0" -AssumeAllCustomized
 
         Write-Host "Manifest created successfully" -ForegroundColor Green
-        Write-Host "Current version marked as: $($manifest.speckit_version)" -ForegroundColor Green
+        Write-Host "Current version marked as: $($manifest.speckit_version) (placeholder - will update to $($targetRelease.tag_name))" -ForegroundColor Green
         Write-Host ""
     }
 
