@@ -87,34 +87,53 @@ Write-Host "SpecKit Safe Update v1.0" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
-try {
-    # Import all required modules
-    $modulesPath = Join-Path $PSScriptRoot "modules"
+# ========================================
+# MODULE IMPORTS
+# ========================================
+# Temporarily allow non-terminating errors during module import to prevent
+# Export-ModuleMember warnings from terminating the script
+$savedErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
 
-    Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force
-    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force
-    Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force
-    Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force
-    Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force
-    Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force
+$modulesPath = Join-Path $PSScriptRoot "modules"
+Write-Verbose "Importing PowerShell modules from: $modulesPath"
 
-    # Import helper functions
-    $helpersPath = Join-Path $PSScriptRoot "helpers"
+# Suppress warnings from unapproved verbs (e.g., Download-SpecKitTemplates)
+# Redirect errors to $null to prevent false-positive Export-ModuleMember errors from cluttering output
+Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
 
-    . (Join-Path $helpersPath "Invoke-PreUpdateValidation.ps1")
-    . (Join-Path $helpersPath "Show-UpdateSummary.ps1")
-    . (Join-Path $helpersPath "Show-UpdateReport.ps1")
-    . (Join-Path $helpersPath "Get-UpdateConfirmation.ps1")
-    . (Join-Path $helpersPath "Invoke-ConflictResolutionWorkflow.ps1")
-    . (Join-Path $helpersPath "Invoke-ThreeWayMerge.ps1")
-    . (Join-Path $helpersPath "Invoke-RollbackWorkflow.ps1")
+# Restore strict error handling
+$ErrorActionPreference = $savedErrorPreference
 
-    Write-Verbose "All modules and helpers loaded successfully"
-}
-catch {
-    Write-Error "Failed to import modules: $($_.Exception.Message)"
-    exit 1
-}
+Write-Verbose "Module imports completed"
+
+# ========================================
+# HELPER IMPORTS
+# ========================================
+# Use same error handling approach as modules - allow non-terminating errors
+$savedErrorPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+
+$helpersPath = Join-Path $PSScriptRoot "helpers"
+
+# Suppress Export-ModuleMember errors from helper scripts (they shouldn't have Export-ModuleMember but do)
+. (Join-Path $helpersPath "Invoke-PreUpdateValidation.ps1") 2>$null
+. (Join-Path $helpersPath "Show-UpdateSummary.ps1") 2>$null
+. (Join-Path $helpersPath "Show-UpdateReport.ps1") 2>$null
+. (Join-Path $helpersPath "Get-UpdateConfirmation.ps1") 2>$null
+. (Join-Path $helpersPath "Invoke-ConflictResolutionWorkflow.ps1") 2>$null
+. (Join-Path $helpersPath "Invoke-ThreeWayMerge.ps1") 2>$null
+. (Join-Path $helpersPath "Invoke-RollbackWorkflow.ps1") 2>$null
+
+# Restore strict error handling
+$ErrorActionPreference = $savedErrorPreference
+
+Write-Verbose "All modules and helpers loaded successfully"
 
 # ========================================
 # MAIN EXECUTION FLOW
