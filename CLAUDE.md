@@ -357,3 +357,80 @@ This skill is designed for projects using **GitHub SpecKit** (`.specify/` direct
 - **Official Commands:** Tracks 8 official SpecKit commands (speckit.analyze, speckit.checklist, etc.)
 - **Custom Commands:** User-created commands in `.claude/commands/` are NEVER overwritten, even with `--force`
 - **Template Source:** Fetches from GitHub SpecKit releases (not from npm)
+
+## Troubleshooting
+
+### GitHub API Issues
+
+The skill fetches SpecKit templates from GitHub Releases API. Common issues:
+
+**"Failed to connect to GitHub API"**
+- **Cause**: Network connectivity issue or firewall blocking api.github.com
+- **Solution**:
+  - Check internet connection
+  - Verify api.github.com is accessible: `Test-NetConnection api.github.com -Port 443`
+  - Check corporate firewall/proxy settings
+  - Use `-Verbose` flag to see detailed connection attempts
+
+**"GitHub API rate limit exceeded"**
+- **Cause**: Exceeded 60 requests/hour limit for unauthenticated API calls
+- **Solution**:
+  - Wait until rate limit resets (time shown in error message)
+  - Error message shows exact reset time: "Resets at: {timestamp}"
+  - Rate limits reset on the hour (e.g., if exceeded at 2:45pm, resets at 3:00pm)
+
+**"GitHub API returned empty response"**
+- **Cause**: GitHub API returned null or invalid JSON
+- **Solution**:
+  - Check GitHub Status: https://www.githubstatus.com/
+  - Retry in a few minutes if GitHub is experiencing issues
+  - Use `-Verbose` flag to see API endpoint and response details
+
+**"GitHub resource not found"**
+- **Cause**: Specified version doesn't exist in GitHub releases
+- **Solution**:
+  - Verify version format: `v0.0.72` (with 'v' prefix)
+  - Check available releases: https://github.com/github/spec-kit/releases
+  - Omit `-Version` parameter to automatically use latest release
+
+**"Invalid version format in tag_name"**
+- **Cause**: GitHub release tag doesn't match semantic versioning (v0.0.0 format)
+- **Solution**:
+  - Report to SpecKit maintainers if official release has invalid tag
+  - Use explicit `-Version` parameter with valid version
+
+### Diagnostic Commands
+
+```powershell
+# Test GitHub API connectivity manually
+Import-Module .\scripts\modules\GitHubApiClient.psm1 -Force
+$release = Get-LatestSpecKitRelease -Verbose
+$release | ConvertTo-Json -Depth 3
+
+# Check current rate limit status
+$rateLimit = Test-GitHubApiRateLimit
+Write-Host "Remaining requests: $($rateLimit.rate.remaining) / $($rateLimit.rate.limit)"
+
+# Test with verbose logging
+& .\scripts\update-orchestrator.ps1 -CheckOnly -Verbose
+
+# Test specific version
+& .\scripts\update-orchestrator.ps1 -CheckOnly -Version v0.0.72 -Verbose
+```
+
+### Common Error Codes
+
+- **Exit Code 0**: Success
+- **Exit Code 1**: General error
+- **Exit Code 2**: Prerequisites not met (Git missing, not in SpecKit project, etc.)
+- **Exit Code 3**: Network/API error (GitHub API unreachable, rate limited, etc.)
+- **Exit Code 4**: Git error (uncommitted changes, merge conflicts, etc.)
+- **Exit Code 5**: User cancelled operation
+- **Exit Code 6**: Automatic rollback occurred due to update failure
+
+### Getting Help
+
+- **Verbose Output**: Always use `-Verbose` flag when troubleshooting
+- **Error Logs**: Check PowerShell error stream and verbose output
+- **GitHub Issues**: Report issues at https://github.com/NotMyself/claude-win11-speckit-update-skill/issues
+- **Bug Reports**: See `docs/bugs/` directory for known issues and resolutions

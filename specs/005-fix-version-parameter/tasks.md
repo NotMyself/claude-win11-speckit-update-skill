@@ -151,10 +151,10 @@
 
 **Purpose**: Documentation, cleanup, and final validation
 
-- [ ] T052 [P] Update CHANGELOG.md with bug fix details under [Unreleased] section
-- [ ] T053 [P] Update docs/bugs/003-missing-speckit-version-parameter.md with resolution notes
+- [X] T052 [P] Update CHANGELOG.md with bug fix details under [Unreleased] section
+- [X] T053 [P] Update docs/bugs/003-missing-speckit-version-parameter.md with resolution notes
 - [ ] T054 [P] Add troubleshooting section to CLAUDE.md for GitHub API issues
-- [ ] T055 Review code for PowerShell style compliance (PascalCase functions, camelCase variables)
+- [X] T055 Review code for PowerShell style compliance (PascalCase functions, camelCase variables)
 - [ ] T056 Run full test suite with coverage using ./tests/test-runner.ps1 -Coverage
 - [ ] T057 Close GitHub issue #6 with verification notes and test results
 

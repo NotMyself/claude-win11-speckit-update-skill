@@ -282,7 +282,7 @@ try {
     Write-Host "Analyzing file changes..." -ForegroundColor Cyan
 
     # Download templates for comparison
-    $templates = Download-SpecKitTemplates -Version $targetRelease.tag_name -ProjectRoot $projectRoot
+    $templates = Download-SpecKitTemplates -Version $targetRelease.tag_name -DestinationPath $projectRoot
 
     # Get all file states
     $fileStates = Get-AllFileStates -Manifest $manifest -UpstreamTemplates $templates -ProjectRoot $projectRoot
