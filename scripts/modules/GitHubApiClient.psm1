@@ -286,11 +286,12 @@ function Download-SpecKitTemplates {
     # Get release assets
     $assets = Get-SpecKitReleaseAssets -Version $Version
 
-    # Find the Claude templates asset
-    $templateAsset = $assets | Where-Object { $_.name -eq 'claude-templates.zip' }
+    # Find the Claude templates asset (PowerShell version)
+    # Asset naming format: spec-kit-template-claude-ps-vX.Y.Z.zip
+    $templateAsset = $assets | Where-Object { $_.name -like "spec-kit-template-claude-ps-*.zip" }
 
     if (-not $templateAsset) {
-        throw "Claude templates asset not found in release $Version. Available assets: $($assets.name -join ', ')"
+        throw "Claude PowerShell templates asset not found in release $Version. Available assets: $($assets.name -join ', ')"
     }
 
     # Create destination directory if it doesn't exist
