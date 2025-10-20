@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-10-20
+
 ### Fixed
 - **BREAKING FIX - Module Import Error**: Permanently resolved recurring "Export-ModuleMember cmdlet can only be called from inside a module" error by fixing the root architectural issue (#3)
   - **Root Cause**: Helper scripts (`.ps1` files) incorrectly used `Export-ModuleMember`, which only works in module files (`.psm1`)
@@ -134,5 +136,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/releases/tag/v0.1.0
