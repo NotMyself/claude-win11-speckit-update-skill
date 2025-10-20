@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Version Parameter Handling (#6)**: Fixed "missing mandatory parameters: SpecKitVersion" error when running updates without explicit version
+  - **Root Cause**: Missing validation and null checks when GitHub API returns invalid or null responses
+  - **Symptoms**: Script crash with "Cannot index into a null array" when accessing `$targetRelease.tag_name` after failed API call
+  - **Impact**: Users unable to run automatic updates (primary workflow) - only explicit version specification worked
+  - **Fix Applied**:
+    - **Enhanced API Error Handling**: Added structured error handling in `Invoke-GitHubApiRequest` for all HTTP status codes (403 rate limit, 404 not found, 500+ server errors) with specific user-friendly messages
+    - **Response Validation**: Added comprehensive validation to `Get-LatestSpecKitRelease` and `Get-SpecKitRelease` checking for null responses, missing properties (`tag_name`, `assets`), and invalid version formats
+    - **Defensive Null Checks**: Added two-stage validation (module + orchestrator) to prevent crashes when accessing response properties
+    - **Parameter Naming Consistency**: Standardized all functions to use `-Version` parameter (was inconsistent with `-SpecKitVersion`)
+    - **Timeout Protection**: Added 30-second timeout to all GitHub API calls to prevent hanging on slow networks
+    - **Diagnostic Logging**: Added extensive `Write-Verbose` logging at validation checkpoints for troubleshooting
+  - **Error Messages Improved**:
+    - Network failures: "Failed to connect to GitHub API. Check network connectivity"
+    - Rate limiting: "GitHub API rate limit exceeded. Resets at: {time}"
+    - Not found: "GitHub resource not found. Verify repository and release exist"
+    - Server errors: "GitHub API server error (HTTP {code}). Try again later"
+    - Invalid responses: Property-specific validation error messages
+  - **Testing**: Added 10 new unit tests covering null responses, missing properties, invalid formats, and all error scenarios
+  - **Files Modified**:
+    - `scripts/modules/GitHubApiClient.psm1` - Enhanced error handling and validation (lines 28-220)
+    - `scripts/modules/ManifestManager.psm1` - Standardized parameter naming
+    - `scripts/update-orchestrator.ps1` - Added defensive null checks and verbose logging (lines 217-266)
+    - `tests/unit/GitHubApiClient.Tests.ps1` - Added validation tests
+  - **Results**: Automatic version detection now works reliably with robust error handling and clear error messages
+  - **Breaking Change**: None (fixes existing functionality, maintains backward compatibility)
+
 ## [0.1.2] - 2025-10-20
 
 ### Fixed

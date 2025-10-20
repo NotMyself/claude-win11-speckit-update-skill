@@ -222,16 +222,36 @@ try {
                 $targetVersion = "v$targetVersion"
             }
 
+            Write-Verbose "Explicit version specified: $targetVersion"
             Write-Host "Target version: $targetVersion (specified)" -ForegroundColor Cyan
             $targetRelease = Get-SpecKitRelease -Version $targetVersion
+
+            # Defensive null check for explicit version path
+            if (-not $targetRelease) {
+                throw "GitHub API returned empty response for version $targetVersion"
+            }
+
+            if (-not $targetRelease.tag_name) {
+                throw "Release information missing version identifier (tag_name property)"
+            }
+
+            Write-Verbose "Explicit version validated: $($targetRelease.tag_name)"
         }
         else {
+            Write-Verbose "No version specified, fetching latest from GitHub"
             $targetRelease = Get-LatestSpecKitRelease
-            Write-Host "Latest version: $($targetRelease.tag_name)" -ForegroundColor Cyan
-        }
 
-        if (-not $targetRelease) {
-            throw "Could not retrieve target release information"
+            # Defensive null check after getting latest release
+            if (-not $targetRelease) {
+                throw "GitHub API returned empty response when fetching latest release"
+            }
+
+            if (-not $targetRelease.tag_name) {
+                throw "Release information missing version identifier (tag_name property)"
+            }
+
+            Write-Verbose "Target version validated: $($targetRelease.tag_name)"
+            Write-Host "Latest version: $($targetRelease.tag_name)" -ForegroundColor Cyan
         }
     }
     catch {
@@ -262,13 +282,13 @@ try {
     Write-Host "Analyzing file changes..." -ForegroundColor Cyan
 
     # Download templates for comparison
-    $templates = Download-SpecKitTemplates -Version $targetRelease.tag_name -ProjectRoot $projectRoot
+    $templates = Download-SpecKitTemplates -Version $targetRelease.tag_name -DestinationPath $projectRoot
 
     # Get all file states
     $fileStates = Get-AllFileStates -Manifest $manifest -UpstreamTemplates $templates -ProjectRoot $projectRoot
 
     # Find custom commands
-    $officialCommands = Get-OfficialSpecKitCommands -SpecKitVersion $targetRelease.tag_name
+    $officialCommands = Get-OfficialSpecKitCommands -Version $targetRelease.tag_name
     $customFiles = Find-CustomCommands -ProjectRoot $projectRoot -OfficialCommands $officialCommands
 
     Write-Host "Analysis complete" -ForegroundColor Green

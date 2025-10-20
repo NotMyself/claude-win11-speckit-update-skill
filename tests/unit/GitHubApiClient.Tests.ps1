@@ -97,6 +97,48 @@ Describe 'GitHubApiClient Module' {
             }
         }
 
+        It 'Throws error when API returns null response' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $null
+            }
+
+            { Get-LatestSpecKitRelease } | Should -Throw '*empty response*'
+        }
+
+        It 'Throws error when response is missing tag_name property' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return @{
+                    name = 'Release v0.0.72'
+                    assets = @()
+                }
+            }
+
+            { Get-LatestSpecKitRelease } | Should -Throw '*Missing required property: tag_name*'
+        }
+
+        It 'Throws error when response is missing assets property' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return @{
+                    tag_name = 'v0.0.72'
+                    name = 'Release v0.0.72'
+                }
+            }
+
+            { Get-LatestSpecKitRelease } | Should -Throw '*Missing required property: assets*'
+        }
+
+        It 'Throws error when tag_name has invalid format' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return @{
+                    tag_name = 'release-72'
+                    name = 'Release 72'
+                    assets = @()
+                }
+            }
+
+            { Get-LatestSpecKitRelease } | Should -Throw '*Invalid version format*'
+        }
+
         It 'Throws error when rate limit is exceeded' {
             # Mock rate limit error
             Mock -ModuleName GitHubApiClient Invoke-RestMethod {
@@ -124,6 +166,20 @@ Describe 'GitHubApiClient Module' {
             }
 
             { Get-LatestSpecKitRelease } | Should -Throw '*not found*'
+        }
+
+        It 'Throws error when API returns 500-599 server error' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = [System.Net.HttpWebResponse]::new()
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 503 -Force
+
+                $exception = [System.Net.WebException]::new('Service unavailable')
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            { Get-LatestSpecKitRelease } | Should -Throw '*server error*'
         }
 
         It 'Throws error when network is unavailable' {
@@ -164,6 +220,25 @@ Describe 'GitHubApiClient Module' {
             Should -Invoke -ModuleName GitHubApiClient Invoke-RestMethod -Times 1 -ParameterFilter {
                 $Uri -eq 'https://api.github.com/repos/github/spec-kit/releases/tags/v0.0.45'
             }
+        }
+
+        It 'Throws error when API returns null response' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $null
+            }
+
+            { Get-SpecKitRelease -Version 'v0.0.45' } | Should -Throw '*empty response*'
+        }
+
+        It 'Throws error when response is missing tag_name property' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return @{
+                    name = 'Release v0.0.45'
+                    assets = @()
+                }
+            }
+
+            { Get-SpecKitRelease -Version 'v0.0.45' } | Should -Throw '*Missing required property: tag_name*'
         }
 
         It 'Throws error when release version does not exist' {
