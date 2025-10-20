@@ -175,6 +175,3 @@ function Invoke-PreUpdateValidation {
     Write-Host "Prerequisites validated successfully" -ForegroundColor Green
     Write-Host ""
 }
-
-# Export function
-Export-ModuleMember -Function Invoke-PreUpdateValidation

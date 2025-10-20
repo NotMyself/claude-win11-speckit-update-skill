@@ -191,6 +191,3 @@ function Invoke-RollbackWorkflow {
         throw "Rollback failed: $($_.Exception.Message)"
     }
 }
-
-# Export function
-Export-ModuleMember -Function Invoke-RollbackWorkflow

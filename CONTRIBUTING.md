@@ -182,6 +182,23 @@ Then create a pull request on GitHub.
 - [ ] No merge conflicts with main branch
 - [ ] Commit messages are clear and descriptive
 
+#### PowerShell-Specific Checks
+
+- [ ] **Module vs. Helper Pattern**:
+  - [ ] New helper scripts (`.ps1` in `scripts/helpers/`) do NOT use `Export-ModuleMember`
+  - [ ] New modules (`.psm1` in `scripts/modules/`) DO use `Export-ModuleMember`
+  - [ ] Use `templates/helper-template.ps1` as starting point for helpers
+  - [ ] Use `templates/module-template.psm1` as starting point for modules
+- [ ] **Error Handling**:
+  - [ ] Module import logic in orchestrator uses proper error handling (no blanket suppression)
+  - [ ] No `-ErrorAction SilentlyContinue` on `Import-Module` calls (masks real errors)
+  - [ ] No `2>$null` redirection on helper dot-sourcing (masks real errors)
+  - [ ] Try-catch blocks with stack trace logging for real errors
+- [ ] **Code Standards**:
+  - [ ] All new PowerShell functions have comment-based help (`.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, `.EXAMPLE`)
+  - [ ] Verbose logging added with `Write-Verbose` for debugging
+  - [ ] Error messages are clear and actionable
+
 ### PR Description Template
 
 ```markdown

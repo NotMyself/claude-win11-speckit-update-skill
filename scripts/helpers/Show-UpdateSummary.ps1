@@ -154,6 +154,3 @@ function Show-UpdateSummary {
     Write-Host "========================================" -ForegroundColor Green
     Write-Host ""
 }
-
-# Export function
-Export-ModuleMember -Function Show-UpdateSummary

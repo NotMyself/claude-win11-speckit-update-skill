@@ -211,6 +211,3 @@ function Invoke-ConflictResolutionWorkflow {
         UsedNew = $usedNew
     }
 }
-
-# Export function
-Export-ModuleMember -Function Invoke-ConflictResolutionWorkflow

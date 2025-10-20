@@ -49,6 +49,31 @@ Get-NormalizedHash -FilePath ".\README.md"
 
 ## Architecture
 
+### Module vs. Helper Pattern
+
+**IMPORTANT**: This codebase uses two distinct patterns for organizing PowerShell code. Understanding this distinction is critical to prevent recurring module import errors.
+
+**Modules** (`.psm1` files in `scripts/modules/`):
+- Imported with `Import-Module`
+- Run in their own module scope (isolated from caller)
+- MUST use `Export-ModuleMember` to export functions
+- Used for business logic with public/private function separation
+- Example: `HashUtils.psm1`, `ManifestManager.psm1`
+
+**Helpers** (`.ps1` files in `scripts/helpers/`):
+- Dot-sourced with `. script.ps1`
+- Run in the caller's current scope (no isolation)
+- MUST NOT use `Export-ModuleMember` (causes fatal errors)
+- Functions are automatically available after dot-sourcing
+- Used for thin orchestration wrappers around module functions
+- Example: `Show-UpdateSummary.ps1`, `Get-UpdateConfirmation.ps1`
+
+**Why This Matters**: `Export-ModuleMember` only works inside PowerShell module scope. Using it in dot-sourced scripts causes "Export-ModuleMember cmdlet can only be called from inside a module" errors that terminate script execution.
+
+**Rule of Thumb**:
+- If you use `Import-Module`, use `Export-ModuleMember`
+- If you use dot-sourcing (`. script.ps1`), do NOT use `Export-ModuleMember`
+
 ### Entry Point and Orchestration
 
 **[scripts/update-orchestrator.ps1](scripts/update-orchestrator.ps1)** is the main entry point invoked by Claude Code. It coordinates all 15 steps of the update workflow in sequence:

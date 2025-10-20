@@ -38,20 +38,20 @@
 
 ### Remove Export-ModuleMember from Helper Scripts (Root Cause Fix)
 
-- [ ] T006 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-PreUpdateValidation.ps1 (line 180)
-- [ ] T007 [P] Remove Export-ModuleMember line from scripts/helpers/Show-UpdateSummary.ps1 (line 159)
-- [ ] T008 [P] Remove Export-ModuleMember line from scripts/helpers/Show-UpdateReport.ps1 (line 170)
-- [ ] T009 [P] Remove Export-ModuleMember line from scripts/helpers/Get-UpdateConfirmation.ps1 (line 136)
-- [ ] T010 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-ConflictResolutionWorkflow.ps1 (line 216)
-- [ ] T011 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-ThreeWayMerge.ps1 (line 182)
-- [ ] T012 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-RollbackWorkflow.ps1 (line 196)
+- [X] T006 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-PreUpdateValidation.ps1 (line 180)
+- [X] T007 [P] Remove Export-ModuleMember line from scripts/helpers/Show-UpdateSummary.ps1 (line 159)
+- [X] T008 [P] Remove Export-ModuleMember line from scripts/helpers/Show-UpdateReport.ps1 (line 170)
+- [X] T009 [P] Remove Export-ModuleMember line from scripts/helpers/Get-UpdateConfirmation.ps1 (line 136)
+- [X] T010 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-ConflictResolutionWorkflow.ps1 (line 216)
+- [X] T011 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-ThreeWayMerge.ps1 (line 182)
+- [X] T012 [P] Remove Export-ModuleMember line from scripts/helpers/Invoke-RollbackWorkflow.ps1 (line 196)
 
 ### Simplify Orchestrator Import Logic
 
-- [ ] T013 Simplify module import logic in scripts/update-orchestrator.ps1 (lines 90-136) to remove error suppression workarounds
-- [ ] T014 Ensure orchestrator retains -WarningAction SilentlyContinue for unapproved verb warnings in scripts/update-orchestrator.ps1
-- [ ] T015 Add proper try-catch blocks with stack trace logging to scripts/update-orchestrator.ps1 import sections
-- [ ] T016 Add verbose logging messages for module and helper loading progress in scripts/update-orchestrator.ps1
+- [X] T013 Simplify module import logic in scripts/update-orchestrator.ps1 (lines 90-136) to remove error suppression workarounds
+- [X] T014 Ensure orchestrator retains -WarningAction SilentlyContinue for unapproved verb warnings in scripts/update-orchestrator.ps1
+- [X] T015 Add proper try-catch blocks with stack trace logging to scripts/update-orchestrator.ps1 import sections
+- [X] T016 Add verbose logging messages for module and helper loading progress in scripts/update-orchestrator.ps1
 
 **Checkpoint**: Foundation ready - helper scripts no longer have Export-ModuleMember, orchestrator uses clean import pattern
 
@@ -65,10 +65,10 @@
 
 ### Validation for User Story 1
 
-- [ ] T017 [US1] Manual test: Run update-orchestrator.ps1 -CheckOnly and verify no fatal errors
-- [ ] T018 [US1] Manual test: Verify all 6 modules load successfully without errors
-- [ ] T019 [US1] Manual test: Verify all 7 helpers load successfully without errors
-- [ ] T020 [US1] Manual test: Verify orchestrator proceeds to main workflow (prerequisite validation)
+- [X] T017 [US1] Manual test: Run update-orchestrator.ps1 -CheckOnly and verify no fatal errors
+- [X] T018 [US1] Manual test: Verify all 6 modules load successfully without errors
+- [X] T019 [US1] Manual test: Verify all 7 helpers load successfully without errors
+- [X] T020 [US1] Manual test: Verify orchestrator proceeds to main workflow (prerequisite validation)
 
 ### Unit Tests for User Story 1
 
@@ -151,36 +151,36 @@
 
 ### Documentation Updates
 
-- [ ] T044 [P] Add "Module vs. Helper Pattern" section to CLAUDE.md under "Architecture" heading
-- [ ] T045 [P] Update CHANGELOG.md with fix details under [Unreleased] → Fixed section
-- [ ] T046 [P] Document the fix rationale (architectural correction, not just error suppression) in CHANGELOG.md
+- [X] T044 [P] Add "Module vs. Helper Pattern" section to CLAUDE.md under "Architecture" heading
+- [X] T045 [P] Update CHANGELOG.md with fix details under [Unreleased] → Fixed section
+- [X] T046 [P] Document the fix rationale (architectural correction, not just error suppression) in CHANGELOG.md
 
 ### Regression Prevention
 
-- [ ] T047 [P] Create new file tests/unit/CodeStandards.Tests.ps1 with Pester test to enforce no Export-ModuleMember in helper scripts
-- [ ] T048 [P] Add test to tests/unit/CodeStandards.Tests.ps1 to verify modules still have Export-ModuleMember
-- [ ] T049 Update CONTRIBUTING.md with PowerShell-specific PR checklist items (module vs. helper pattern)
+- [X] T047 [P] Create new file tests/unit/CodeStandards.Tests.ps1 with Pester test to enforce no Export-ModuleMember in helper scripts
+- [X] T048 [P] Add test to tests/unit/CodeStandards.Tests.ps1 to verify modules still have Export-ModuleMember
+- [X] T049 Update CONTRIBUTING.md with PowerShell-specific PR checklist items (module vs. helper pattern)
 
 ### Template Creation (Future Prevention)
 
-- [ ] T050 [P] Create templates/helper-template.ps1 with correct pattern (no Export-ModuleMember)
-- [ ] T051 [P] Create templates/module-template.psm1 with correct pattern (with Export-ModuleMember)
+- [X] T050 [P] Create templates/helper-template.ps1 with correct pattern (no Export-ModuleMember)
+- [X] T051 [P] Create templates/module-template.psm1 with correct pattern (with Export-ModuleMember)
 
 ### Final Validation
 
-- [ ] T052 Run full test suite: ./tests/test-runner.ps1 and verify all tests pass
-- [ ] T053 Run quickstart.md Test 1-3 (basic execution with all parameters)
-- [ ] T054 Run quickstart.md Test 4-5 (verify no Export-ModuleMember in helpers, still in modules)
-- [ ] T055 Run quickstart.md Test 6 (function availability check)
-- [ ] T056 Run quickstart.md Test 7 (performance measurement < 2 seconds)
-- [ ] T057 Run quickstart.md Test 8 (negative test - real errors still fatal)
+- [X] T052 Run full test suite: ./tests/test-runner.ps1 and verify all tests pass
+- [X] T053 Run quickstart.md Test 1-3 (basic execution with all parameters)
+- [X] T054 Run quickstart.md Test 4-5 (verify no Export-ModuleMember in helpers, still in modules)
+- [X] T055 Run quickstart.md Test 6 (function availability check)
+- [X] T056 Run quickstart.md Test 7 (performance measurement < 2 seconds)
+- [X] T057 Run quickstart.md Test 8 (negative test - real errors still fatal)
 - [ ] T058 Test in actual Claude Code environment with /speckit-update command
 
 ### Code Cleanup
 
-- [ ] T059 Remove backup files created in Phase 1 (if tests pass)
-- [ ] T060 Review all modified files for code quality and consistency
-- [ ] T061 Verify no debugging code or comments left in final version
+- [X] T059 Remove backup files created in Phase 1 (if tests pass)
+- [X] T060 Review all modified files for code quality and consistency
+- [X] T061 Verify no debugging code or comments left in final version
 
 ---
 

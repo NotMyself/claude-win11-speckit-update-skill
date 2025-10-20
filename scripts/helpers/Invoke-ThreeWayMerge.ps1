@@ -177,6 +177,3 @@ function Invoke-ThreeWayMerge {
         }
     }
 }
-
-# Export function
-Export-ModuleMember -Function Invoke-ThreeWayMerge
