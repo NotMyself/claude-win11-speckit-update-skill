@@ -90,48 +90,50 @@ Write-Host ""
 # ========================================
 # MODULE IMPORTS
 # ========================================
-# Temporarily allow non-terminating errors during module import to prevent
-# Export-ModuleMember warnings from terminating the script
-$savedErrorPreference = $ErrorActionPreference
-$ErrorActionPreference = 'Continue'
+Write-Verbose "Importing PowerShell modules..."
 
-$modulesPath = Join-Path $PSScriptRoot "modules"
-Write-Verbose "Importing PowerShell modules from: $modulesPath"
+try {
+    $modulesPath = Join-Path $PSScriptRoot "modules"
 
-# Suppress warnings from unapproved verbs (e.g., Download-SpecKitTemplates)
-# Redirect errors to $null to prevent false-positive Export-ModuleMember errors from cluttering output
-Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+    # Import modules (suppress unapproved verb warnings only)
+    Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue
 
-# Restore strict error handling
-$ErrorActionPreference = $savedErrorPreference
-
-Write-Verbose "Module imports completed"
+    Write-Verbose "Modules imported successfully"
+}
+catch {
+    Write-Error "Failed to import modules: $($_.Exception.Message)"
+    Write-Error $_.ScriptStackTrace
+    exit 1
+}
 
 # ========================================
 # HELPER IMPORTS
 # ========================================
-# Use same error handling approach as modules - allow non-terminating errors
-$savedErrorPreference = $ErrorActionPreference
-$ErrorActionPreference = 'Continue'
+Write-Verbose "Loading helper scripts..."
 
-$helpersPath = Join-Path $PSScriptRoot "helpers"
+try {
+    $helpersPath = Join-Path $PSScriptRoot "helpers"
 
-# Suppress Export-ModuleMember errors from helper scripts (they shouldn't have Export-ModuleMember but do)
-. (Join-Path $helpersPath "Invoke-PreUpdateValidation.ps1") 2>$null
-. (Join-Path $helpersPath "Show-UpdateSummary.ps1") 2>$null
-. (Join-Path $helpersPath "Show-UpdateReport.ps1") 2>$null
-. (Join-Path $helpersPath "Get-UpdateConfirmation.ps1") 2>$null
-. (Join-Path $helpersPath "Invoke-ConflictResolutionWorkflow.ps1") 2>$null
-. (Join-Path $helpersPath "Invoke-ThreeWayMerge.ps1") 2>$null
-. (Join-Path $helpersPath "Invoke-RollbackWorkflow.ps1") 2>$null
+    . (Join-Path $helpersPath "Invoke-PreUpdateValidation.ps1")
+    . (Join-Path $helpersPath "Show-UpdateSummary.ps1")
+    . (Join-Path $helpersPath "Show-UpdateReport.ps1")
+    . (Join-Path $helpersPath "Get-UpdateConfirmation.ps1")
+    . (Join-Path $helpersPath "Invoke-ConflictResolutionWorkflow.ps1")
+    . (Join-Path $helpersPath "Invoke-ThreeWayMerge.ps1")
+    . (Join-Path $helpersPath "Invoke-RollbackWorkflow.ps1")
 
-# Restore strict error handling
-$ErrorActionPreference = $savedErrorPreference
+    Write-Verbose "Helpers loaded successfully"
+}
+catch {
+    Write-Error "Failed to load helper scripts: $($_.Exception.Message)"
+    Write-Error $_.ScriptStackTrace
+    exit 1
+}
 
 Write-Verbose "All modules and helpers loaded successfully"
 

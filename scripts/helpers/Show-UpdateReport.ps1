@@ -165,6 +165,3 @@ function Show-UpdateReport {
 
     Write-Host ""
 }
-
-# Export function
-Export-ModuleMember -Function Show-UpdateReport

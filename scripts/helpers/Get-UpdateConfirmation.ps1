@@ -131,6 +131,3 @@ function Get-UpdateConfirmation {
 
     return ($response -ne 'n' -and $response -ne 'N')
 }
-
-# Export function
-Export-ModuleMember -Function Get-UpdateConfirmation

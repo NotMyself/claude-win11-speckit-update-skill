@@ -8,14 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **Module Import Error**: Fixed fatal "Export-ModuleMember cmdlet can only be called from inside a module" error that prevented skill execution
-  - Removed try-catch wrapper around module imports to prevent non-terminating errors from being caught
-  - Added temporary `$ErrorActionPreference = 'Continue'` during imports to allow false-positive errors
-  - Suppressed Export-ModuleMember errors from helper scripts with stderr redirection
-  - Suppressed unapproved verb warnings with `-WarningAction SilentlyContinue`
-  - Added verbose logging for module import diagnostics
-  - Module import now completes in ~380ms (well under 2-second requirement)
-  - Skill now executes successfully on Windows 11 with PowerShell 7.x
+- **BREAKING FIX - Module Import Error**: Permanently resolved recurring "Export-ModuleMember cmdlet can only be called from inside a module" error by fixing the root architectural issue (#3)
+  - **Root Cause**: Helper scripts (`.ps1` files) incorrectly used `Export-ModuleMember`, which only works in module files (`.psm1`)
+  - **Previous Fix (PR #1)**: Applied error suppression workarounds that masked symptoms but allowed the antipattern to persist and recur
+  - **This Fix (PR #3)**: Corrected the architectural confusion:
+    - Removed `Export-ModuleMember` from all 7 helper scripts in `scripts/helpers/`
+    - Helpers are dot-sourced (`. script.ps1`), not imported, so functions are automatically available without export declarations
+    - Modules in `scripts/modules/` correctly retain `Export-ModuleMember` (proper module pattern)
+    - Simplified orchestrator import logic - removed error suppression workarounds (`-ErrorAction SilentlyContinue`, `2>$null`, `$ErrorActionPreference` save/restore)
+    - Added proper try-catch blocks with stack trace logging for real errors
+    - Real errors now cause immediate fatal exit (fail-fast principle restored)
+  - **Prevention Measures**:
+    - Added "Module vs. Helper Pattern" documentation to CLAUDE.md
+    - Establishes clear architectural boundaries to prevent recurrence
+  - Module import still completes in <500ms (well under 2-second requirement)
+  - Skill now executes cleanly on Windows 11 with PowerShell 7.x without false-positive errors
 
 ## [0.1.0] - 2025-01-19
 
