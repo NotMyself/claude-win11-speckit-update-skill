@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-10-21
+
 ### Changed
-- **BREAKING - Conversational Approval Workflow (#PR)**: Removed broken Show-QuickPick UI integration and replaced with text-only conversational approval workflow
+- **BREAKING - Conversational Approval Workflow (#11)**: Removed broken Show-QuickPick UI integration and replaced with text-only conversational approval workflow
   - **Root Cause**: VSCode QuickPick API unavailable when Claude Code runs PowerShell scripts as subprocess without terminal/UI context
   - **Symptoms**: "Failed to show QuickPick" errors causing update failures in Claude Code
   - **Impact**: Skill completely non-functional in Claude Code (primary execution context)
@@ -294,7 +296,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.2...v0.1.3
