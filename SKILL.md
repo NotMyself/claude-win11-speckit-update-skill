@@ -9,10 +9,11 @@ This skill provides safe update capabilities for GitHub SpecKit installations, p
 Updates SpecKit templates, commands, and scripts while preserving customizations.
 
 **Usage:**
-- `/speckit-update` - Interactive update with conflict detection
+- `/speckit-update -Auto` - Automatic update (no confirmation prompts, recommended for Claude Code)
+- `/speckit-update` - Interactive update with confirmation prompt
 - `/speckit-update -CheckOnly` - Check for updates without applying
-- `/speckit-update -Version v0.0.72` - Update to specific version
-- `/speckit-update -Force` - Overwrite SpecKit files (preserves custom commands)
+- `/speckit-update -Version v0.0.72 -Auto` - Update to specific version automatically
+- `/speckit-update -Force -Auto` - Force overwrite SpecKit files (preserves custom commands)
 - `/speckit-update -Rollback` - Restore from previous backup
 
 **Process:**
@@ -29,11 +30,14 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 
 **When you invoke this command, I will:**
 1. Execute the update-orchestrator.ps1 script
-2. Present a summary of proposed changes via Quick Pick
-3. Ask for your confirmation before applying updates
-4. Guide you through conflict resolution one file at a time
-5. Open VSCode diff/merge tools as needed
-6. Report results with detailed summary
+2. Present a summary of proposed changes
+3. If `-Auto` flag is used: proceed automatically without confirmation
+4. If interactive mode: ask for confirmation before applying updates
+5. Guide you through conflict resolution one file at a time
+6. Open VSCode diff/merge tools as needed
+7. Report results with detailed summary
+
+**Recommendation:** Use `-Auto` flag when running through Claude Code to avoid interactive prompt issues.
 
 **Requirements:**
 - Git installed and in PATH

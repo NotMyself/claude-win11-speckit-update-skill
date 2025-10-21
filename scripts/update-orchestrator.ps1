@@ -37,9 +37,16 @@
 .PARAMETER NoBackup
     Skip backup creation (dangerous, not recommended)
 
+.PARAMETER Auto
+    Skip confirmation prompts and proceed automatically (recommended for Claude Code)
+
 .EXAMPLE
     .\update-orchestrator.ps1 -CheckOnly
     Check for updates without applying changes
+
+.EXAMPLE
+    .\update-orchestrator.ps1 -Auto
+    Automatic update without confirmation prompts
 
 .EXAMPLE
     .\update-orchestrator.ps1
@@ -69,7 +76,10 @@ param(
     [switch]$Rollback,
 
     [Parameter(Mandatory=$false)]
-    [switch]$NoBackup
+    [switch]$NoBackup,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$Auto
 )
 
 # Set error action preference
@@ -332,16 +342,23 @@ try {
     # ========================================
     Write-Verbose "Step 7: Getting user confirmation..."
 
-    $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name
-
-    if (-not $confirmed) {
-        Write-Host "Update cancelled by user." -ForegroundColor Yellow
+    if ($Auto) {
+        Write-Verbose "Auto mode enabled, skipping confirmation prompt"
+        Write-Host "Auto mode: Proceeding with update automatically..." -ForegroundColor Cyan
         Write-Host ""
-        exit 5
     }
+    else {
+        $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name
 
-    Write-Host "Update confirmed. Proceeding..." -ForegroundColor Green
-    Write-Host ""
+        if (-not $confirmed) {
+            Write-Host "Update cancelled by user." -ForegroundColor Yellow
+            Write-Host ""
+            exit 5
+        }
+
+        Write-Host "Update confirmed. Proceeding..." -ForegroundColor Green
+        Write-Host ""
+    }
 
     # ========================================
     # STEP 8: Create Backup
