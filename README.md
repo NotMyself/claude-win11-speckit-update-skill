@@ -20,11 +20,14 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 ## Prerequisites
 
-- PowerShell 7+
-- Git in PATH
-- VSCode with Claude Code extension
-- Existing SpecKit project
-- Internet connection (for GitHub API access)
+**Supported Environment**:
+- **OS**: Windows 11 (macOS/Linux support welcome - see [#15](https://github.com/NotMyself/claude-win11-speckit-update-skill/issues/15))
+- **Shell**: PowerShell 7+
+- **AI**: Claude Code extension for VSCode
+- **Git**: In PATH
+- **Internet**: For GitHub API access
+
+**Note**: This skill is designed specifically for Windows + PowerShell + Claude Code. Community contributions for other platforms/models are welcome but not maintained by the project owner.
 
 ## Installation
 
@@ -292,11 +295,31 @@ Full specification available in `specs/001-safe-update/spec.md`.
 
 This skill follows the specification in `specs/001-safe-update/spec.md`.
 
+### General Contributions
+
 Contributions should:
 1. Follow PowerShell best practices
 2. Include appropriate error handling
 3. Add tests for new functionality
 4. Update documentation
+
+### Multi-Platform/Multi-Model Support
+
+**The project owner only supports Windows + PowerShell + Claude Code** and does not have the environment to test other configurations.
+
+However, **community contributions are welcome** for:
+- macOS/Linux support (Bash, Zsh, or PowerShell Core)
+- Other AI models (GPT-4, local LLMs, etc.)
+- Other shells (Fish, Nushell, etc.)
+
+**See [Issue #15](https://github.com/NotMyself/claude-win11-speckit-update-skill/issues/15)** for detailed guidance on contributing multi-platform support.
+
+**Requirements for multi-platform PRs**:
+- Must maintain backward compatibility with Windows/PowerShell/Claude
+- Must pass all existing tests (193 tests)
+- Must add tests for new platforms
+- Must update documentation
+- Contributor must test on target platform (maintainer cannot)
 
 ## License
 
