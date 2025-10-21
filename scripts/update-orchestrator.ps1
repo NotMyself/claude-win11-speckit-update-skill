@@ -37,20 +37,16 @@
 .PARAMETER NoBackup
     Skip backup creation (dangerous, not recommended)
 
-.PARAMETER Auto
-    Skip confirmation prompts and proceed automatically (recommended for Claude Code)
+.PARAMETER Proceed
+    Internal flag passed by Claude Code after user approval via conversational workflow
 
 .EXAMPLE
     .\update-orchestrator.ps1 -CheckOnly
     Check for updates without applying changes
 
 .EXAMPLE
-    .\update-orchestrator.ps1 -Auto
-    Automatic update without confirmation prompts
-
-.EXAMPLE
     .\update-orchestrator.ps1
-    Interactive update with confirmation
+    Interactive update with conversational confirmation workflow
 
 .EXAMPLE
     .\update-orchestrator.ps1 -Version v0.0.72
@@ -79,11 +75,23 @@ param(
     [switch]$NoBackup,
 
     [Parameter(Mandatory=$false)]
-    [switch]$Auto
+    [switch]$Proceed,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$Auto  # DEPRECATED: Use conversational workflow instead
 )
 
 # Set error action preference
 $ErrorActionPreference = 'Stop'
+
+# Backward compatibility: Handle deprecated -Auto flag
+if ($Auto) {
+    Write-Warning "The -Auto flag is deprecated and will be removed in a future version."
+    Write-Warning "Please use the conversational approval workflow instead."
+    Write-Warning "For now, treating -Auto as -Proceed for backward compatibility."
+    Write-Host ""
+    $Proceed = $true
+}
 
 # Store script start time
 $startTime = Get-Date
@@ -342,13 +350,13 @@ try {
     # ========================================
     Write-Verbose "Step 7: Getting user confirmation..."
 
-    if ($Auto) {
-        Write-Verbose "Auto mode enabled, skipping confirmation prompt"
-        Write-Host "Auto mode: Proceeding with update automatically..." -ForegroundColor Cyan
+    if ($Proceed) {
+        Write-Verbose "Proceed flag set, skipping confirmation prompt"
+        Write-Host "Proceeding with update (approved via conversational workflow)..." -ForegroundColor Cyan
         Write-Host ""
     }
     else {
-        $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name
+        $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -Proceed:$Proceed
 
         if (-not $confirmed) {
             Write-Host "Update cancelled by user." -ForegroundColor Yellow
@@ -560,18 +568,9 @@ try {
             Write-Host "Old backups to clean up: $($oldBackups.Count)" -ForegroundColor Yellow
 
             # Ask user if they want to clean up
-            $context = Get-ExecutionContext
-            $cleanup = $false
-
-            if ($context -eq 'vscode-extension') {
-                $choice = Show-QuickPick -Prompt "Delete $($oldBackups.Count) old backup(s)?" -Options @("Yes", "No")
-                $cleanup = ($choice -eq "Yes")
-            }
-            else {
-                Write-Host "Delete old backups? (Y/n): " -NoNewline -ForegroundColor Cyan
-                $response = Read-Host
-                $cleanup = ($response -ne 'n' -and $response -ne 'N')
-            }
+            Write-Host "Delete old backups? (Y/n): " -NoNewline -ForegroundColor Cyan
+            $response = Read-Host
+            $cleanup = ($response -ne 'n' -and $response -ne 'N')
 
             if ($cleanup) {
                 Remove-OldBackups -ProjectRoot $projectRoot -KeepCount 5

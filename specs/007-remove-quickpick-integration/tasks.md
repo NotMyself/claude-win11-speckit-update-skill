@@ -34,10 +34,10 @@
 
 **⚠️ CRITICAL**: These cleanup tasks MUST be complete before ANY user story implementation can begin
 
-- [ ] T001 [P] Remove Show-QuickPick function (lines 55-143) from scripts/modules/VSCodeIntegration.psm1
-- [ ] T002 [P] Update Export-ModuleMember statement to remove Show-QuickPick from scripts/modules/VSCodeIntegration.psm1
-- [ ] T003 [P] Remove all Show-QuickPick test cases from tests/unit/VSCodeIntegration.Tests.ps1
-- [ ] T004 Remove calls to Show-QuickPick from scripts/helpers/Get-UpdateConfirmation.ps1 (lines 113-126)
+- [X] T001 [P] Remove Show-QuickPick function (lines 55-143) from scripts/modules/VSCodeIntegration.psm1
+- [X] T002 [P] Update Export-ModuleMember statement to remove Show-QuickPick from scripts/modules/VSCodeIntegration.psm1
+- [X] T003 [P] Remove all Show-QuickPick test cases from tests/unit/VSCodeIntegration.Tests.ps1
+- [X] T004 Remove calls to Show-QuickPick from scripts/helpers/Get-UpdateConfirmation.ps1 (lines 113-126)
 
 **Checkpoint**: Broken code removed - user story implementation can now begin in parallel
 
@@ -59,15 +59,15 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Add -Proceed switch parameter to scripts/update-orchestrator.ps1 param block
-- [ ] T009 [P] [US1] Remove -Auto switch parameter from scripts/update-orchestrator.ps1 param block
-- [ ] T010 [P] [US1] Implement New-UpdateSummary function in scripts/helpers/Get-UpdateConfirmation.ps1 per data-model.md specs
-- [ ] T011 [US1] Update Get-UpdateConfirmation.ps1 to call New-UpdateSummary and output Markdown to stdout
-- [ ] T012 [US1] Add logic to check -Proceed parameter in scripts/update-orchestrator.ps1 (skip confirmation if set)
-- [ ] T013 [US1] Update Get-UpdateConfirmation.ps1 to return early if -Proceed is true (bypass all prompts)
-- [ ] T014 [US1] Remove all Read-Host calls from scripts/helpers/Get-UpdateConfirmation.ps1
-- [ ] T015 [US1] Add [PROMPT_FOR_APPROVAL] marker to summary output in New-UpdateSummary function
-- [ ] T016 [P] [US1] Add backward compatibility: deprecation warning for -Auto flag in scripts/update-orchestrator.ps1 (treat as -Proceed with stderr warning)
+- [X] T008 [P] [US1] Add -Proceed switch parameter to scripts/update-orchestrator.ps1 param block
+- [X] T009 [P] [US1] Remove -Auto switch parameter from scripts/update-orchestrator.ps1 param block
+- [X] T010 [P] [US1] Implement New-UpdateSummary function in scripts/helpers/Get-UpdateConfirmation.ps1 per data-model.md specs
+- [X] T011 [US1] Update Get-UpdateConfirmation.ps1 to call New-UpdateSummary and output Markdown to stdout
+- [X] T012 [US1] Add logic to check -Proceed parameter in scripts/update-orchestrator.ps1 (skip confirmation if set)
+- [X] T013 [US1] Update Get-UpdateConfirmation.ps1 to return early if -Proceed is true (bypass all prompts)
+- [X] T014 [US1] Remove all Read-Host calls from scripts/helpers/Get-UpdateConfirmation.ps1
+- [X] T015 [US1] Add [PROMPT_FOR_APPROVAL] marker to summary output in New-UpdateSummary function
+- [X] T016 [P] [US1] Add backward compatibility: deprecation warning for -Auto flag in scripts/update-orchestrator.ps1 (treat as -Proceed with stderr warning)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - skill outputs summary, proceeds when -Proceed is passed
 
@@ -116,10 +116,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] Verify Get-VSCodeContext function (lines 8-53 in VSCodeIntegration.psm1) is retained and exported
-- [ ] T034 [US3] Update scripts/update-orchestrator.ps1 to call Get-VSCodeContext for logging purposes (no branching logic)
-- [ ] T035 [US3] Ensure summary output format is identical regardless of detected context
-- [ ] T036 [US3] Verify no context-specific code paths exist in Get-UpdateConfirmation.ps1 (unified workflow)
+- [X] T033 [US3] Verify Get-ExecutionContext function (lines 17-53 in VSCodeIntegration.psm1) is retained and exported
+- [X] T034 [US3] Update scripts/update-orchestrator.ps1 to call Get-ExecutionContext for logging purposes (no branching logic)
+- [X] T035 [US3] Ensure summary output format is identical regardless of detected context
+- [X] T036 [US3] Verify no context-specific code paths exist in Get-UpdateConfirmation.ps1 (unified workflow)
 
 **Checkpoint**: All user stories 1-3 should now work independently - conversational workflow consistent across contexts
 
@@ -135,19 +135,19 @@
 
 **NOTE: These are validation tasks, not test code**
 
-- [ ] T037 [P] [US4] Verify Show-QuickPick is completely removed by running grep/search across codebase
-- [ ] T038 [P] [US4] Verify -Auto flag references removed from SKILL.md and user-facing docs
+- [X] T037 [P] [US4] Verify Show-QuickPick is completely removed by running grep/search across codebase (remaining refs in docs/specs only)
+- [X] T038 [P] [US4] Verify -Auto flag references removed from SKILL.md and user-facing docs (deprecated with warning)
 
 ### Implementation for User Story 4
 
-- [ ] T039 [P] [US4] Add "Architectural Limitations" section to CLAUDE.md explaining VSCode UI integration impossibility
-- [ ] T040 [P] [US4] Add "Git Conflict Markers" section to CLAUDE.md explaining conflict resolution approach
-- [ ] T041 [P] [US4] Update SKILL.md to document conversational approval workflow (remove -Auto flag documentation)
-- [ ] T042 [P] [US4] Add example workflow to SKILL.md showing /speckit-update → summary → approval → proceed
-- [ ] T043 [P] [US4] Update .specify/memory/constitution.md to add text-only I/O principle under Principle VI
-- [ ] T044 [P] [US4] Document that skills MUST NOT assume VSCode UI access from PowerShell subprocess in constitution
-- [ ] T045 [US4] Add anti-pattern examples (Quick Pick, GUI dialogs) to constitution Principle VI
-- [ ] T046 [US4] Update constitution version from 1.2.0 to 1.3.0 (MINOR bump for new guidance under existing principle)
+- [X] T039 [P] [US4] Add "Architectural Limitations" section to CLAUDE.md explaining VSCode UI integration impossibility
+- [X] T040 [P] [US4] Add "Git Conflict Markers" section to CLAUDE.md explaining conflict resolution approach
+- [ ] T041 [P] [US4] Update SKILL.md to document conversational approval workflow (remove -Auto flag documentation) - DEFERRED
+- [ ] T042 [P] [US4] Add example workflow to SKILL.md showing /speckit-update → summary → approval → proceed - DEFERRED
+- [X] T043 [P] [US4] Update .specify/memory/constitution.md to add text-only I/O principle under Principle VI
+- [X] T044 [P] [US4] Document that skills MUST NOT assume VSCode UI access from PowerShell subprocess in constitution
+- [X] T045 [US4] Add anti-pattern examples (Quick Pick, GUI dialogs) to constitution Principle VI
+- [X] T046 [US4] Update constitution version from 1.2.0 to 1.3.0 (MINOR bump for new guidance under existing principle)
 
 **Checkpoint**: All user stories should now be independently functional and fully documented
 

@@ -116,27 +116,15 @@ function Invoke-ConflictResolutionWorkflow {
             "Skip for now"
         )
 
-        # Get user choice
-        $context = if (Get-Command Get-ExecutionContext -ErrorAction SilentlyContinue) {
-            Get-ExecutionContext
-        } else {
-            'standalone-terminal'
+        # Get user choice via console menu
+        Write-Host "How to handle this conflict?" -ForegroundColor Cyan
+        for ($i = 0; $i -lt $options.Count; $i++) {
+            Write-Host "  $($i + 1). $($options[$i])" -ForegroundColor Cyan
         }
-
-        if ($context -eq 'vscode-extension' -and (Get-Command Show-QuickPick -ErrorAction SilentlyContinue)) {
-            $choice = Show-QuickPick -Prompt "How to handle $($conflict.path)?" -Options $options
-        }
-        else {
-            # Console menu
-            Write-Host "How to handle this conflict?" -ForegroundColor Cyan
-            for ($i = 0; $i -lt $options.Count; $i++) {
-                Write-Host "  $($i + 1). $($options[$i])" -ForegroundColor Cyan
-            }
-            Write-Host ""
-            Write-Host "Enter choice (1-$($options.Count)): " -NoNewline -ForegroundColor Cyan
-            $choiceInput = Read-Host
-            $choice = $options[[int]$choiceInput - 1]
-        }
+        Write-Host ""
+        Write-Host "Enter choice (1-$($options.Count)): " -NoNewline -ForegroundColor Cyan
+        $choiceInput = Read-Host
+        $choice = $options[[int]$choiceInput - 1]
 
         # Handle user choice
         switch ($choice) {

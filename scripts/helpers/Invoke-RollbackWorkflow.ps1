@@ -76,54 +76,20 @@ function Invoke-RollbackWorkflow {
         Import-Module $vscodeModulePath -Force
     }
 
-    # Get user selection
-    $context = if (Get-Command Get-ExecutionContext -ErrorAction SilentlyContinue) {
-        Get-ExecutionContext
-    } else {
-        'standalone-terminal'
-    }
-
+    # Get user selection via console menu
     $selectedBackup = $null
 
-    if ($context -eq 'vscode-extension' -and (Get-Command Show-QuickPick -ErrorAction SilentlyContinue)) {
-        # Use VSCode Quick Pick
-        $options = $backups | ForEach-Object {
-            $label = $_.timestamp
-            if ($_.from_version -and $_.to_version) {
-                $label += " ($($_.from_version) -> $($_.to_version))"
-            }
-            $label
-        }
+    Write-Host "Select backup to restore (1-$($backups.Count)), or 0 to cancel: " -NoNewline -ForegroundColor Cyan
+    $selection = Read-Host
 
-        $options += "Cancel"
-
-        $choice = Show-QuickPick -Prompt "Select backup to restore" -Options $options
-
-        if ($choice -eq "Cancel") {
-            Write-Host "Rollback cancelled by user." -ForegroundColor Yellow
-            exit 5
-        }
-
-        # Find selected backup
-        $selectedIndex = [array]::IndexOf($options, $choice)
-        if ($selectedIndex -ge 0 -and $selectedIndex -lt $backups.Count) {
-            $selectedBackup = $backups[$selectedIndex]
-        }
+    if ($selection -eq '0') {
+        Write-Host "Rollback cancelled by user." -ForegroundColor Yellow
+        exit 5
     }
-    else {
-        # Console menu
-        Write-Host "Select backup to restore (1-$($backups.Count)), or 0 to cancel: " -NoNewline -ForegroundColor Cyan
-        $selection = Read-Host
 
-        if ($selection -eq '0') {
-            Write-Host "Rollback cancelled by user." -ForegroundColor Yellow
-            exit 5
-        }
-
-        $selectedIndex = [int]$selection - 1
-        if ($selectedIndex -ge 0 -and $selectedIndex -lt $backups.Count) {
-            $selectedBackup = $backups[$selectedIndex]
-        }
+    $selectedIndex = [int]$selection - 1
+    if ($selectedIndex -ge 0 -and $selectedIndex -lt $backups.Count) {
+        $selectedBackup = $backups[$selectedIndex]
     }
 
     if (-not $selectedBackup) {
@@ -145,20 +111,11 @@ function Invoke-RollbackWorkflow {
     Write-Host "WARNING: This will overwrite your current files!" -ForegroundColor Red
     Write-Host ""
 
-    if ($context -eq 'vscode-extension' -and (Get-Command Show-QuickPick -ErrorAction SilentlyContinue)) {
-        $confirm = Show-QuickPick -Prompt "Proceed with rollback?" -Options @("Yes, restore backup", "No, cancel")
-        if ($confirm -ne "Yes, restore backup") {
-            Write-Host "Rollback cancelled by user." -ForegroundColor Yellow
-            exit 5
-        }
-    }
-    else {
-        Write-Host "Proceed with rollback? (yes/no): " -NoNewline -ForegroundColor Cyan
-        $confirm = Read-Host
-        if ($confirm -ne 'yes') {
-            Write-Host "Rollback cancelled by user. Type 'yes' to confirm." -ForegroundColor Yellow
-            exit 5
-        }
+    Write-Host "Proceed with rollback? (yes/no): " -NoNewline -ForegroundColor Cyan
+    $confirm = Read-Host
+    if ($confirm -ne 'yes') {
+        Write-Host "Rollback cancelled by user. Type 'yes' to confirm." -ForegroundColor Yellow
+        exit 5
     }
 
     # Perform rollback

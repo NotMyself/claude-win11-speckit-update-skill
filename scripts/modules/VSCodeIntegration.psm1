@@ -52,95 +52,6 @@ function Get-ExecutionContext {
     }
 }
 
-function Show-QuickPick {
-    <#
-    .SYNOPSIS
-        Shows a Quick Pick menu for user selection.
-
-    .DESCRIPTION
-        In VSCode context, returns a sentinel hashtable for Claude orchestration.
-        In terminal context, falls back to numbered menu with Read-Host.
-
-    .PARAMETER Prompt
-        The question to ask the user.
-
-    .PARAMETER Options
-        Array of options for the user to choose from.
-
-    .PARAMETER MultiSelect
-        If specified, allows multiple selections (terminal mode only for now).
-
-    .OUTPUTS
-        String or String[]. Returns selected option(s).
-
-    .EXAMPLE
-        $choice = Show-QuickPick -Prompt "Select an option" -Options @("Yes", "No")
-
-    .EXAMPLE
-        $choices = Show-QuickPick -Prompt "Select features" -Options @("Feature1", "Feature2", "Feature3") -MultiSelect
-    #>
-    [CmdletBinding()]
-    [OutputType([object])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Prompt,
-
-        [Parameter(Mandatory = $true)]
-        [string[]]$Options,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$MultiSelect
-    )
-
-    $context = Get-ExecutionContext
-
-    if ($context -eq 'vscode-extension' -or $context -eq 'vscode-terminal') {
-        # In VSCode context: return sentinel hashtable for Claude orchestration
-        # Claude Code extension will intercept this and show native Quick Pick
-        return @{
-            __ClaudeQuickPick = $true
-            Prompt = $Prompt
-            Options = $Options
-            MultiSelect = $MultiSelect.IsPresent
-        }
-    }
-    else {
-        # Terminal fallback: numbered menu with Read-Host
-        Write-Host ""
-        Write-Host $Prompt
-        Write-Host ""
-
-        for ($i = 0; $i -lt $Options.Count; $i++) {
-            Write-Host "  [$($i + 1)] $($Options[$i])"
-        }
-        Write-Host ""
-
-        if ($MultiSelect) {
-            Write-Host "Enter selection numbers separated by commas (e.g., 1,3,4): " -NoNewline
-            $input = Read-Host
-            $selections = $input -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^\d+$' }
-
-            $result = @()
-            foreach ($sel in $selections) {
-                $index = [int]$sel - 1
-                if ($index -ge 0 -and $index -lt $Options.Count) {
-                    $result += $Options[$index]
-                }
-            }
-            return $result
-        }
-        else {
-            do {
-                Write-Host "Enter selection (1-$($Options.Count)): " -NoNewline
-                $input = Read-Host
-                $selection = 0
-                $valid = [int]::TryParse($input, [ref]$selection)
-            } while (-not $valid -or $selection -lt 1 -or $selection -gt $Options.Count)
-
-            return $Options[$selection - 1]
-        }
-    }
-}
 
 function Open-DiffView {
     <#
@@ -348,7 +259,6 @@ function Show-Notification {
 # Export module members
 Export-ModuleMember -Function @(
     'Get-ExecutionContext',
-    'Show-QuickPick',
     'Open-DiffView',
     'Open-MergeEditor',
     'Show-Notification'

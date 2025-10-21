@@ -142,33 +142,10 @@ function Invoke-PreUpdateValidation {
         }
         Write-Host ""
 
-        # Import VSCode integration for context detection and user prompts
-        $modulePath = Join-Path $PSScriptRoot "..\modules\VSCodeIntegration.psm1"
-        if (Test-Path $modulePath) {
-            Import-Module $modulePath -Force
-            $context = Get-ExecutionContext
-
-            if ($context -eq 'vscode-extension') {
-                # Use VSCode Quick Pick
-                $choice = Show-QuickPick -Prompt "Continue despite warnings?" -Options @("Yes", "No")
-                if ($choice -eq "No") {
-                    throw "Update cancelled by user due to warnings."
-                }
-            }
-            else {
-                # Use console prompt
-                $response = Read-Host "Continue anyway? (Y/n)"
-                if ($response -eq 'n' -or $response -eq 'N') {
-                    throw "Update cancelled by user due to warnings."
-                }
-            }
-        }
-        else {
-            # Fallback: simple console prompt
-            $response = Read-Host "Continue anyway? (Y/n)"
-            if ($response -eq 'n' -or $response -eq 'N') {
-                throw "Update cancelled by user due to warnings."
-            }
+        # Use console prompt for confirmation
+        $response = Read-Host "Continue anyway? (Y/n)"
+        if ($response -eq 'n' -or $response -eq 'N') {
+            throw "Update cancelled by user due to warnings."
         }
     }
 

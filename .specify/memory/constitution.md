@@ -1,16 +1,19 @@
 <!--
 Sync Impact Report:
-- Version change: 1.1.0 → 1.2.0
-- Modified principles: N/A
+- Version change: 1.2.0 → 1.3.0
+- Modified principles:
+  * Principle VI: Added Text-Only I/O Constraint subsection and anti-pattern examples
 - Added sections:
-  * Principle VI: Architectural Verification Before Suggestions
+  * Text-Only I/O Constraint guidance for Claude Code skills
+  * Anti-pattern examples (Show-QuickPick, Out-GridView, VSCode UI assumptions)
+  * Conversational approval workflow pattern
 - Removed sections: N/A
 - Templates requiring updates:
   ✅ plan-template.md - reviewed, Constitution Check section remains generic (no changes needed)
-  ✅ spec-template.md - reviewed, no conflicts with new principle
+  ✅ spec-template.md - reviewed, no conflicts with enhanced principle
   ✅ tasks-template.md - reviewed, no task-type changes required
 - Follow-up TODOs: None
-- Amendment Rationale: MINOR version bump (new principle added without breaking existing governance)
+- Amendment Rationale: MINOR version bump (enhanced existing principle with new guidance, no breaking changes)
 -->
 
 # SpecKit Safe Update Skill Constitution
@@ -127,10 +130,44 @@ suggestion is compatible with the current runtime architecture and execution env
 - Confirm APIs, libraries, or integrations are accessible from current context
 - Document assumptions about runtime environment in suggestions
 
+**Text-Only I/O Constraint** (Added 2025-10-21):
+
+PowerShell skills executed by Claude Code run in an isolated subprocess with **text-only I/O**:
+
+```
+Claude Code Extension (VSCode/JavaScript)
+    ↓ spawns
+PowerShell Subprocess (pwsh -Command)
+    ↓ captures
+stdout/stderr (TEXT STREAMS ONLY)
+```
+
+**What Works:**
+- ✅ Text output via Write-Host, Write-Output, Write-Error
+- ✅ Reading files, environment variables
+- ✅ Invoking external CLI tools (e.g., `code --diff`)
+- ✅ Conversational workflows (skill outputs summary → Claude presents → user responds → skill re-invoked)
+
+**What Doesn't Work:**
+- ❌ VSCode extension APIs (Quick Pick, dialogs, webviews)
+- ❌ PowerShell GUI cmdlets (Out-GridView, WPF windows)
+- ❌ Sentinel hashtables expecting Claude extension interception
+- ❌ Direct IPC to VSCode extension host from PowerShell
+
+**Approved Pattern**: Use conversational approval workflow - skill outputs structured Markdown summary, Claude parses and presents to user, user approves via chat, Claude re-invokes skill with approval flag.
+
 **Anti-Pattern Examples**:
 
-- Suggesting VSCode Quick Pick UI from within a PowerShell script executing via stdio
-  (PowerShell runs in isolated process; no IPC bridge to VSCode extension host)
+- ❌ **Show-QuickPick (DEPRECATED)**: Attempted to return sentinel hashtable for VSCode Quick Pick UI
+  - **Why it fails**: PowerShell objects serialized to string when written to stdout; no IPC bridge exists
+  - **Alternative**: Output summary text, let Claude present, use -Proceed parameter for approval
+
+- ❌ **Out-GridView for user selection**: GUI window won't display in headless or Claude Code contexts
+  - **Alternative**: Console menu with numbered options + Read-Host, or conversational approval
+
+- ❌ **Assuming VSCode UI access from subprocess**: PowerShell cannot invoke VSCode extension APIs
+  - **Alternative**: Write Git conflict markers to files; VSCode detects and shows CodeLens UI
+
 - Proposing GUI dialogs from headless/SSH sessions
 - Recommending browser APIs from Node.js CLI scripts
 - Suggesting direct file system access from sandboxed web contexts
@@ -141,6 +178,7 @@ suggestion is compatible with the current runtime architecture and execution env
 2. What I/O channels are available? (stdio, named pipes, REST APIs, message passing)
 3. What cross-process bridges exist? (VSCode extension APIs, IPC libraries, HTTP)
 4. Can the suggested approach access required resources from this context?
+5. **For Claude Code skills**: Is the approach compatible with text-only I/O and subprocess isolation?
 
 **Rationale**: Suggesting incompatible solutions wastes implementation time, creates
 user frustration, and can lead to costly architectural dead-ends or rewrites.
@@ -399,4 +437,4 @@ For runtime development guidance, consult:
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and PR guidelines
 - [specs/001-safe-update/spec.md](../../specs/001-safe-update/spec.md) - Full specification
 
-**Version**: 1.2.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-21 | **Amendment**: Added Principle VI (Architectural Verification Before Suggestions)
+**Version**: 1.3.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-21 | **Amendment**: Enhanced Principle VI with Text-Only I/O Constraint guidance and anti-pattern examples
