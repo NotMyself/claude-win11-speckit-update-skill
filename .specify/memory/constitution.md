@@ -1,14 +1,16 @@
 <!--
 Sync Impact Report:
-- Version change: NONE → 1.0.0
-- Modified principles: N/A (initial version)
-- Added sections: All core principles (I-V), PowerShell Standards, Testing Requirements, Governance
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: N/A
+- Added sections:
+  * Principle VI: Architectural Verification Before Suggestions
 - Removed sections: N/A
 - Templates requiring updates:
-  ✅ plan-template.md - reviewed, constitution check section aligns
-  ✅ spec-template.md - reviewed, no conflicts with principles
-  ✅ tasks-template.md - reviewed, testing gates align with principles
+  ✅ plan-template.md - reviewed, Constitution Check section remains generic (no changes needed)
+  ✅ spec-template.md - reviewed, no conflicts with new principle
+  ✅ tasks-template.md - reviewed, no task-type changes required
 - Follow-up TODOs: None
+- Amendment Rationale: MINOR version bump (new principle added without breaking existing governance)
 -->
 
 # SpecKit Safe Update Skill Constitution
@@ -30,6 +32,7 @@ and clear separation of concerns. Helper functions are thin orchestration wrappe
 that call module functions and handle user interaction only.
 
 **Module Responsibilities**:
+
 - `HashUtils.psm1` - File hashing with normalization
 - `VSCodeIntegration.psm1` - VSCode context detection and editor integration
 - `GitHubApiClient.psm1` - GitHub Releases API interaction
@@ -43,6 +46,7 @@ The update process MUST be transactional. Any error during critical steps (backu
 creation through manifest update) MUST trigger automatic rollback.
 
 **Requirements**:
+
 - Backup created BEFORE any file modifications
 - All file operations in try-catch blocks with rollback handler
 - Exit code 6 on rollback
@@ -59,6 +63,7 @@ File customization detection MUST use normalized hashing to avoid false positive
 from line ending differences, trailing whitespace, or BOM variations.
 
 **Normalization Rules**:
+
 - Convert CRLF → LF
 - Trim trailing whitespace per line
 - Remove BOM if present (0xFEFF)
@@ -78,6 +83,7 @@ The update process MUST obtain explicit user confirmation before applying change
 except in `--check-only` mode.
 
 **Requirements**:
+
 - Show detailed change preview (files to add/update/merge/remove)
 - Use VSCode Quick Pick UI when in Claude Code context
 - Provide clear escape option (user can cancel with exit code 5)
@@ -95,6 +101,7 @@ All modules MUST have corresponding Pester unit tests. Integration tests MUST co
 the end-to-end orchestration workflow.
 
 **Test Requirements**:
+
 - Unit tests in `tests/unit/[ModuleName].Tests.ps1`
 - Integration tests in `tests/integration/UpdateOrchestrator.Tests.ps1`
 - Mock external dependencies (GitHub API, file system where appropriate)
@@ -106,6 +113,40 @@ Pester 5.x module scoping issues cause false failures but modules work correctly
 
 **Rationale**: PowerShell scripts are error-prone without tests. Tests document
 expected behavior and prevent regressions during refactoring.
+
+### VI. Architectural Verification Before Suggestions
+
+When suggesting techniques, technologies, or approaches, MUST first verify that the
+suggestion is compatible with the current runtime architecture and execution environment.
+
+**Requirements**:
+
+- Verify I/O model compatibility (stdio, GUI, CLI, IPC mechanisms)
+- Check execution context (PowerShell process, VSCode extension host, terminal)
+- Validate inter-process communication capabilities and available bridges
+- Confirm APIs, libraries, or integrations are accessible from current context
+- Document assumptions about runtime environment in suggestions
+
+**Anti-Pattern Examples**:
+
+- Suggesting VSCode Quick Pick UI from within a PowerShell script executing via stdio
+  (PowerShell runs in isolated process; no IPC bridge to VSCode extension host)
+- Proposing GUI dialogs from headless/SSH sessions
+- Recommending browser APIs from Node.js CLI scripts
+- Suggesting direct file system access from sandboxed web contexts
+
+**Correct Pattern**: Before suggesting a solution, verify:
+
+1. What process/runtime is executing the code? (PowerShell.exe, node.exe, extension host)
+2. What I/O channels are available? (stdio, named pipes, REST APIs, message passing)
+3. What cross-process bridges exist? (VSCode extension APIs, IPC libraries, HTTP)
+4. Can the suggested approach access required resources from this context?
+
+**Rationale**: Suggesting incompatible solutions wastes implementation time, creates
+user frustration, and can lead to costly architectural dead-ends or rewrites.
+Understanding execution context and runtime constraints prevents impossible suggestions
+like trying to access GUI features from CLI-only processes, or expecting cross-process
+communication without proper IPC mechanisms.
 
 ## PowerShell Standards
 
@@ -121,6 +162,7 @@ expected behavior and prevent regressions during refactoring.
 ### Module Export Rules
 
 Each module MUST:
+
 - Use `[CmdletBinding()]` on exported functions
 - Explicitly export functions with `Export-ModuleMember -Function`
 - Not rely on implicit exports
@@ -134,7 +176,7 @@ Each module MUST:
 
 When a module (e.g., `ManifestManager.psm1`) contains `Import-Module HashUtils.psm1`, PowerShell creates this scope hierarchy:
 
-```
+```text
 Global Scope
 └── Orchestrator Script Scope
     └── ManifestManager Module Scope
@@ -145,11 +187,13 @@ Global Scope
 When the orchestrator calls `Get-NormalizedHash`, PowerShell searches the orchestrator scope and parent scopes but does NOT search child module scopes, resulting in "command not recognized" errors.
 
 **Enforcement**:
+
 - Automated lint check in `tests/test-runner.ps1` scans all `.psm1` files before test execution
 - Lint check fails with detailed error messages if `Import-Module` statements detected
 - Integration tests in `tests/integration/ModuleDependencies.Tests.ps1` verify cross-module function calls work
 
 **Correct Pattern** (orchestrator-managed imports in dependency order):
+
 ```powershell
 # scripts/update-orchestrator.ps1
 
@@ -167,6 +211,7 @@ Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAc
 ```
 
 **Incorrect Pattern** (nested imports in module files):
+
 ```powershell
 # scripts/modules/ManifestManager.psm1 - ❌ INCORRECT
 
@@ -177,6 +222,7 @@ Import-Module (Join-Path $PSScriptRoot "HashUtils.psm1") -Force  # ❌ DO NOT DO
 **Exception**: None. This rule is absolute.
 
 **Module Dependencies Documentation**: Each module file should document its dependencies in a comment:
+
 ```powershell
 # Dependencies: HashUtils, GitHubApiClient
 # All module imports are managed by the orchestrator script (update-orchestrator.ps1)
@@ -186,6 +232,7 @@ Import-Module (Join-Path $PSScriptRoot "HashUtils.psm1") -Force  # ❌ DO NOT DO
 ### Error Messages
 
 Error messages MUST:
+
 - Be actionable (tell user what to do)
 - Include context (file path, operation attempted)
 - Use proper error streams (`Write-Error` for errors, `Write-Warning` for warnings)
@@ -195,7 +242,7 @@ Error messages MUST:
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/                    # Isolated module tests
 │   ├── HashUtils.Tests.ps1
@@ -226,6 +273,7 @@ tests/
 ### Commit Message Format
 
 Use conventional commits:
+
 - `feat:` - New features
 - `fix:` - Bug fixes
 - `docs:` - Documentation changes
@@ -236,6 +284,7 @@ Use conventional commits:
 ### Pre-Commit Checklist
 
 Before committing:
+
 1. Run `./tests/test-runner.ps1` and verify all tests pass
 2. Review changes to ensure no secrets or test data included
 3. Update `CHANGELOG.md` under `[Unreleased]` section
@@ -252,6 +301,7 @@ Before committing:
 This skill is distributed as a **Git repository**, NOT via npm or PowerShell Gallery.
 
 **Installation Method**:
+
 ```powershell
 cd $env:USERPROFILE\.claude\skills
 git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit-updater
@@ -269,6 +319,7 @@ This skill integrates with GitHub SpecKit projects (`.specify/` directories).
 ### Official SpecKit Commands
 
 The following 8 commands are considered official and tracked in the manifest:
+
 - `speckit.constitution.md`
 - `speckit.specify.md`
 - `speckit.clarify.md`
@@ -288,6 +339,7 @@ User-created commands in `.claude/commands/` are NEVER overwritten, even with
 
 When the constitution template (`.specify/memory/constitution.md`) has upstream
 changes, the skill MUST:
+
 1. Detect the change via hash comparison
 2. Mark as conflict (file is typically customized)
 3. Notify user to run `/speckit.constitution` after update completes
@@ -300,6 +352,7 @@ responsibility of `/speckit.constitution` command.
 ### Amendment Procedure
 
 Constitution amendments require:
+
 1. Propose change via GitHub issue with rationale
 2. Discussion and approval from maintainer
 3. Update this constitution document with version increment
@@ -315,6 +368,7 @@ Constitution amendments require:
 ### Compliance Validation
 
 All pull requests MUST:
+
 - Pass `./tests/test-runner.ps1` with no failures
 - Follow PowerShell style guidelines
 - Include comment-based help for new functions
@@ -322,14 +376,17 @@ All pull requests MUST:
 - Verify no principles violated
 
 Reviewers MUST check:
+
 - Module architecture preserved (no business logic in helpers)
 - Error handling includes rollback where appropriate
 - User confirmation obtained before destructive operations
 - Customization detection uses normalized hashing
+- Architectural suggestions verified against runtime constraints (Principle VI)
 
 ### Constitution Supersedes
 
 When conflict arises between this constitution and other documentation:
+
 1. This constitution takes precedence
 2. Update conflicting documentation to align
 3. If constitution is incorrect, amend constitution first, then update docs
@@ -337,8 +394,9 @@ When conflict arises between this constitution and other documentation:
 ### Development Guidance
 
 For runtime development guidance, consult:
+
 - [CLAUDE.md](../../CLAUDE.md) - Repository architecture and common commands
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and PR guidelines
 - [specs/001-safe-update/spec.md](../../specs/001-safe-update/spec.md) - Full specification
 
-**Version**: 1.1.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-20 | **Amendment**: Added Module Import Rules (prohibits nested imports in modules)
+**Version**: 1.2.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-21 | **Amendment**: Added Principle VI (Architectural Verification Before Suggestions)
