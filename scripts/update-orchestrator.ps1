@@ -521,7 +521,7 @@ try {
 
     try {
         Update-ManifestVersion -ProjectRoot $projectRoot -NewVersion $targetRelease.tag_name
-        Update-FileHashes -ProjectRoot $projectRoot -FileStates $fileStates
+        Update-FileHashes -ProjectRoot $projectRoot
 
         Write-Host "Manifest updated successfully" -ForegroundColor Green
         Write-Host ""
