@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-10-20
+
+### Added
+- **Wrapper Script for CLI Compatibility**: Added `update-wrapper.ps1` to handle both Linux-style (`--flags`) and PowerShell-style (`-Flags`) command arguments
+  - Converts kebab-case to PascalCase automatically
+  - Supports `--flag`, `--flag=value`, and `--flag value` formats
+  - Uses hashtable splatting to avoid parameter binding issues
+  - Updated SKILL.md to use wrapper as entry point
+
+### Fixed
+- **Claude Code Integration (#11)**: Fixed interactive prompt failures when running through Claude Code extension
+  - **Root Cause**: No interactive terminal available for `Read-Host` prompts
+  - **Symptoms**: "The update was cancelled because the interactive confirmation prompt cannot be displayed"
+  - **Impact**: Skill completely non-functional when invoked through Claude Code
+  - **Fix Applied**:
+    - Added `-Auto` parameter to skip confirmation prompts (line 75)
+    - When `-Auto` is set, automatically proceeds without user confirmation
+    - Updated SKILL.md to recommend `-Auto` flag for Claude Code usage
+    - Added comment-based help documentation for `-Auto` parameter
+  - **Testing**: Successfully ran end-to-end update of 19 files through Claude Code in VSCode
+  - **Results**: Skill now works in both Claude Code (non-interactive) and terminal (interactive) contexts
+  - **Breaking Change**: None (adds new optional parameter, maintains backward compatibility)
+
+### Documentation
+- Updated SKILL.md usage examples to show PowerShell-style flags as primary
+- Added recommendation to use `-Auto` flag when running through Claude Code
+- Clarified wrapper script purpose and dual-syntax support
+
 ## [0.1.4] - 2025-10-20
 
 ### Fixed
@@ -221,7 +249,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.1...v0.1.2
