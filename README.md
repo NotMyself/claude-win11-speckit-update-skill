@@ -23,7 +23,7 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 **Supported Environment**:
 - **OS**: Windows 11 (macOS/Linux support welcome - see [#15](https://github.com/NotMyself/claude-win11-speckit-update-skill/issues/15))
 - **Shell**: PowerShell 7+
-- **AI**: Claude Code extension for VSCode
+- **AI**: Claude Code (CLI or VSCode extension)
 - **Git**: In PATH
 - **Internet**: For GitHub API access
 
