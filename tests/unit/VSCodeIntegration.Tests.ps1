@@ -87,77 +87,6 @@ Describe "VSCodeIntegration Module" {
         }
     }
 
-    Describe "Show-QuickPick" {
-
-        Context "When running in VSCode context" {
-            It "Returns sentinel hashtable for Claude orchestration in vscode-extension context" {
-                # Save original values
-                $originalVscodePid = $env:VSCODE_PID
-                $originalTermProgram = $env:TERM_PROGRAM
-
-                try {
-                    $env:VSCODE_PID = "12345"
-                    $env:TERM_PROGRAM = $null
-
-                    $result = Show-QuickPick -Prompt "Select an option" -Options @("Yes", "No")
-
-                    $result | Should -BeOfType [hashtable]
-                    $result.__ClaudeQuickPick | Should -Be $true
-                    $result.Prompt | Should -Be "Select an option"
-                    $result.Options | Should -HaveCount 2
-                    $result.MultiSelect | Should -Be $false
-                }
-                finally {
-                    $env:VSCODE_PID = $originalVscodePid
-                    $env:TERM_PROGRAM = $originalTermProgram
-                }
-            }
-
-            It "Returns sentinel hashtable with MultiSelect flag when specified" {
-                # Save original values
-                $originalVscodePid = $env:VSCODE_PID
-                $originalTermProgram = $env:TERM_PROGRAM
-
-                try {
-                    $env:VSCODE_PID = "12345"
-                    $env:TERM_PROGRAM = "vscode"
-
-                    $result = Show-QuickPick -Prompt "Select features" -Options @("A", "B", "C") -MultiSelect
-
-                    $result | Should -BeOfType [hashtable]
-                    $result.__ClaudeQuickPick | Should -Be $true
-                    $result.MultiSelect | Should -Be $true
-                }
-                finally {
-                    $env:VSCODE_PID = $originalVscodePid
-                    $env:TERM_PROGRAM = $originalTermProgram
-                }
-            }
-        }
-
-        Context "When running in standalone terminal" {
-            # Note: Terminal mode tests with Read-Host are skipped because mocking Read-Host
-            # with validation loops causes infinite loops in Pester tests.
-            # The terminal fallback functionality works correctly in practice.
-            # VSCode integration is the primary use case for this module.
-
-            It "Falls back to numbered menu in standalone terminal" -Skip {
-                # This test is skipped - terminal mode Read-Host mocking is problematic
-                $true | Should -Be $true
-            }
-
-            It "Handles multi-select in terminal mode" -Skip {
-                # This test is skipped - terminal mode Read-Host mocking is problematic
-                $true | Should -Be $true
-            }
-
-            It "Validates input range in terminal mode" -Skip {
-                # This test is skipped - terminal mode Read-Host mocking is problematic
-                $true | Should -Be $true
-            }
-        }
-    }
-
     Describe "Open-DiffView" {
 
         Context "When code command is available" -Skip {
@@ -269,10 +198,6 @@ Describe "VSCodeIntegration Module" {
     Describe "Module Export" {
         It "Exports Get-ExecutionContext function" {
             (Get-Command Get-ExecutionContext).Source | Should -BeLike "*VSCodeIntegration*"
-        }
-
-        It "Exports Show-QuickPick function" {
-            (Get-Command Show-QuickPick).Source | Should -BeLike "*VSCodeIntegration*"
         }
 
         It "Exports Open-DiffView function" {

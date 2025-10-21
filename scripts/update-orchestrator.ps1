@@ -37,20 +37,16 @@
 .PARAMETER NoBackup
     Skip backup creation (dangerous, not recommended)
 
-.PARAMETER Auto
-    Skip confirmation prompts and proceed automatically (recommended for Claude Code)
+.PARAMETER Proceed
+    Internal flag passed by Claude Code after user approval via conversational workflow
 
 .EXAMPLE
     .\update-orchestrator.ps1 -CheckOnly
     Check for updates without applying changes
 
 .EXAMPLE
-    .\update-orchestrator.ps1 -Auto
-    Automatic update without confirmation prompts
-
-.EXAMPLE
     .\update-orchestrator.ps1
-    Interactive update with confirmation
+    Interactive update with conversational confirmation workflow
 
 .EXAMPLE
     .\update-orchestrator.ps1 -Version v0.0.72
@@ -79,11 +75,23 @@ param(
     [switch]$NoBackup,
 
     [Parameter(Mandatory=$false)]
-    [switch]$Auto
+    [switch]$Proceed,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$Auto  # DEPRECATED: Use conversational workflow instead
 )
 
 # Set error action preference
 $ErrorActionPreference = 'Stop'
+
+# Backward compatibility: Handle deprecated -Auto flag
+if ($Auto) {
+    Write-Warning "The -Auto flag is deprecated and will be removed in a future version."
+    Write-Warning "Please use the conversational approval workflow instead."
+    Write-Warning "For now, treating -Auto as -Proceed for backward compatibility."
+    Write-Host ""
+    $Proceed = $true
+}
 
 # Store script start time
 $startTime = Get-Date
@@ -342,18 +350,30 @@ try {
     # ========================================
     Write-Verbose "Step 7: Getting user confirmation..."
 
-    if ($Auto) {
-        Write-Verbose "Auto mode enabled, skipping confirmation prompt"
-        Write-Host "Auto mode: Proceeding with update automatically..." -ForegroundColor Cyan
+    if ($Proceed) {
+        Write-Verbose "Proceed flag set, skipping confirmation prompt"
+        Write-Host "Proceeding with update (approved via conversational workflow)..." -ForegroundColor Cyan
         Write-Host ""
     }
     else {
-        $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name
+        $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -Proceed:$Proceed
 
         if (-not $confirmed) {
-            Write-Host "Update cancelled by user." -ForegroundColor Yellow
-            Write-Host ""
-            exit 5
+            # In non-interactive mode (Claude Code), this means waiting for user approval
+            # In interactive mode, this means user explicitly declined
+            # Either way, exit gracefully
+            Write-Verbose "Confirmation not received, exiting"
+
+            # Clean up temporary manifest if we created one (don't leave repo in dirty state)
+            if ($needsManifestCreation) {
+                $manifestPath = Join-Path $projectRoot ".specify/manifest.json"
+                if (Test-Path $manifestPath) {
+                    Write-Verbose "Removing temporary manifest created during update check"
+                    Remove-Item $manifestPath -Force
+                }
+            }
+
+            exit 0
         }
 
         Write-Host "Update confirmed. Proceeding..." -ForegroundColor Green
@@ -487,17 +507,165 @@ try {
     Write-Host ""
 
     # ========================================
-    # STEP 11: Handle Conflicts (Flow A)
+    # STEP 11: Handle Conflicts
     # ========================================
     $conflicts = @($fileStates | Where-Object { $_.action -eq 'merge' })
 
     if ($conflicts.Count -gt 0) {
         Write-Verbose "Step 11: Handling $($conflicts.Count) conflict(s)..."
 
-        $conflictResult = Invoke-ConflictResolutionWorkflow -Conflicts $conflicts -Templates $templates -ProjectRoot $projectRoot
+        # Check if running in non-interactive mode (Claude Code)
+        try {
+            $isInteractive = -not [Console]::IsInputRedirected
+        }
+        catch {
+            $isInteractive = $true
+        }
 
-        $updateResult.ConflictsResolved = $conflictResult.Resolved + $conflictResult.KeptMine + $conflictResult.UsedNew
-        $updateResult.ConflictsSkipped = $conflictResult.Skipped
+        if (-not $isInteractive) {
+            # Non-interactive mode: Write Git conflict markers for VSCode resolution
+            Write-Host ""
+            Write-Host "========================================" -ForegroundColor Yellow
+            Write-Host "Conflicts Detected" -ForegroundColor Yellow
+            Write-Host "========================================" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Running in non-interactive mode (Claude Code)." -ForegroundColor Yellow
+            Write-Host "Writing Git conflict markers to $($conflicts.Count) conflicted files..." -ForegroundColor Yellow
+            Write-Host ""
+
+            $actualConflicts = @()
+            $falsePositives = @()
+            $constitutionConflicts = @()
+
+            foreach ($conflict in $conflicts) {
+                try {
+                    $filePath = Join-Path $projectRoot $conflict.path
+
+                    # Special handling for constitution.md
+                    if ($conflict.path -eq '.specify/memory/constitution.md') {
+                        Write-Host "  Constitution conflict detected - will use /speckit.constitution workflow" -ForegroundColor Yellow
+                        $constitutionConflicts += $conflict.path
+
+                        # Mark as requiring constitution update
+                        $updateResult.ConstitutionUpdateNeeded = $true
+
+                        # Add to conflicts resolved (will be handled by /speckit.constitution)
+                        $updateResult.ConflictsResolved += $conflict.path
+                        continue
+                    }
+
+                    # Read current content
+                    $currentContent = if (Test-Path $filePath) {
+                        Get-Content $filePath -Raw -Encoding utf8
+                    } else {
+                        ""
+                    }
+
+                    # Get upstream content
+                    $incomingContent = if ($templates.ContainsKey($conflict.path)) {
+                        $templates[$conflict.path]
+                    } else {
+                        ""
+                    }
+
+                    # Check if current and incoming are actually different (normalized)
+                    $currentHash = if ($currentContent) {
+                        # Write to temp file to hash it
+                        $tempFile = Join-Path $env:TEMP "current-$(Get-Random).txt"
+                        $currentContent | Set-Content -Path $tempFile -Encoding utf8 -Force
+                        $hash = Get-NormalizedHash -FilePath $tempFile
+                        Remove-Item $tempFile -Force
+                        $hash
+                    } else {
+                        $null
+                    }
+
+                    $incomingHash = $conflict.UpstreamHash
+
+                    # Compare hashes to see if there's a real conflict
+                    $hasRealConflict = -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $incomingHash)
+
+                    if ($hasRealConflict) {
+                        # Real conflict - write markers
+                        $baseContent = ""
+
+                        Write-ConflictMarkers `
+                            -FilePath $filePath `
+                            -CurrentContent $currentContent `
+                            -BaseContent $baseContent `
+                            -IncomingContent $incomingContent `
+                            -OriginalVersion $manifest.speckit_version `
+                            -NewVersion $targetRelease.tag_name
+
+                        Write-Host "  Written conflict markers: $($conflict.path)" -ForegroundColor Cyan
+                        $actualConflicts += $conflict.path
+                    }
+                    else {
+                        # False positive - file is actually the same, just marked as customized
+                        Write-Host "  No changes detected: $($conflict.path) (marked as not customized)" -ForegroundColor Green
+                        $falsePositives += $conflict.path
+
+                        # Update manifest to mark as not customized
+                        $trackedFile = $manifest.tracked_files | Where-Object { $_.path -eq $conflict.path }
+                        if ($trackedFile) {
+                            $trackedFile.customized = $false
+                            $trackedFile.original_hash = $incomingHash
+                        }
+
+                        # Add to resolved list
+                        $updateResult.FilesUpdated += $conflict.path
+                    }
+                }
+                catch {
+                    Write-Warning "Failed to process conflict for $($conflict.path): $($_.Exception.Message)"
+                    $actualConflicts += $conflict.path
+                }
+            }
+
+            Write-Host ""
+            if ($falsePositives.Count -gt 0) {
+                Write-Host "False Positives Resolved:" -ForegroundColor Green
+                Write-Host "  $($falsePositives.Count) files were marked as customized but are identical to upstream" -ForegroundColor Green
+                Write-Host "  These have been automatically marked as not customized in the manifest" -ForegroundColor Green
+                Write-Host ""
+            }
+
+            if ($constitutionConflicts.Count -gt 0) {
+                Write-Host "Constitution Conflict Detected:" -ForegroundColor Yellow
+                Write-Host "  Constitution.md has been customized and has upstream changes" -ForegroundColor Yellow
+                Write-Host "  This will be handled by the /speckit.constitution workflow" -ForegroundColor Yellow
+                Write-Host "  (Constitution conflicts are not suitable for Git conflict markers)" -ForegroundColor Yellow
+                Write-Host ""
+            }
+
+            if ($actualConflicts.Count -gt 0) {
+                Write-Host "Conflict markers written for $($actualConflicts.Count) file(s)." -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "Next Steps:" -ForegroundColor Cyan
+                Write-Host "  1. Open the conflicted files in VSCode" -ForegroundColor Cyan
+                Write-Host "  2. Use CodeLens actions to resolve conflicts:" -ForegroundColor Cyan
+                Write-Host "     - Accept Current (keep your version)" -ForegroundColor Cyan
+                Write-Host "     - Accept Incoming (use new version)" -ForegroundColor Cyan
+                Write-Host "     - Accept Both (merge manually)" -ForegroundColor Cyan
+                Write-Host "  3. Save the resolved files" -ForegroundColor Cyan
+                Write-Host "  4. Commit the resolved files to git" -ForegroundColor Cyan
+                Write-Host ""
+
+                # Mark actual conflicts as skipped - user will resolve in VSCode
+                $updateResult.ConflictsSkipped = $actualConflicts
+            }
+            elseif ($constitutionConflicts.Count -eq 0 -and $falsePositives.Count -gt 0) {
+                Write-Host "All conflicts were false positives - no action needed!" -ForegroundColor Green
+                Write-Host ""
+            }
+        }
+        else {
+            # Interactive mode: Use interactive workflow
+            $conflictResult = Invoke-ConflictResolutionWorkflow -Conflicts $conflicts -Templates $templates -ProjectRoot $projectRoot
+
+            $updateResult.ConflictsResolved = $conflictResult.Resolved + $conflictResult.KeptMine + $conflictResult.UsedNew
+            $updateResult.ConflictsSkipped = $conflictResult.Skipped
+        }
     }
     else {
         Write-Verbose "Step 11: No conflicts to resolve"
@@ -519,12 +687,20 @@ try {
         Write-Host "========================================" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "The constitution template has been updated." -ForegroundColor Yellow
-        Write-Host "Please run the following command to review changes:" -ForegroundColor Yellow
+
+        if ($constitutionConflict) {
+            Write-Host ""
+            Write-Host "Your customized constitution has been preserved." -ForegroundColor Green
+            Write-Host "Backup location: $backupPath/.specify/memory/constitution.md" -ForegroundColor Cyan
+            Write-Host ""
+        }
+
+        Write-Host "Run the following command to intelligently merge changes:" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "  /speckit.constitution" -ForegroundColor Green
         Write-Host ""
-        Write-Host "This will help you merge new sections while preserving" -ForegroundColor Yellow
-        Write-Host "your project-specific governance rules." -ForegroundColor Yellow
+        Write-Host "This will help you merge new sections from the template while" -ForegroundColor Yellow
+        Write-Host "preserving your project-specific governance rules." -ForegroundColor Yellow
         Write-Host ""
 
         $updateResult.ConstitutionUpdateNeeded = $true
@@ -560,18 +736,9 @@ try {
             Write-Host "Old backups to clean up: $($oldBackups.Count)" -ForegroundColor Yellow
 
             # Ask user if they want to clean up
-            $context = Get-ExecutionContext
-            $cleanup = $false
-
-            if ($context -eq 'vscode-extension') {
-                $choice = Show-QuickPick -Prompt "Delete $($oldBackups.Count) old backup(s)?" -Options @("Yes", "No")
-                $cleanup = ($choice -eq "Yes")
-            }
-            else {
-                Write-Host "Delete old backups? (Y/n): " -NoNewline -ForegroundColor Cyan
-                $response = Read-Host
-                $cleanup = ($response -ne 'n' -and $response -ne 'N')
-            }
+            Write-Host "Delete old backups? (Y/n): " -NoNewline -ForegroundColor Cyan
+            $response = Read-Host
+            $cleanup = ($response -ne 'n' -and $response -ne 'N')
 
             if ($cleanup) {
                 Remove-OldBackups -ProjectRoot $projectRoot -KeepCount 5

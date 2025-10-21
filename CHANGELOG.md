@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING - Conversational Approval Workflow (#PR)**: Removed broken Show-QuickPick UI integration and replaced with text-only conversational approval workflow
+  - **Root Cause**: VSCode QuickPick API unavailable when Claude Code runs PowerShell scripts as subprocess without terminal/UI context
+  - **Symptoms**: "Failed to show QuickPick" errors causing update failures in Claude Code
+  - **Impact**: Skill completely non-functional in Claude Code (primary execution context)
+  - **Breaking Changes**:
+    - Removed `-Auto` flag (DEPRECATED - now shows warning and treats as `-Proceed`)
+    - Added `-Proceed` flag for conversational workflow continuation
+    - Removed `Show-QuickPick` function entirely from VSCodeIntegration module
+    - Workflow now two-step: 1) Show summary + approval request, 2) Re-invoke with `-Proceed`
+  - **Implementation Changes**:
+    - Added conversational approval workflow with `[PROMPT_FOR_APPROVAL]` marker in summary output
+    - Implemented non-interactive stdin detection using `[Console]::IsInputRedirected`
+    - Replaced Read-Host prompts with graceful exit (exit code 0, not error)
+    - Script outputs summary, exits for approval, then proceeds when re-invoked with `-Proceed`
+  - **Conflict Resolution Changes**:
+    - Removed VSCode merge editor integration (`code --merge` no longer invoked)
+    - Implemented Git conflict markers (<<<<<<, ||||||, =======, >>>>>>) for conflicts
+    - VSCode CodeLens automatically detects markers and provides resolution UI
+    - Added false positive detection (auto-resolves when file content matches upstream)
+    - Special handling for constitution.md (delegates to `/speckit.constitution` workflow)
+  - **Critical Bug Fixes**:
+    - **Manifest Customized Flag**: Fixed bug where files marked `customized: true` were being overwritten
+      - Root cause: `Get-FileState` only compared hashes, ignored manifest's customized flag
+      - When manifest created with `-AssumeAllCustomized`, original_hash = current hash
+      - This caused `isCustomized = false` despite manifest flag, leading to incorrect 'update' action
+      - Fix: Added `ManifestCustomized` parameter that takes precedence over hash comparison
+      - Added 3 unit tests to prevent regression (commit 0865eb7)
+    - **Manifest Cleanup**: Fixed script leaving temporary manifest.json in dirty state after approval prompt
+      - Now cleans up manifest when exiting for approval (commit f4e397d)
+    - **Constitution Preservation**: Constitution.md now preserved with intelligent merge command instead of conflict markers
+  - **Files Modified**:
+    - `scripts/update-orchestrator.ps1` - Conversational workflow, conflict markers, manifest cleanup
+    - `scripts/helpers/Get-UpdateConfirmation.ps1` - Non-interactive detection, summary generation
+    - `scripts/helpers/Show-UpdateSummary.ps1` - Constitution command with backup path
+    - `scripts/modules/ConflictDetector.psm1` - ManifestCustomized parameter, Write-ConflictMarkers function
+    - `scripts/modules/VSCodeIntegration.psm1` - Removed Show-QuickPick function
+    - `tests/unit/VSCodeIntegration.Tests.ps1` - Removed Show-QuickPick tests
+    - `tests/unit/ConflictDetector.Tests.ps1` - Added ManifestCustomized tests
+    - `SKILL.md` - Updated command name, added execution instructions
+    - `.specify/memory/constitution.md` - Added text-only I/O principle (v1.3.0)
+    - `CLAUDE.md` - Documented architectural limitations, Git conflict markers approach
+  - **Testing**: Successfully tested end-to-end in claude-toolkit project via VSCode extension
+  - **Results**: Skill now works reliably in Claude Code with conversational approval, automatic conflict marker detection in VSCode, and preserved customizations
+
 ## [0.1.5] - 2025-10-20
 
 ### Added

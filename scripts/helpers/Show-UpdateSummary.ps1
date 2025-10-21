@@ -125,7 +125,16 @@ function Show-UpdateSummary {
     # Constitution update
     if ($Result.ConstitutionUpdateNeeded) {
         Write-Host "Constitution template updated." -ForegroundColor Cyan
-        Write-Host "Please run '/speckit.constitution' to review changes." -ForegroundColor Cyan
+
+        # Show command with backup path parameter
+        if ($Result.BackupPath) {
+            $relativeBackupPath = $Result.BackupPath -replace '^.*\.specify\\backups\\', '.specify/backups/'
+            Write-Host "Run this to merge intelligently: /speckit.constitution $relativeBackupPath/.specify/memory/constitution.md" -ForegroundColor Cyan
+        }
+        else {
+            Write-Host "Please run '/speckit.constitution' to review changes." -ForegroundColor Cyan
+        }
+
         Write-Host ""
     }
 

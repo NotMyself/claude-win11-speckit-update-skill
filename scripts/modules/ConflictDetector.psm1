@@ -84,7 +84,10 @@ function Get-FileState {
         [string]$UpstreamHash,
 
         [Parameter(Mandatory)]
-        [bool]$IsOfficial
+        [bool]$IsOfficial,
+
+        [Parameter()]
+        [bool]$ManifestCustomized = $false
     )
 
     try {
@@ -98,7 +101,12 @@ function Get-FileState {
         }
 
         # Determine states
-        $isCustomized = if ($currentHash -and $OriginalHash) {
+        # Trust the manifest's customized flag if set, otherwise compare hashes
+        $isCustomized = if ($ManifestCustomized) {
+            # Manifest explicitly marks this as customized (e.g., from -AssumeAllCustomized)
+            $true
+        } elseif ($currentHash -and $OriginalHash) {
+            # Compare current vs original hash
             -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $OriginalHash)
         } else {
             $false
@@ -245,7 +253,8 @@ function Get-AllFileStates {
                     -FilePath $absolutePath `
                     -OriginalHash $trackedFile.original_hash `
                     -UpstreamHash $upstreamHash `
-                    -IsOfficial $trackedFile.is_official
+                    -IsOfficial $trackedFile.is_official `
+                    -ManifestCustomized $trackedFile.customized
 
                 # Replace absolute path with relative path in the state for consistency
                 $state.path = $trackedFile.path
@@ -423,10 +432,107 @@ function Find-CustomCommands {
     }
 }
 
+function Write-ConflictMarkers {
+    <#
+    .SYNOPSIS
+        Writes Git-style conflict markers to a file for VSCode native conflict resolution.
+
+    .DESCRIPTION
+        Creates a file with Git-style 3-way merge conflict markers containing:
+        - Current version (user's local modifications)
+        - Base version (original from manifest)
+        - Incoming version (new upstream version)
+
+        VSCode automatically detects these markers and displays CodeLens actions
+        for conflict resolution (Accept Current, Accept Incoming, Accept Both, Compare).
+
+    .PARAMETER FilePath
+        Target file path to write conflict markers to (absolute or relative to current directory).
+
+    .PARAMETER CurrentContent
+        User's local version content.
+
+    .PARAMETER BaseContent
+        Original version content from manifest.
+
+    .PARAMETER IncomingContent
+        New upstream version content.
+
+    .PARAMETER OriginalVersion
+        Original SpecKit version label (e.g., "v0.0.71").
+
+    .PARAMETER NewVersion
+        New SpecKit version label (e.g., "v0.0.72").
+
+    .OUTPUTS
+        None. Writes conflict markers to file.
+
+    .EXAMPLE
+        Write-ConflictMarkers -FilePath ".claude/commands/speckit.plan.md" `
+                              -CurrentContent $current -BaseContent $base -IncomingContent $incoming `
+                              -OriginalVersion "v0.0.71" -NewVersion "v0.0.72"
+
+    .NOTES
+        - Markers must start at column 1 (no indentation) for VSCode recognition
+        - Content is written with UTF-8 encoding
+        - Line endings are normalized to CRLF on Windows, LF on Unix
+        - If incoming content contains conflict marker syntax, it should be escaped (future enhancement)
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$CurrentContent,
+
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$BaseContent,
+
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$IncomingContent,
+
+        [Parameter(Mandatory=$true)]
+        [string]$OriginalVersion,
+
+        [Parameter(Mandatory=$true)]
+        [string]$NewVersion
+    )
+
+    try {
+        Write-Verbose "Writing conflict markers to: $FilePath"
+
+        # Construct 3-way conflict marker block
+        # Format matches Git's conflict marker syntax for VSCode recognition
+        $conflictBlock = @"
+<<<<<<< Current (Your Version)
+$CurrentContent
+||||||| Base ($OriginalVersion)
+$BaseContent
+=======
+$IncomingContent
+>>>>>>> Incoming ($NewVersion)
+"@
+
+        # Write to file with UTF-8 encoding (no BOM for cross-platform compatibility)
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($FilePath, $conflictBlock, $utf8NoBom)
+
+        Write-Verbose "Conflict markers written successfully"
+    }
+    catch {
+        throw "Failed to write conflict markers to $FilePath`: $($_.Exception.Message)"
+    }
+}
+
 # Export module members
 Export-ModuleMember -Function @(
     'Get-FileState',
     'Get-AllFileStates',
     'Test-FileCustomized',
-    'Find-CustomCommands'
+    'Find-CustomCommands',
+    'Write-ConflictMarkers'
 )

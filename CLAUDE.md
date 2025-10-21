@@ -210,6 +210,112 @@ Helpers are thin orchestration wrappers that call module functions. They handle 
 - `merge` - File customized locally AND has upstream changes (conflict!)
 - `skip` - No changes needed
 
+## Architectural Limitations
+
+### Text-Only I/O Constraint
+
+**Critical Design Constraint:** This skill runs as a PowerShell subprocess spawned by Claude Code via `pwsh -Command`. The execution model has fundamental I/O limitations:
+
+```
+Claude Code Extension (JavaScript)
+    ↓ spawns
+PowerShell Process (pwsh -Command "& 'script.ps1'")
+    ↓ captures
+stdout (text stream) + stderr (text stream)
+    ↓ displays
+User sees text output
+```
+
+**Implications:**
+- **No VSCode UI Access**: PowerShell subprocess cannot invoke VSCode extension APIs or UI elements (Quick Pick, dialogs, webviews)
+- **No IPC Bridge**: No inter-process communication mechanism exists for passing structured data between PowerShell and VSCode extension host
+- **Text Streams Only**: All communication must use stdout/stderr text streams
+- **No External GUI**: PowerShell GUI cmdlets (e.g., `Out-GridView`, WPF windows) won't work in Claude Code context
+
+**What Works:**
+- ✅ Text output to stdout (Write-Host, Write-Output)
+- ✅ Error messages to stderr (Write-Error, Write-Warning)
+- ✅ Reading environment variables (e.g., `$env:VSCODE_PID` for context detection)
+- ✅ File I/O operations
+- ✅ Invoking `code` CLI commands (e.g., `code --diff`, `code --merge`) as separate processes
+
+**What Doesn't Work:**
+- ❌ Returning PowerShell objects expecting Claude extension to parse them
+- ❌ Sentinel hashtables for VSCode Quick Pick interception
+- ❌ Direct calls to VSCode extension APIs
+- ❌ GUI dialog boxes or interactive prompts expecting VSCode UI integration
+
+### Conversational Workflow Pattern
+
+Given the text-only constraint, this skill uses a **conversational approval workflow**:
+
+1. **Skill outputs structured summary** to stdout (Markdown format)
+2. **Claude Code parses summary** and presents it to user in natural language
+3. **User responds via chat** ("yes", "proceed", "no", questions, etc.)
+4. **Claude re-invokes skill** with `-Proceed` flag if approved
+5. **Skill executes update** without prompts (approval already obtained)
+
+This pattern:
+- Respects text-only I/O constraint
+- Leverages Claude's conversational interface
+- Provides better UX than Read-Host prompts in terminal
+- Works identically in Claude Code CLI and VSCode Extension contexts
+
+## Git Conflict Markers
+
+When files have both local customizations AND upstream changes, the skill uses **Git-style conflict markers** instead of attempting to launch external merge editors.
+
+### Why Conflict Markers?
+
+**Problem:** Invoking `code --merge` from PowerShell subprocess is unreliable:
+- May fail if VSCode extension host doesn't allow IPC from subprocess
+- `--wait` flag blocks PowerShell until merge complete (timeout risk)
+- Unexpected UI interruption for user
+
+**Solution:** Write Git-format conflict markers directly to files:
+
+```markdown
+<<<<<<< Current (Your Version)
+# Custom content you added
+||||||| Base (v0.0.71)
+# Original version content
+=======
+# New upstream content
+>>>>>>> Incoming (v0.0.72)
+```
+
+VSCode automatically detects these markers and displays **CodeLens actions**:
+- Accept Current Change
+- Accept Incoming Change
+- Accept Both Changes
+- Compare Changes
+
+**Benefits:**
+- No external process invocation required
+- Works reliably across all contexts (CLI, Extension, terminal)
+- Familiar UX for developers (standard Git workflow)
+- Graceful degradation (other editors can parse markers manually)
+- User can resolve conflicts at their own pace
+
+### Implementation
+
+The `Write-ConflictMarkers` function (ConflictDetector.psm1) creates 3-way merge conflict markers:
+
+```powershell
+Write-ConflictMarkers -FilePath ".claude/commands/speckit.plan.md" `
+                      -CurrentContent $currentVersion `
+                      -BaseContent $originalVersion `
+                      -IncomingContent $upstreamVersion `
+                      -OriginalVersion "v0.0.71" `
+                      -NewVersion "v0.0.72"
+```
+
+**Requirements for VSCode Recognition:**
+- Markers must start at column 1 (no indentation)
+- Exact format: `<<<<<<<`, `|||||||`, `=======`, `>>>>>>>`
+- UTF-8 encoding (no BOM for cross-platform compatibility)
+- Text-based file types only (.md, .json, .ps1, .txt, etc.)
+
 ## Key Workflows
 
 ### Conflict Resolution (Flow A)
