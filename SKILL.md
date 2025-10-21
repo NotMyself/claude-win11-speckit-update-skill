@@ -41,12 +41,14 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 - Write permissions to .specify/ and .claude/ directories
 - Clean or staged Git working directory
 
-**The script is located at:** `{skill_path}/scripts/update-orchestrator.ps1`
+**The script is located at:** `{skill_path}/scripts/update-wrapper.ps1` (wrapper) and `{skill_path}/scripts/update-orchestrator.ps1` (main logic)
 
 **Entry point command:**
 ```powershell
-pwsh -NoProfile -Command "& '{skill_path}/scripts/update-orchestrator.ps1' [parameters]"
+pwsh -NoProfile -Command "& '{skill_path}/scripts/update-wrapper.ps1' [parameters]"
 ```
+
+**Note:** The wrapper script converts Linux-style `--flags` to PowerShell-style `-Flags` automatically.
 
 ## Features
 
