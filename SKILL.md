@@ -2,6 +2,39 @@
 
 This skill provides safe update capabilities for GitHub SpecKit installations, preserving customizations while applying template updates.
 
+## What to do when this skill is invoked
+
+When the user invokes `/speckit-updater`, you should:
+
+1. **Run the update orchestrator script** without any flags (conversational mode):
+   ```powershell
+   pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1'"
+   ```
+
+2. **Parse the output** for the `[PROMPT_FOR_APPROVAL]` marker
+
+3. **Present the Markdown summary** to the user showing:
+   - Current version vs. available version
+   - Files to update/add/remove
+   - Conflicts detected (if any)
+   - Files preserved (customized)
+   - Backup location
+   - Custom commands
+
+4. **Ask the user for approval** to proceed with the update
+
+5. **If approved**, re-run with `-Proceed` flag:
+   ```powershell
+   pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1' -Proceed"
+   ```
+
+6. **If declined**, inform the user the update was cancelled
+
+**Special cases:**
+- If user requests `-CheckOnly`: run with that flag and show the report
+- If user requests `-Rollback`: run with that flag and confirm restoration
+- If user requests specific `-Version`: include that parameter
+
 ## Commands
 
 ### /speckit-updater
