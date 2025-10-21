@@ -507,17 +507,92 @@ try {
     Write-Host ""
 
     # ========================================
-    # STEP 11: Handle Conflicts (Flow A)
+    # STEP 11: Handle Conflicts
     # ========================================
     $conflicts = @($fileStates | Where-Object { $_.action -eq 'merge' })
 
     if ($conflicts.Count -gt 0) {
         Write-Verbose "Step 11: Handling $($conflicts.Count) conflict(s)..."
 
-        $conflictResult = Invoke-ConflictResolutionWorkflow -Conflicts $conflicts -Templates $templates -ProjectRoot $projectRoot
+        # Check if running in non-interactive mode (Claude Code)
+        try {
+            $isInteractive = -not [Console]::IsInputRedirected
+        }
+        catch {
+            $isInteractive = $true
+        }
 
-        $updateResult.ConflictsResolved = $conflictResult.Resolved + $conflictResult.KeptMine + $conflictResult.UsedNew
-        $updateResult.ConflictsSkipped = $conflictResult.Skipped
+        if (-not $isInteractive) {
+            # Non-interactive mode: Write Git conflict markers for VSCode resolution
+            Write-Host ""
+            Write-Host "========================================" -ForegroundColor Yellow
+            Write-Host "Conflicts Detected" -ForegroundColor Yellow
+            Write-Host "========================================" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Running in non-interactive mode (Claude Code)." -ForegroundColor Yellow
+            Write-Host "Writing Git conflict markers to $($conflicts.Count) conflicted files..." -ForegroundColor Yellow
+            Write-Host ""
+
+            foreach ($conflict in $conflicts) {
+                try {
+                    $filePath = Join-Path $projectRoot $conflict.path
+
+                    # Read current content
+                    $currentContent = if (Test-Path $filePath) {
+                        Get-Content $filePath -Raw -Encoding utf8
+                    } else {
+                        ""
+                    }
+
+                    # Get upstream content
+                    $incomingContent = if ($templates.ContainsKey($conflict.path)) {
+                        $templates[$conflict.path]
+                    } else {
+                        ""
+                    }
+
+                    # Get base content (not available in this workflow - use empty)
+                    $baseContent = ""
+
+                    # Write conflict markers
+                    Write-ConflictMarkers `
+                        -FilePath $filePath `
+                        -CurrentContent $currentContent `
+                        -BaseContent $baseContent `
+                        -IncomingContent $incomingContent `
+                        -OriginalVersion $manifest.speckit_version `
+                        -NewVersion $targetRelease.tag_name
+
+                    Write-Host "  Written conflict markers: $($conflict.path)" -ForegroundColor Cyan
+                }
+                catch {
+                    Write-Warning "Failed to write conflict markers for $($conflict.path): $($_.Exception.Message)"
+                }
+            }
+
+            Write-Host ""
+            Write-Host "Conflict markers written successfully." -ForegroundColor Green
+            Write-Host ""
+            Write-Host "Next Steps:" -ForegroundColor Cyan
+            Write-Host "  1. Open the conflicted files in VSCode" -ForegroundColor Cyan
+            Write-Host "  2. Use CodeLens actions to resolve conflicts:" -ForegroundColor Cyan
+            Write-Host "     - Accept Current (keep your version)" -ForegroundColor Cyan
+            Write-Host "     - Accept Incoming (use new version)" -ForegroundColor Cyan
+            Write-Host "     - Accept Both (merge manually)" -ForegroundColor Cyan
+            Write-Host "  3. Save the resolved files" -ForegroundColor Cyan
+            Write-Host "  4. Run '/speckit-updater -Proceed' to finalize" -ForegroundColor Cyan
+            Write-Host ""
+
+            # Mark all as skipped for now - user will resolve in VSCode
+            $updateResult.ConflictsSkipped = $conflicts | ForEach-Object { $_.path }
+        }
+        else {
+            # Interactive mode: Use interactive workflow
+            $conflictResult = Invoke-ConflictResolutionWorkflow -Conflicts $conflicts -Templates $templates -ProjectRoot $projectRoot
+
+            $updateResult.ConflictsResolved = $conflictResult.Resolved + $conflictResult.KeptMine + $conflictResult.UsedNew
+            $updateResult.ConflictsSkipped = $conflictResult.Skipped
+        }
     }
     else {
         Write-Verbose "Step 11: No conflicts to resolve"
