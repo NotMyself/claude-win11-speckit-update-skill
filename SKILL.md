@@ -10,10 +10,10 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 
 **Usage:**
 - `/speckit-update` - Interactive update with conflict detection
-- `/speckit-update --check-only` - Check for updates without applying
-- `/speckit-update --version v0.0.72` - Update to specific version
-- `/speckit-update --force` - Overwrite SpecKit files (preserves custom commands)
-- `/speckit-update --rollback` - Restore from previous backup
+- `/speckit-update -CheckOnly` - Check for updates without applying
+- `/speckit-update -Version v0.0.72` - Update to specific version
+- `/speckit-update -Force` - Overwrite SpecKit files (preserves custom commands)
+- `/speckit-update -Rollback` - Restore from previous backup
 
 **Process:**
 1. Validates prerequisites (Git installed, clean Git state, write permissions)
@@ -41,14 +41,14 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 - Write permissions to .specify/ and .claude/ directories
 - Clean or staged Git working directory
 
-**The script is located at:** `{skill_path}/scripts/update-wrapper.ps1` (wrapper) and `{skill_path}/scripts/update-orchestrator.ps1` (main logic)
+**The script is located at:** `{skill_path}/scripts/update-wrapper.ps1` (entry point) and `{skill_path}/scripts/update-orchestrator.ps1` (main logic)
 
 **Entry point command:**
 ```powershell
 pwsh -NoProfile -Command "& '{skill_path}/scripts/update-wrapper.ps1' [parameters]"
 ```
 
-**Note:** The wrapper script converts Linux-style `--flags` to PowerShell-style `-Flags` automatically.
+**Note:** Both PowerShell-style (`-CheckOnly`) and Linux-style (`--check-only`) flags are supported via the wrapper script.
 
 ## Features
 
