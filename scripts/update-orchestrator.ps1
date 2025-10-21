@@ -535,10 +535,24 @@ try {
 
             $actualConflicts = @()
             $falsePositives = @()
+            $constitutionConflicts = @()
 
             foreach ($conflict in $conflicts) {
                 try {
                     $filePath = Join-Path $projectRoot $conflict.path
+
+                    # Special handling for constitution.md
+                    if ($conflict.path -eq '.specify/memory/constitution.md') {
+                        Write-Host "  Constitution conflict detected - will use /speckit.constitution workflow" -ForegroundColor Yellow
+                        $constitutionConflicts += $conflict.path
+
+                        # Mark as requiring constitution update
+                        $updateResult.ConstitutionUpdateNeeded = $true
+
+                        # Add to conflicts resolved (will be handled by /speckit.constitution)
+                        $updateResult.ConflictsResolved += $conflict.path
+                        continue
+                    }
 
                     # Read current content
                     $currentContent = if (Test-Path $filePath) {
@@ -616,6 +630,14 @@ try {
                 Write-Host ""
             }
 
+            if ($constitutionConflicts.Count -gt 0) {
+                Write-Host "Constitution Conflict Detected:" -ForegroundColor Yellow
+                Write-Host "  Constitution.md has been customized and has upstream changes" -ForegroundColor Yellow
+                Write-Host "  This will be handled by the /speckit.constitution workflow" -ForegroundColor Yellow
+                Write-Host "  (Constitution conflicts are not suitable for Git conflict markers)" -ForegroundColor Yellow
+                Write-Host ""
+            }
+
             if ($actualConflicts.Count -gt 0) {
                 Write-Host "Conflict markers written for $($actualConflicts.Count) file(s)." -ForegroundColor Yellow
                 Write-Host ""
@@ -632,7 +654,7 @@ try {
                 # Mark actual conflicts as skipped - user will resolve in VSCode
                 $updateResult.ConflictsSkipped = $actualConflicts
             }
-            else {
+            elseif ($constitutionConflicts.Count -eq 0 -and $falsePositives.Count -gt 0) {
                 Write-Host "All conflicts were false positives - no action needed!" -ForegroundColor Green
                 Write-Host ""
             }
@@ -665,12 +687,20 @@ try {
         Write-Host "========================================" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "The constitution template has been updated." -ForegroundColor Yellow
-        Write-Host "Please run the following command to review changes:" -ForegroundColor Yellow
+
+        if ($constitutionConflict) {
+            Write-Host ""
+            Write-Host "Your customized constitution has been preserved." -ForegroundColor Green
+            Write-Host "Backup location: $backupPath/.specify/memory/constitution.md" -ForegroundColor Cyan
+            Write-Host ""
+        }
+
+        Write-Host "Run the following command to intelligently merge changes:" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "  /speckit.constitution" -ForegroundColor Green
         Write-Host ""
-        Write-Host "This will help you merge new sections while preserving" -ForegroundColor Yellow
-        Write-Host "your project-specific governance rules." -ForegroundColor Yellow
+        Write-Host "This will help you merge new sections from the template while" -ForegroundColor Yellow
+        Write-Host "preserving your project-specific governance rules." -ForegroundColor Yellow
         Write-Host ""
 
         $updateResult.ConstitutionUpdateNeeded = $true
