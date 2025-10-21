@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-10-20
+
+### Fixed
+- **First-Time User Workflow (#8)**: Fixed 10 cascading issues preventing first-time manifest creation and updates
+  - **Root Cause**: Parameter naming inconsistency in `New-SpecKitManifest` and multiple integration bugs in first-time workflow
+  - **Symptoms**: "Cannot process command because of one or more missing mandatory parameters: SpecKitVersion" error
+  - **Impact**: New users unable to initialize manifest or run first update
+  - **Bug #1 - Parameter Naming**: Changed `-SpecKitVersion` to `-Version` in `New-SpecKitManifest` for consistency with other functions
+  - **Bug #2 - Wrong Initial Version**: Fixed manifest creation to use "v0.0.0" placeholder instead of target version (prevented "already up to date" false positive)
+  - **Bug #3 - Asset Name Pattern**: Changed from exact match `claude-templates.zip` to pattern match `spec-kit-template-claude-ps-*.zip` to support versioned asset names
+  - **Bug #4 - Non-Existent Release Lookup**: Added early return in `Get-OfficialSpecKitCommands` for v0.0.0 placeholder version with fallback command list
+  - **Bug #5 - Invalid ProjectRoot Parameter (First Instance)**: Temporarily removed `-ProjectRoot` parameter from `Get-AllFileStates` call (later re-added with fix)
+  - **Bug #6 - PowerShell Common Parameters**: Changed SKILL.md entry point from `pwsh -File` to `pwsh -NoProfile -Command` to support `-Help`, `-Verbose`, etc.
+  - **Bug #7 - File Path Resolution**: Re-added `-ProjectRoot` parameter to `Get-AllFileStates` with absolute path construction before file operations, preventing "file locked or inaccessible" errors
+  - **Bug #8 - Check-Only Leaving Repo Dirty**: Added cleanup code to delete temporary manifest.json when running with `-CheckOnly` flag
+  - **Bug #9 - Invalid Backup Parameters**: Removed non-existent `-FromVersion` and `-ToVersion` parameters from `New-SpecKitBackup` call
+  - **Bug #10 - Invalid FileStates Parameter**: Removed non-existent `-FileStates` parameter from `Update-FileHashes` call
+  - **Fix Applied**:
+    - Standardized parameter naming across ManifestManager module (11 instances updated)
+    - Implemented placeholder version workflow for first-time users (orchestrator restructured to fetch version before creating manifest)
+    - Updated GitHub asset lookup to handle PowerShell-specific template naming
+    - Added v0.0.0 special case handling with hardcoded fallback list of 8 official commands
+    - Fixed absolute/relative path handling in ConflictDetector module (constructs absolute paths, returns relative paths in state objects)
+    - Updated SKILL.md entry point to use `pwsh -NoProfile -Command` invocation pattern
+    - Added temporary file cleanup in check-only mode to prevent Git state pollution
+    - Fixed all function parameter signatures to match actual function definitions
+  - **Testing**: Added 4 new unit tests for parameter validation and first-time scenarios; end-to-end tested in real SpecKit project (claude-toolkit)
+  - **Files Modified**:
+    - `scripts/modules/ManifestManager.psm1` - Parameter naming and v0.0.0 handling (lines 126, 135, 138, 197, 261-276, 312)
+    - `scripts/modules/GitHubApiClient.psm1` - Asset name pattern matching (lines 289-291)
+    - `scripts/modules/ConflictDetector.psm1` - ProjectRoot parameter and absolute path construction (lines 212-214, 241-251, 268-279)
+    - `scripts/update-orchestrator.ps1` - Workflow restructuring, parameter fixes, cleanup (lines 263-277, 299, 316-323, 354, 524)
+    - `SKILL.md` - Entry point command pattern (line 48)
+    - `tests/unit/ManifestManager.Tests.ps1` - Parameter naming updates and new tests (lines 328-344)
+  - **Results**: First-time users can now successfully create manifest with v0.0.0 placeholder, download 19 template files, and update to latest version; unit test pass rate improved from 67% to 97% (35/36 passing)
+  - **Breaking Change**: None (fixes existing functionality, maintains backward compatibility)
+
 ## [0.1.3] - 2025-10-20
 
 ### Fixed
@@ -184,7 +221,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.0...v0.1.1
