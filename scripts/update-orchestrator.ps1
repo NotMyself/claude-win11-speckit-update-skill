@@ -313,6 +313,15 @@ try {
 
         Show-UpdateReport -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -CustomFiles $customFiles
 
+        # Clean up temporary manifest if we created one (don't leave repo in dirty state)
+        if ($needsManifestCreation) {
+            $manifestPath = Join-Path $projectRoot ".specify/manifest.json"
+            if (Test-Path $manifestPath) {
+                Write-Verbose "Removing temporary manifest created for check-only mode"
+                Remove-Item $manifestPath -Force
+            }
+        }
+
         exit 0
     }
 
