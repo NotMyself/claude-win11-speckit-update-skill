@@ -192,11 +192,41 @@ function Get-UpdateConfirmation {
     Write-Host $summary
     Write-Host ""
 
-    # For backwards compatibility in terminal mode, still prompt for confirmation
-    # In Claude Code conversational workflow, this won't be reached (script exits after summary)
-    # User will see summary, approve via chat, Claude will re-invoke with -Proceed
+    # Check if running in non-interactive context (Claude Code)
+    # In non-interactive mode, stdin is redirected/closed, so Read-Host would auto-complete
+    try {
+        $isInteractive = -not [Console]::IsInputRedirected
+    }
+    catch {
+        # If IsInputRedirected not available (older PowerShell), assume interactive
+        $isInteractive = $true
+    }
+
+    if (-not $isInteractive) {
+        # Non-interactive mode (Claude Code): Show message and exit
+        # Claude will re-invoke with -Proceed after getting user approval via chat
+        Write-Host ""
+        Write-Host "Running in non-interactive mode (Claude Code)." -ForegroundColor Yellow
+        Write-Host "The summary above has been presented to the user for approval." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "To proceed after approval, re-run with: -Proceed" -ForegroundColor Cyan
+        Write-Host "To cancel, simply don't re-run the command." -ForegroundColor Cyan
+        Write-Host ""
+
+        # Exit with code 0 (success) - not an error, just waiting for approval
+        # The orchestrator should check if this returned false and exit gracefully
+        return $false
+    }
+
+    # Interactive mode (terminal): Prompt for confirmation
     Write-Host "Proceed with update? (Y/n): " -NoNewline -ForegroundColor Cyan
     $response = Read-Host
+
+    # Treat empty response as "yes" in interactive mode (user pressed Enter)
+    if ([string]::IsNullOrWhiteSpace($response)) {
+        Write-Verbose "Empty response in interactive mode, treating as 'yes'"
+        return $true
+    }
 
     return ($response -ne 'n' -and $response -ne 'N')
 }

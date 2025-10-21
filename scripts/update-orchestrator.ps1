@@ -359,9 +359,11 @@ try {
         $confirmed = Get-UpdateConfirmation -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -Proceed:$Proceed
 
         if (-not $confirmed) {
-            Write-Host "Update cancelled by user." -ForegroundColor Yellow
-            Write-Host ""
-            exit 5
+            # In non-interactive mode (Claude Code), this means waiting for user approval
+            # In interactive mode, this means user explicitly declined
+            # Either way, exit gracefully
+            Write-Verbose "Confirmation not received, exiting"
+            exit 0
         }
 
         Write-Host "Update confirmed. Proceeding..." -ForegroundColor Green
