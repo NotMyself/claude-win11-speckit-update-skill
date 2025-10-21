@@ -363,6 +363,16 @@ try {
             # In interactive mode, this means user explicitly declined
             # Either way, exit gracefully
             Write-Verbose "Confirmation not received, exiting"
+
+            # Clean up temporary manifest if we created one (don't leave repo in dirty state)
+            if ($needsManifestCreation) {
+                $manifestPath = Join-Path $projectRoot ".specify/manifest.json"
+                if (Test-Path $manifestPath) {
+                    Write-Verbose "Removing temporary manifest created during update check"
+                    Remove-Item $manifestPath -Force
+                }
+            }
+
             exit 0
         }
 
