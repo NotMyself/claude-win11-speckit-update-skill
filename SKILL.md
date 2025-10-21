@@ -2,19 +2,53 @@
 
 This skill provides safe update capabilities for GitHub SpecKit installations, preserving customizations while applying template updates.
 
+## What to do when this skill is invoked
+
+When the user invokes `/speckit-updater`, you should:
+
+1. **Run the update orchestrator script** without any flags (conversational mode):
+   ```powershell
+   pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1'"
+   ```
+
+2. **Parse the output** for the `[PROMPT_FOR_APPROVAL]` marker
+
+3. **Present the Markdown summary** to the user showing:
+   - Current version vs. available version
+   - Files to update/add/remove
+   - Conflicts detected (if any)
+   - Files preserved (customized)
+   - Backup location
+   - Custom commands
+
+4. **Ask the user for approval** to proceed with the update
+
+5. **If approved**, re-run with `-Proceed` flag:
+   ```powershell
+   pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1' -Proceed"
+   ```
+
+6. **If declined**, inform the user the update was cancelled
+
+**Special cases:**
+- If user requests `-CheckOnly`: run with that flag and show the report
+- If user requests `-Rollback`: run with that flag and confirm restoration
+- If user requests specific `-Version`: include that parameter
+
 ## Commands
 
-### /speckit-update
+### /speckit-updater
 
 Updates SpecKit templates, commands, and scripts while preserving customizations.
 
 **Usage:**
-- `/speckit-update -Auto` - Automatic update (no confirmation prompts, recommended for Claude Code)
-- `/speckit-update` - Interactive update with confirmation prompt
-- `/speckit-update -CheckOnly` - Check for updates without applying
-- `/speckit-update -Version v0.0.72 -Auto` - Update to specific version automatically
-- `/speckit-update -Force -Auto` - Force overwrite SpecKit files (preserves custom commands)
-- `/speckit-update -Rollback` - Restore from previous backup
+- `/speckit-updater` - Interactive update with conversational approval workflow (recommended for Claude Code)
+- `/speckit-updater -Proceed` - Proceed with update after approval (used by Claude after user confirms)
+- `/speckit-updater -CheckOnly` - Check for updates without applying
+- `/speckit-updater -Version v0.0.72` - Update to specific version
+- `/speckit-updater -Force` - Force overwrite SpecKit files (preserves custom commands)
+- `/speckit-updater -Rollback` - Restore from previous backup
+- `/speckit-updater -Auto` - DEPRECATED: Use conversational workflow instead (shows warning, maps to -Proceed)
 
 **Process:**
 1. Validates prerequisites (Git installed, clean Git state, write permissions)
@@ -30,14 +64,16 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 
 **When you invoke this command, I will:**
 1. Execute the update-orchestrator.ps1 script
-2. Present a summary of proposed changes
-3. If `-Auto` flag is used: proceed automatically without confirmation
-4. If interactive mode: ask for confirmation before applying updates
+2. Present a Markdown summary of proposed changes with `[PROMPT_FOR_APPROVAL]` marker
+3. Wait for your approval via chat conversation
+4. After approval: re-invoke with `-Proceed` flag to apply updates
 5. Guide you through conflict resolution one file at a time
 6. Open VSCode diff/merge tools as needed
 7. Report results with detailed summary
 
-**Recommendation:** Use `-Auto` flag when running through Claude Code to avoid interactive prompt issues.
+**Conversational Workflow:** The skill uses a two-step approval process:
+- **Step 1**: Outputs summary → script exits → waits for approval
+- **Step 2**: After approval, Claude re-invokes with `-Proceed` → applies updates
 
 **Requirements:**
 - Git installed and in PATH
