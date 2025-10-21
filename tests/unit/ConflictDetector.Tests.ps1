@@ -316,6 +316,96 @@ Describe "ConflictDetector Module" {
             }
         }
 
+        Describe "ManifestCustomized Flag" {
+            It "Trusts ManifestCustomized flag when true (overrides hash comparison)" {
+                # Arrange - File with same hash as original, but manifest says customized
+                $content = "Test content"
+                $file = New-TestFile -Content $content
+                $hash = Get-NormalizedHash -FilePath $file
+
+                # Create different upstream
+                $tempUpstream = New-TestFile -Content "Upstream content"
+                $upstreamHash = Get-NormalizedHash -FilePath $tempUpstream
+
+                try {
+                    # Act - Current matches original, but ManifestCustomized=true
+                    $state = Get-FileState -FilePath $file `
+                                           -OriginalHash $hash `
+                                           -UpstreamHash $upstreamHash `
+                                           -IsOfficial $true `
+                                           -ManifestCustomized $true
+
+                    # Assert - Should be marked as customized despite matching original
+                    $state.IsCustomized | Should -BeTrue
+                    $state.Action | Should -Be 'merge'  # Customized + upstream changes = merge
+                }
+                finally {
+                    Remove-Item $file, $tempUpstream -Force -ErrorAction SilentlyContinue
+                }
+            }
+
+            It "Uses hash comparison when ManifestCustomized is false" {
+                # Arrange - File modified from original
+                $originalContent = "Original content"
+                $modifiedContent = "Modified content"
+
+                $file = New-TestFile -Content $modifiedContent
+
+                $tempOriginal = New-TestFile -Content $originalContent
+                $originalHash = Get-NormalizedHash -FilePath $tempOriginal
+
+                try {
+                    # Act - File is actually customized but ManifestCustomized=false
+                    $state = Get-FileState -FilePath $file `
+                                           -OriginalHash $originalHash `
+                                           -UpstreamHash $originalHash `
+                                           -IsOfficial $true `
+                                           -ManifestCustomized $false
+
+                    # Assert - Should detect customization through hash comparison
+                    $state.IsCustomized | Should -BeTrue
+                }
+                finally {
+                    Remove-Item $file, $tempOriginal -Force -ErrorAction SilentlyContinue
+                }
+            }
+
+            It "Fixes false negative when manifest created with -AssumeAllCustomized" {
+                # Arrange - Simulates the bug scenario:
+                # - New manifest created with -AssumeAllCustomized
+                # - original_hash set to current hash (same content)
+                # - But file actually IS customized per manifest flag
+                $content = "Current content"
+                $file = New-TestFile -Content $content
+                $currentHash = Get-NormalizedHash -FilePath $file
+
+                $upstreamContent = "Upstream content"
+                $tempUpstream = New-TestFile -Content $upstreamContent
+                $upstreamHash = Get-NormalizedHash -FilePath $tempUpstream
+
+                try {
+                    # Act - This is the bug scenario:
+                    # currentHash == originalHash (same), upstreamHash different
+                    # Without ManifestCustomized fix: would be 'update'
+                    # With ManifestCustomized=true: should be 'merge'
+                    $state = Get-FileState -FilePath $file `
+                                           -OriginalHash $currentHash `
+                                           -UpstreamHash $upstreamHash `
+                                           -IsOfficial $true `
+                                           -ManifestCustomized $true
+
+                    # Assert - Critical fix: respects manifest flag
+                    $state.IsCustomized | Should -BeTrue
+                    $state.HasUpstreamChanges | Should -BeTrue
+                    $state.IsConflict | Should -BeTrue
+                    $state.Action | Should -Be 'merge'  # NOT 'update'!
+                }
+                finally {
+                    Remove-Item $file, $tempUpstream -Force -ErrorAction SilentlyContinue
+                }
+            }
+        }
+
         Describe "Hash Comparisons" {
             It "Correctly identifies customization through hash comparison" {
                 # Arrange
