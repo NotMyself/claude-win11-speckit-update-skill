@@ -351,7 +351,7 @@ try {
         Write-Host "Creating backup..." -ForegroundColor Cyan
 
         try {
-            $backupPath = New-SpecKitBackup -ProjectRoot $projectRoot -FromVersion $manifest.speckit_version -ToVersion $targetRelease.tag_name
+            $backupPath = New-SpecKitBackup -ProjectRoot $projectRoot
 
             Write-Host "Backup created: $backupPath" -ForegroundColor Green
             Write-Host ""
