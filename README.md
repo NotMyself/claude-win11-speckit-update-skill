@@ -9,7 +9,9 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 ## Features
 
 - **Customization Preservation**: Automatically detects and preserves your customized files
-- **Intelligent Conflict Resolution**: Opens VSCode 3-way merge editor for conflicts
+- **Git Conflict Markers**: Writes conflict markers that VSCode CodeLens detects automatically
+- **False Positive Detection**: Auto-resolves conflicts where files are identical to upstream
+- **Conversational Approval**: Two-step workflow designed for Claude Code
 - **Version Tracking**: Maintains manifest with file hashes and version information
 - **Automatic Backups**: Creates timestamped backups with retention management
 - **Fail-Fast with Rollback**: Automatic rollback on failure
@@ -20,7 +22,7 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 - PowerShell 7+
 - Git in PATH
-- VSCode with Claude Code extension (for merge editor)
+- VSCode with Claude Code extension
 - Existing SpecKit project
 - Internet connection (for GitHub API access)
 
@@ -38,14 +40,14 @@ git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit
 # Restart VSCode to load the skill
 ```
 
-**Verify installation**: After restarting VSCode, the `/speckit-update` command should be available in Claude Code.
+**Verify installation**: After restarting VSCode, the `/speckit-updater` command should be available in Claude Code.
 
 ## Usage
 
 ### Check for Updates (Dry-Run)
 
 ```
-/speckit-update --check-only
+/speckit-updater --check-only
 ```
 
 Shows what would change without applying any updates.
@@ -53,15 +55,17 @@ Shows what would change without applying any updates.
 ### Update to Latest Version
 
 ```
-/speckit-update
+/speckit-updater
 ```
 
-Interactive update with conflict detection and user confirmation.
+Two-step conversational workflow:
+1. Shows summary with `[PROMPT_FOR_APPROVAL]` marker
+2. You approve via chat → Claude re-invokes with `-Proceed`
 
 ### Update to Specific Version
 
 ```
-/speckit-update --version v0.0.72
+/speckit-updater --version v0.0.72
 ```
 
 Update to a specific SpecKit release tag.
@@ -69,7 +73,7 @@ Update to a specific SpecKit release tag.
 ### Rollback to Previous Version
 
 ```
-/speckit-update --rollback
+/speckit-updater --rollback
 ```
 
 Restore from a previous backup.
@@ -77,7 +81,7 @@ Restore from a previous backup.
 ### Force Update
 
 ```
-/speckit-update --force
+/speckit-updater --force
 ```
 
 Overwrite SpecKit files even if customized (preserves custom commands).
@@ -85,7 +89,7 @@ Overwrite SpecKit files even if customized (preserves custom commands).
 ### Skip Backup (Not Recommended)
 
 ```
-/speckit-update --no-backup
+/speckit-updater --no-backup
 ```
 
 Skip backup creation. Use only if you're absolutely sure.
@@ -100,28 +104,38 @@ Skip backup creation. Use only if you're absolutely sure.
 4. **Fetch Target Version**: Get latest or specific version from GitHub Releases
 5. **Analyze File States**: Compare current files with manifest and upstream
 6. **Check-Only Mode**: Show detailed report and exit (if `--check-only`)
-7. **Get Confirmation**: Prompt user to confirm update
+7. **Get Confirmation**: Show summary and exit for user approval (conversational workflow)
 8. **Create Backup**: Create timestamped backup in `.specify/backups/`
 9. **Download Templates**: Fetch templates from GitHub release
 10. **Apply Updates**: Update files that aren't customized or conflicts
-11. **Handle Conflicts**: Guide user through Flow A conflict resolution
-12. **Update Constitution**: Notify to run `/speckit.constitution` if needed
+11. **Handle Conflicts**: Write Git conflict markers for VSCode CodeLens detection
+12. **Update Constitution**: Delegate to `/speckit.constitution` with backup path if needed
 13. **Update Manifest**: Update version and file hashes
 14. **Cleanup Old Backups**: Optionally remove backups older than 5 most recent
 15. **Show Summary**: Display detailed update results
 
-### Conflict Resolution (Flow A)
+### Conflict Resolution
 
 When conflicts are detected (file customized locally AND changed upstream):
 
-1. Shows list of all conflicts
-2. For each conflict, prompts user:
-   - **Open merge editor**: 3-way merge with base/current/incoming
-   - **Keep my version**: Discard upstream changes
-   - **Use new version**: Discard local changes
-   - **Skip for now**: Resolve later
-3. Tracks resolved and skipped conflicts
-4. Cleans up temporary merge files automatically
+1. **Detects conflicts** during file analysis
+2. **Writes Git conflict markers** to conflicted files:
+   ```
+   <<<<<<< Current (Your Version)
+   Your local changes
+   ||||||| Base (v0.1.5)
+   Original content
+   =======
+   New upstream content
+   >>>>>>> Incoming (v0.2.0)
+   ```
+3. **VSCode CodeLens** automatically detects markers and shows actions:
+   - Accept Current Change
+   - Accept Incoming Change
+   - Accept Both Changes
+   - Compare Changes
+4. **False positive detection**: Auto-resolves when content is identical to upstream
+5. **Constitution special handling**: Uses `/speckit.constitution` workflow instead of markers
 
 ### File State Detection
 
@@ -139,20 +153,19 @@ Files are categorized based on hash comparison:
 ### Modules
 
 - **HashUtils.psm1**: Normalized hashing (handles line endings, whitespace)
-- **VSCodeIntegration.psm1**: Context detection, Quick Pick, merge editor
+- **VSCodeIntegration.psm1**: Execution context detection, notifications
 - **GitHubApiClient.psm1**: GitHub Releases API interaction
 - **ManifestManager.psm1**: Manifest CRUD operations
 - **BackupManager.psm1**: Backup creation and restoration
-- **ConflictDetector.psm1**: File state analysis and conflict detection
+- **ConflictDetector.psm1**: File state analysis, conflict detection, conflict marker writing
 
 ### Helper Functions
 
 - **Invoke-PreUpdateValidation.ps1**: Prerequisites validation
 - **Show-UpdateSummary.ps1**: Detailed results display
 - **Show-UpdateReport.ps1**: Check-only mode output
-- **Get-UpdateConfirmation.ps1**: User confirmation prompt
-- **Invoke-ConflictResolutionWorkflow.ps1**: Flow A implementation
-- **Invoke-ThreeWayMerge.ps1**: VSCode merge editor integration
+- **Get-UpdateConfirmation.ps1**: Conversational approval workflow and summary generation
+- **Invoke-ConflictResolutionWorkflow.ps1**: Conflict detection and marker writing (legacy name)
 - **Invoke-RollbackWorkflow.ps1**: Backup restoration workflow
 
 ### Main Orchestrator
@@ -227,7 +240,6 @@ claude-Win11-SpecKit-Safe-Update-Skill/
 │       ├── Show-UpdateReport.ps1
 │       ├── Get-UpdateConfirmation.ps1
 │       ├── Invoke-ConflictResolutionWorkflow.ps1
-│       ├── Invoke-ThreeWayMerge.ps1
 │       └── Invoke-RollbackWorkflow.ps1
 ├── templates/
 │   └── manifest-template.json
@@ -267,10 +279,10 @@ Run the test suite:
 ./tests/test-runner.ps1 -Integration
 ```
 
-**Test Results (v0.1.0)**:
-- ✅ 132 tests passing
-- ⚠️ 45 tests failing (known Pester 5.x scoping issues - modules work correctly)
-- ⚠️ 10 tests skipped (VSCodeIntegration mocking limitations)
+**Test Results (v0.2.0)**:
+- ✅ 193 tests passing
+- ⚠️ 59 tests failing (pre-existing integration test issues - modules work correctly)
+- ⚠️ 7 tests skipped (VSCodeIntegration mocking limitations)
 
 ## Specification
 
