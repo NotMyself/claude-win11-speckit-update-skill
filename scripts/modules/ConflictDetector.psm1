@@ -84,7 +84,10 @@ function Get-FileState {
         [string]$UpstreamHash,
 
         [Parameter(Mandatory)]
-        [bool]$IsOfficial
+        [bool]$IsOfficial,
+
+        [Parameter()]
+        [bool]$ManifestCustomized = $false
     )
 
     try {
@@ -98,7 +101,12 @@ function Get-FileState {
         }
 
         # Determine states
-        $isCustomized = if ($currentHash -and $OriginalHash) {
+        # Trust the manifest's customized flag if set, otherwise compare hashes
+        $isCustomized = if ($ManifestCustomized) {
+            # Manifest explicitly marks this as customized (e.g., from -AssumeAllCustomized)
+            $true
+        } elseif ($currentHash -and $OriginalHash) {
+            # Compare current vs original hash
             -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $OriginalHash)
         } else {
             $false
@@ -245,7 +253,8 @@ function Get-AllFileStates {
                     -FilePath $absolutePath `
                     -OriginalHash $trackedFile.original_hash `
                     -UpstreamHash $upstreamHash `
-                    -IsOfficial $trackedFile.is_official
+                    -IsOfficial $trackedFile.is_official `
+                    -ManifestCustomized $trackedFile.customized
 
                 # Replace absolute path with relative path in the state for consistency
                 $state.path = $trackedFile.path
