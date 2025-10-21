@@ -45,7 +45,7 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 
 **Entry point command:**
 ```powershell
-& "{skill_path}/scripts/update-orchestrator.ps1" [parameters]
+pwsh -NoProfile -Command "& '{skill_path}/scripts/update-orchestrator.ps1' [parameters]"
 ```
 
 ## Features

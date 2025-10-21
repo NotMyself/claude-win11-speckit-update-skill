@@ -182,26 +182,18 @@ try {
     Write-Verbose "Step 2: No rollback requested, continuing with update"
 
     # ========================================
-    # STEP 3: Load or Create Manifest
+    # STEP 3: Load Manifest (or prepare to create one)
     # ========================================
     Write-Verbose "Step 3: Loading manifest..."
     Write-Host "Loading manifest..." -ForegroundColor Cyan
 
     $manifest = Get-SpecKitManifest -ProjectRoot $projectRoot
+    $needsManifestCreation = $false
 
     if (-not $manifest) {
-        Write-Host "No manifest found. Creating new manifest..." -ForegroundColor Yellow
+        Write-Host "No manifest found. Will create after fetching target version..." -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
-        Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
-        Write-Host ""
-
-        # Create manifest assuming all files are customized
-        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -AssumeAllCustomized
-
-        Write-Host "Manifest created successfully" -ForegroundColor Green
-        Write-Host "Current version marked as: $($manifest.speckit_version)" -ForegroundColor Green
-        Write-Host ""
+        $needsManifestCreation = $true
     }
     else {
         Write-Host "Manifest loaded: $($manifest.speckit_version)" -ForegroundColor Green
@@ -265,6 +257,25 @@ try {
         exit 3
     }
 
+    # ========================================
+    # STEP 3.5: Create Manifest if needed (with placeholder version)
+    # ========================================
+    if ($needsManifestCreation) {
+        Write-Verbose "Creating new manifest with placeholder version v0.0.0"
+        Write-Host ""
+        Write-Host "Creating new manifest (version unknown - will update to $($targetRelease.tag_name))" -ForegroundColor Yellow
+        Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
+        Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
+        Write-Host ""
+
+        # Create manifest with placeholder version (unknown starting point), assuming all files are customized
+        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version "v0.0.0" -AssumeAllCustomized
+
+        Write-Host "Manifest created successfully" -ForegroundColor Green
+        Write-Host "Current version marked as: $($manifest.speckit_version) (placeholder - will update to $($targetRelease.tag_name))" -ForegroundColor Green
+        Write-Host ""
+    }
+
     # Check if already up to date
     if ($manifest.speckit_version -eq $targetRelease.tag_name -and -not $Force) {
         Write-Host ""
@@ -302,6 +313,15 @@ try {
 
         Show-UpdateReport -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -CustomFiles $customFiles
 
+        # Clean up temporary manifest if we created one (don't leave repo in dirty state)
+        if ($needsManifestCreation) {
+            $manifestPath = Join-Path $projectRoot ".specify/manifest.json"
+            if (Test-Path $manifestPath) {
+                Write-Verbose "Removing temporary manifest created for check-only mode"
+                Remove-Item $manifestPath -Force
+            }
+        }
+
         exit 0
     }
 
@@ -331,7 +351,7 @@ try {
         Write-Host "Creating backup..." -ForegroundColor Cyan
 
         try {
-            $backupPath = New-SpecKitBackup -ProjectRoot $projectRoot -FromVersion $manifest.speckit_version -ToVersion $targetRelease.tag_name
+            $backupPath = New-SpecKitBackup -ProjectRoot $projectRoot
 
             Write-Host "Backup created: $backupPath" -ForegroundColor Green
             Write-Host ""
@@ -501,7 +521,7 @@ try {
 
     try {
         Update-ManifestVersion -ProjectRoot $projectRoot -NewVersion $targetRelease.tag_name
-        Update-FileHashes -ProjectRoot $projectRoot -FileStates $fileStates
+        Update-FileHashes -ProjectRoot $projectRoot
 
         Write-Host "Manifest updated successfully" -ForegroundColor Green
         Write-Host ""

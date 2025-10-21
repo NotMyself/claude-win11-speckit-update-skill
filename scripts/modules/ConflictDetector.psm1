@@ -207,7 +207,11 @@ function Get-AllFileStates {
 
         [Parameter(Mandatory)]
         [ValidateNotNull()]
-        [hashtable]$UpstreamTemplates
+        [hashtable]$UpstreamTemplates,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ProjectRoot
     )
 
     try {
@@ -234,11 +238,17 @@ function Get-AllFileStates {
                     Remove-Item $tempFile -Force
                 }
 
+                # Construct absolute path for file operations
+                $absolutePath = Join-Path $ProjectRoot $trackedFile.path
+
                 $state = Get-FileState `
-                    -FilePath $trackedFile.path `
+                    -FilePath $absolutePath `
                     -OriginalHash $trackedFile.original_hash `
                     -UpstreamHash $upstreamHash `
                     -IsOfficial $trackedFile.is_official
+
+                # Replace absolute path with relative path in the state for consistency
+                $state.path = $trackedFile.path
 
                 $fileStates += $state
                 $processedPaths[$trackedFile.path] = $true
@@ -255,12 +265,18 @@ function Get-AllFileStates {
                     $upstreamHash = Get-NormalizedHash -FilePath $tempFile
                     Remove-Item $tempFile -Force
 
+                    # Construct absolute path for file operations
+                    $absolutePath = Join-Path $ProjectRoot $upstreamPath
+
                     # New file: no original hash
                     $state = Get-FileState `
-                        -FilePath $upstreamPath `
+                        -FilePath $absolutePath `
                         -OriginalHash $null `
                         -UpstreamHash $upstreamHash `
                         -IsOfficial $true
+
+                    # Replace absolute path with relative path in the state for consistency
+                    $state.path = $upstreamPath
 
                     $fileStates += $state
                 }
