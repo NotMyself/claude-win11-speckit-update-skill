@@ -533,6 +533,9 @@ try {
             Write-Host "Writing Git conflict markers to $($conflicts.Count) conflicted files..." -ForegroundColor Yellow
             Write-Host ""
 
+            $actualConflicts = @()
+            $falsePositives = @()
+
             foreach ($conflict in $conflicts) {
                 try {
                     $filePath = Join-Path $projectRoot $conflict.path
@@ -551,40 +554,88 @@ try {
                         ""
                     }
 
-                    # Get base content (not available in this workflow - use empty)
-                    $baseContent = ""
+                    # Check if current and incoming are actually different (normalized)
+                    $currentHash = if ($currentContent) {
+                        # Write to temp file to hash it
+                        $tempFile = Join-Path $env:TEMP "current-$(Get-Random).txt"
+                        $currentContent | Set-Content -Path $tempFile -Encoding utf8 -Force
+                        $hash = Get-NormalizedHash -FilePath $tempFile
+                        Remove-Item $tempFile -Force
+                        $hash
+                    } else {
+                        $null
+                    }
 
-                    # Write conflict markers
-                    Write-ConflictMarkers `
-                        -FilePath $filePath `
-                        -CurrentContent $currentContent `
-                        -BaseContent $baseContent `
-                        -IncomingContent $incomingContent `
-                        -OriginalVersion $manifest.speckit_version `
-                        -NewVersion $targetRelease.tag_name
+                    $incomingHash = $conflict.UpstreamHash
 
-                    Write-Host "  Written conflict markers: $($conflict.path)" -ForegroundColor Cyan
+                    # Compare hashes to see if there's a real conflict
+                    $hasRealConflict = -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $incomingHash)
+
+                    if ($hasRealConflict) {
+                        # Real conflict - write markers
+                        $baseContent = ""
+
+                        Write-ConflictMarkers `
+                            -FilePath $filePath `
+                            -CurrentContent $currentContent `
+                            -BaseContent $baseContent `
+                            -IncomingContent $incomingContent `
+                            -OriginalVersion $manifest.speckit_version `
+                            -NewVersion $targetRelease.tag_name
+
+                        Write-Host "  Written conflict markers: $($conflict.path)" -ForegroundColor Cyan
+                        $actualConflicts += $conflict.path
+                    }
+                    else {
+                        # False positive - file is actually the same, just marked as customized
+                        Write-Host "  No changes detected: $($conflict.path) (marked as not customized)" -ForegroundColor Green
+                        $falsePositives += $conflict.path
+
+                        # Update manifest to mark as not customized
+                        $trackedFile = $manifest.tracked_files | Where-Object { $_.path -eq $conflict.path }
+                        if ($trackedFile) {
+                            $trackedFile.customized = $false
+                            $trackedFile.original_hash = $incomingHash
+                        }
+
+                        # Add to resolved list
+                        $updateResult.FilesUpdated += $conflict.path
+                    }
                 }
                 catch {
-                    Write-Warning "Failed to write conflict markers for $($conflict.path): $($_.Exception.Message)"
+                    Write-Warning "Failed to process conflict for $($conflict.path): $($_.Exception.Message)"
+                    $actualConflicts += $conflict.path
                 }
             }
 
             Write-Host ""
-            Write-Host "Conflict markers written successfully." -ForegroundColor Green
-            Write-Host ""
-            Write-Host "Next Steps:" -ForegroundColor Cyan
-            Write-Host "  1. Open the conflicted files in VSCode" -ForegroundColor Cyan
-            Write-Host "  2. Use CodeLens actions to resolve conflicts:" -ForegroundColor Cyan
-            Write-Host "     - Accept Current (keep your version)" -ForegroundColor Cyan
-            Write-Host "     - Accept Incoming (use new version)" -ForegroundColor Cyan
-            Write-Host "     - Accept Both (merge manually)" -ForegroundColor Cyan
-            Write-Host "  3. Save the resolved files" -ForegroundColor Cyan
-            Write-Host "  4. Run '/speckit-updater -Proceed' to finalize" -ForegroundColor Cyan
-            Write-Host ""
+            if ($falsePositives.Count -gt 0) {
+                Write-Host "False Positives Resolved:" -ForegroundColor Green
+                Write-Host "  $($falsePositives.Count) files were marked as customized but are identical to upstream" -ForegroundColor Green
+                Write-Host "  These have been automatically marked as not customized in the manifest" -ForegroundColor Green
+                Write-Host ""
+            }
 
-            # Mark all as skipped for now - user will resolve in VSCode
-            $updateResult.ConflictsSkipped = $conflicts | ForEach-Object { $_.path }
+            if ($actualConflicts.Count -gt 0) {
+                Write-Host "Conflict markers written for $($actualConflicts.Count) file(s)." -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "Next Steps:" -ForegroundColor Cyan
+                Write-Host "  1. Open the conflicted files in VSCode" -ForegroundColor Cyan
+                Write-Host "  2. Use CodeLens actions to resolve conflicts:" -ForegroundColor Cyan
+                Write-Host "     - Accept Current (keep your version)" -ForegroundColor Cyan
+                Write-Host "     - Accept Incoming (use new version)" -ForegroundColor Cyan
+                Write-Host "     - Accept Both (merge manually)" -ForegroundColor Cyan
+                Write-Host "  3. Save the resolved files" -ForegroundColor Cyan
+                Write-Host "  4. Commit the resolved files to git" -ForegroundColor Cyan
+                Write-Host ""
+
+                # Mark actual conflicts as skipped - user will resolve in VSCode
+                $updateResult.ConflictsSkipped = $actualConflicts
+            }
+            else {
+                Write-Host "All conflicts were false positives - no action needed!" -ForegroundColor Green
+                Write-Host ""
+            }
         }
         else {
             # Interactive mode: Use interactive workflow
