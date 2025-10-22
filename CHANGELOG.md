@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-10-22
+
 ### Fixed
 - **False Constitution Update Notifications (#18)**: Eliminated false positive notifications for constitution template updates
   - **Root Cause**: Step 12 displayed notifications whenever `constitution.md` appeared in `FilesUpdated` or `ConflictsResolved` arrays without verifying actual content changes
