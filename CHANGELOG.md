@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Smart Conflict Resolution (#8)**: Intelligent two-tier conflict handling based on file size
+  - **Small Files (≤100 lines)**: Continue using Git conflict markers with VSCode CodeLens integration
+  - **Large Files (>100 lines)**: Generate side-by-side Markdown diff files in `.specify/.tmp-conflicts/`
+  - **Implementation**:
+    - New `Compare-FileSections` function: Analyzes file differences and groups consecutive changes into sections
+    - New `Write-SideBySideDiff` function: Generates Markdown diff files with syntax highlighting and unchanged sections summary
+    - New `Write-SmartConflictResolution` function: Routes to appropriate resolution method based on line count
+    - New `Remove-ConflictDiffFiles` function: Cleans up diff files after successful updates
+  - **Diff File Features**:
+    - Header with version comparison and file metadata (line count, changed sections, total changed lines)
+    - Only changed sections shown with 3-line context before/after
+    - Side-by-side comparison: "Your Version (Lines X-Y)" vs "Incoming Version (Lines X-Y)"
+    - Syntax highlighting based on file extension (.md, .ps1, .json, .yaml)
+    - Summary of unchanged sections (e.g., "Lines 1-50 (50 lines) unchanged")
+    - UTF-8 encoding without BOM for cross-platform compatibility
+  - **Automatic Cleanup**:
+    - `.specify/.tmp-conflicts/` directory removed after successful updates
+    - Diff files preserved on rollback for debugging purposes
+  - **Error Handling**: Graceful fallback to Git markers if diff generation fails
+  - **Files Added**:
+    - `tests/fixtures/large-file-samples/` - 5 test fixtures for boundary condition testing (50, 100, 101, 200, 1000 lines)
+  - **Files Modified**:
+    - `scripts/modules/ConflictDetector.psm1` - Added 4 new functions (~400 lines)
+    - `scripts/update-orchestrator.ps1` - Added Step 13.5 for cleanup, replaced `Write-ConflictMarkers` with `Write-SmartConflictResolution`
+    - `.gitignore` - Added `.specify/.tmp-conflicts/` to ignore patterns
+    - `tests/unit/ConflictDetector.Tests.ps1` - Added 26 new unit tests (18 for diff generation, 8 for cleanup)
+    - `tests/integration/UpdateOrchestrator.Tests.ps1` - Added 5 integration tests
+  - **Test Coverage**: 206 passing unit tests, 29 passing integration tests
+
 ## [0.2.0] - 2025-10-21
 
 ### Changed

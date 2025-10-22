@@ -26,12 +26,12 @@ description: "Task list for smart conflict resolution implementation"
 
 **Purpose**: Project initialization and test fixture preparation
 
-- [ ] T001 Create test fixtures directory at tests/fixtures/large-file-samples/
-- [ ] T002 [P] Create small-file.md test fixture (50 lines) in tests/fixtures/large-file-samples/
-- [ ] T003 [P] Create boundary-100-lines.md test fixture (exactly 100 lines) in tests/fixtures/large-file-samples/
-- [ ] T004 [P] Create boundary-101-lines.md test fixture (101 lines) in tests/fixtures/large-file-samples/
-- [ ] T005 [P] Create large-file-200-lines.md test fixture (200 lines with 3 changed sections) in tests/fixtures/large-file-samples/
-- [ ] T006 [P] Create large-file-1000-lines.md test fixture (1000 lines for performance testing) in tests/fixtures/large-file-samples/
+- [X] T001 Create test fixtures directory at tests/fixtures/large-file-samples/
+- [X] T002 [P] Create small-file.md test fixture (50 lines) in tests/fixtures/large-file-samples/
+- [X] T003 [P] Create boundary-100-lines.md test fixture (exactly 100 lines) in tests/fixtures/large-file-samples/
+- [X] T004 [P] Create boundary-101-lines.md test fixture (101 lines) in tests/fixtures/large-file-samples/
+- [X] T005 [P] Create large-file-200-lines.md test fixture (200 lines with 3 changed sections) in tests/fixtures/large-file-samples/
+- [X] T006 [P] Create large-file-1000-lines.md test fixture (1000 lines for performance testing) in tests/fixtures/large-file-samples/
 
 ---
 
@@ -53,32 +53,32 @@ description: "Task list for smart conflict resolution implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement Compare-FileSections function in scripts/modules/ConflictDetector.psm1
-- [ ] T008 [US1] Implement Write-SideBySideDiff function (including unchanged sections summary) in scripts/modules/ConflictDetector.psm1
-- [ ] T009 [US1] Implement Write-SmartConflictResolution function (size detection and large file path) in scripts/modules/ConflictDetector.psm1
+- [X] T007 [US1] Implement Compare-FileSections function in scripts/modules/ConflictDetector.psm1
+- [X] T008 [US1] Implement Write-SideBySideDiff function (including unchanged sections summary) in scripts/modules/ConflictDetector.psm1
+- [X] T009 [US1] Implement Write-SmartConflictResolution function (size detection and large file path) in scripts/modules/ConflictDetector.psm1
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Unit test: Compare-FileSections with identical files returns empty DiffSections in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T011 [P] [US1] Unit test: Compare-FileSections with single section change groups consecutive lines in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T012 [P] [US1] Unit test: Compare-FileSections with multiple sections returns correct section count in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T013 [P] [US1] Unit test: Compare-FileSections adds 3 context lines before/after changes in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T014 [P] [US1] Unit test: Compare-FileSections handles change at start of file (boundary) in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T015 [P] [US1] Unit test: Compare-FileSections handles change at end of file (boundary) in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T016 [P] [US1] Unit test: Compare-FileSections handles empty file comparison in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T017 [P] [US1] Unit test: Compare-FileSections identifies unchanged ranges correctly in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T018 [P] [US1] Unit test: Write-SideBySideDiff creates diff file at correct path in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T019 [P] [US1] Unit test: Write-SideBySideDiff generates valid Markdown format in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T020 [P] [US1] Unit test: Write-SideBySideDiff detects language hint from file extension in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T021 [P] [US1] Unit test: Write-SideBySideDiff creates .specify/.tmp-conflicts/ directory if not exists in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T022 [P] [US1] Unit test: Write-SideBySideDiff uses UTF-8 encoding without BOM in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T023 [P] [US1] Unit test: Write-SideBySideDiff includes unchanged sections summary in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T024 [P] [US1] Unit test: Write-SmartConflictResolution generates diff for 101-line file in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T025 [P] [US1] Unit test: Write-SmartConflictResolution generates diff for 200-line file in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T026 [P] [US1] Unit test: Write-SmartConflictResolution falls back to Git markers on error in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T027 [P] [US1] Unit test: Write-SmartConflictResolution handles empty base version in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T028 [US1] Integration test: End-to-end large file conflict generates diff file with correct format in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T029 [US1] Validation test: Open generated diff file in VSCode preview and verify Markdown renders correctly with syntax highlighting
+- [X] T010 [P] [US1] Unit test: Compare-FileSections with identical files returns empty DiffSections in tests/unit/ConflictDetector.Tests.ps1
+- [X] T011 [P] [US1] Unit test: Compare-FileSections with single section change groups consecutive lines in tests/unit/ConflictDetector.Tests.ps1
+- [X] T012 [P] [US1] Unit test: Compare-FileSections with multiple sections returns correct section count in tests/unit/ConflictDetector.Tests.ps1
+- [X] T013 [P] [US1] Unit test: Compare-FileSections adds 3 context lines before/after changes in tests/unit/ConflictDetector.Tests.ps1
+- [X] T014 [P] [US1] Unit test: Compare-FileSections handles change at start of file (boundary) in tests/unit/ConflictDetector.Tests.ps1
+- [X] T015 [P] [US1] Unit test: Compare-FileSections handles change at end of file (boundary) in tests/unit/ConflictDetector.Tests.ps1
+- [X] T016 [P] [US1] Unit test: Compare-FileSections handles empty file comparison in tests/unit/ConflictDetector.Tests.ps1
+- [X] T017 [P] [US1] Unit test: Compare-FileSections identifies unchanged ranges correctly in tests/unit/ConflictDetector.Tests.ps1
+- [X] T018 [P] [US1] Unit test: Write-SideBySideDiff creates diff file at correct path in tests/unit/ConflictDetector.Tests.ps1
+- [X] T019 [P] [US1] Unit test: Write-SideBySideDiff generates valid Markdown format in tests/unit/ConflictDetector.Tests.ps1
+- [X] T020 [P] [US1] Unit test: Write-SideBySideDiff detects language hint from file extension in tests/unit/ConflictDetector.Tests.ps1
+- [X] T021 [P] [US1] Unit test: Write-SideBySideDiff creates .specify/.tmp-conflicts/ directory if not exists in tests/unit/ConflictDetector.Tests.ps1
+- [X] T022 [P] [US1] Unit test: Write-SideBySideDiff uses UTF-8 encoding without BOM in tests/unit/ConflictDetector.Tests.ps1
+- [X] T023 [P] [US1] Unit test: Write-SideBySideDiff includes unchanged sections summary in tests/unit/ConflictDetector.Tests.ps1
+- [X] T024 [P] [US1] Unit test: Write-SmartConflictResolution generates diff for 101-line file in tests/unit/ConflictDetector.Tests.ps1
+- [X] T025 [P] [US1] Unit test: Write-SmartConflictResolution generates diff for 200-line file in tests/unit/ConflictDetector.Tests.ps1
+- [X] T026 [P] [US1] Unit test: Write-SmartConflictResolution falls back to Git markers on error in tests/unit/ConflictDetector.Tests.ps1
+- [X] T027 [P] [US1] Unit test: Write-SmartConflictResolution handles empty base version in tests/unit/ConflictDetector.Tests.ps1
+- [X] T028 [US1] Integration test: End-to-end large file conflict generates diff file with correct format in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T029 [US1] Validation test: Open generated diff file in VSCode preview and verify Markdown renders correctly with syntax highlighting
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently. Large file conflicts (>100 lines) generate side-by-side diff files.
 
@@ -94,16 +94,16 @@ description: "Task list for smart conflict resolution implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Update Write-SmartConflictResolution to call Write-ConflictMarkers for files ≤100 lines in scripts/modules/ConflictDetector.psm1
-- [ ] T031 [US2] Update Export-ModuleMember to export Write-SmartConflictResolution, Compare-FileSections, Write-SideBySideDiff in scripts/modules/ConflictDetector.psm1
-- [ ] T032 [US2] Update orchestrator to replace Write-ConflictMarkers calls with Write-SmartConflictResolution in scripts/update-orchestrator.ps1
+- [X] T030 [US2] Update Write-SmartConflictResolution to call Write-ConflictMarkers for files ≤100 lines in scripts/modules/ConflictDetector.psm1
+- [X] T031 [US2] Update Export-ModuleMember to export Write-SmartConflictResolution, Compare-FileSections, Write-SideBySideDiff in scripts/modules/ConflictDetector.psm1
+- [X] T032 [US2] Update orchestrator to replace Write-ConflictMarkers calls with Write-SmartConflictResolution in scripts/update-orchestrator.ps1
 
 ### Tests for User Story 2
 
-- [ ] T033 [P] [US2] Unit test: Write-SmartConflictResolution uses Git markers for 50-line file in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T034 [P] [US2] Unit test: Write-SmartConflictResolution uses Git markers for exactly 100-line file (boundary) in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T035 [P] [US2] Unit test: Write-SmartConflictResolution calls Write-ConflictMarkers with correct parameters in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T036 [US2] Integration test: End-to-end small file conflict uses Git markers in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T033 [P] [US2] Unit test: Write-SmartConflictResolution uses Git markers for 50-line file in tests/unit/ConflictDetector.Tests.ps1
+- [X] T034 [P] [US2] Unit test: Write-SmartConflictResolution uses Git markers for exactly 100-line file (boundary) in tests/unit/ConflictDetector.Tests.ps1
+- [X] T035 [P] [US2] Unit test: Write-SmartConflictResolution calls Write-ConflictMarkers with correct parameters in tests/unit/ConflictDetector.Tests.ps1
+- [X] T036 [US2] Integration test: End-to-end small file conflict uses Git markers in tests/integration/UpdateOrchestrator.Tests.ps1
 - [ ] T037 [US2] Validation test: Verify Git conflict markers work in VSCode (CodeLens actions appear)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently. Small files use Git markers, large files use diff files.
@@ -118,16 +118,16 @@ description: "Task list for smart conflict resolution implementation"
 
 ### Implementation for User Story 3
 
-- [ ] T038 [US3] Implement cleanup logic for .specify/.tmp-conflicts/ in orchestrator after successful update in scripts/update-orchestrator.ps1
-- [ ] T039 [US3] Ensure cleanup does NOT run on rollback (preserve diff files for debugging) in scripts/update-orchestrator.ps1
+- [X] T038 [US3] Implement cleanup logic for .specify/.tmp-conflicts/ in orchestrator after successful update in scripts/update-orchestrator.ps1
+- [X] T039 [US3] Ensure cleanup does NOT run on rollback (preserve diff files for debugging) in scripts/update-orchestrator.ps1
 
 ### Tests for User Story 3
 
-- [ ] T040 [P] [US3] Unit test: Cleanup function removes .specify/.tmp-conflicts/ directory in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T041 [P] [US3] Unit test: Cleanup handles non-existent directory gracefully in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T042 [P] [US3] Unit test: Cleanup failure logs warning but doesn't fail update in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T043 [US3] Integration test: Successful update cleans up diff files in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T044 [US3] Integration test: Rollback preserves diff files in .specify/.tmp-conflicts/ in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T040 [P] [US3] Unit test: Cleanup function removes .specify/.tmp-conflicts/ directory in tests/unit/ConflictDetector.Tests.ps1
+- [X] T041 [P] [US3] Unit test: Cleanup handles non-existent directory gracefully in tests/unit/ConflictDetector.Tests.ps1
+- [X] T042 [P] [US3] Unit test: Cleanup failure logs warning but doesn't fail update in tests/unit/ConflictDetector.Tests.ps1
+- [X] T043 [US3] Integration test: Successful update cleans up diff files in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T044 [US3] Integration test: Rollback preserves diff files in .specify/.tmp-conflicts/ in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: All user stories should now be independently functional. Cleanup works for successful updates, diff files preserved on rollback.
 
@@ -137,17 +137,17 @@ description: "Task list for smart conflict resolution implementation"
 
 **Purpose**: Documentation, performance validation, and final quality checks
 
-- [ ] T045 [P] Update "Git Conflict Markers" section in CLAUDE.md with smart conflict resolution description
-- [ ] T046 [P] Add example diff file output to CLAUDE.md documentation
-- [ ] T047 [P] Update README.md with feature mention (smart diff generation for large files)
-- [ ] T048 [P] Update CHANGELOG.md under [Unreleased] with feature description and breaking changes
-- [ ] T049 Performance benchmark: Measure Compare-FileSections with 100-line file (target <50ms) in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T050 Performance benchmark: Measure Write-SmartConflictResolution with 1000-line file (target <2000ms) in tests/unit/ConflictDetector.Tests.ps1
-- [ ] T051 Code cleanup: Review all new functions for PowerShell style compliance (PascalCase, comment-based help, verbose logging)
-- [ ] T052 Code cleanup: Ensure all functions have .SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE documentation
-- [ ] T053 Final validation: Run all unit tests (.\tests\test-runner.ps1 -Unit) and verify pass
-- [ ] T054 Final validation: Run all integration tests (.\tests\test-runner.ps1 -Integration) and verify pass
-- [ ] T055 Final validation: Run full test suite with coverage (.\tests\test-runner.ps1 -Coverage) and verify 80%+ coverage
+- [X] T045 [P] Update "Git Conflict Markers" section in CLAUDE.md with smart conflict resolution description
+- [X] T046 [P] Add example diff file output to CLAUDE.md documentation
+- [X] T047 [P] Update README.md with feature mention (smart diff generation for large files)
+- [X] T048 [P] Update CHANGELOG.md under [Unreleased] with feature description and breaking changes
+- [X] T049 Performance benchmark: Measure Compare-FileSections with 100-line file (target <50ms) in tests/unit/ConflictDetector.Tests.ps1
+- [X] T050 Performance benchmark: Measure Write-SmartConflictResolution with 1000-line file (target <2000ms) in tests/unit/ConflictDetector.Tests.ps1
+- [X] T051 Code cleanup: Review all new functions for PowerShell style compliance (PascalCase, comment-based help, verbose logging)
+- [X] T052 Code cleanup: Ensure all functions have .SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE documentation
+- [X] T053 Final validation: Run all unit tests (.\tests\test-runner.ps1 -Unit) and verify pass
+- [X] T054 Final validation: Run all integration tests (.\tests\test-runner.ps1 -Integration) and verify pass
+- [X] T055 Final validation: Run full test suite with coverage (.\tests\test-runner.ps1 -Coverage) and verify 80%+ coverage
 
 ---
 
