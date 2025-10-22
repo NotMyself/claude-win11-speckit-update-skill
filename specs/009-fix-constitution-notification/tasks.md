@@ -113,13 +113,13 @@
 - [ ] T031 [US1] Manual test: Create scenario with identical constitution in backup, verify no notification shown using quickstart.md test procedure
 - [ ] T032 [US2] Manual test: Create scenario with modified constitution in backup, verify ℹ️ informational notification shown using quickstart.md test procedure
 - [ ] T033 [US3] Manual test: Simulate conflict scenario, verify ⚠️ urgent notification shown using quickstart.md test procedure
-- [ ] T034 [US1] [US2] [US3] Verify emoji rendering in Windows Terminal and VSCode integrated terminal
+- [X] T034 [US1] [US2] [US3] Verify emoji rendering in Windows Terminal and VSCode integrated terminal
 - [ ] T035 [US1] [US2] [US3] Test verbose logging: enable $VerbosePreference and verify structured key-value output format
 - [ ] T036 [US1] [US2] [US3] Test fail-safe behavior: delete backup constitution, verify notification still shown
 - [ ] T037 [US1] Performance validation: measure Step 12 processing time with Measure-Command, verify <200ms total
 - [ ] T038 [US1] Performance validation: measure hash verification time, verify <100ms for typical constitution file
-- [ ] T039 [US1] [US2] [US3] Code quality check: run PSScriptAnalyzer on scripts/update-orchestrator.ps1, verify no warnings
-- [ ] T040 [US1] [US2] [US3] Run full test suite: execute tests/test-runner.ps1, verify all tests pass including new integration tests
+- [X] T039 [US1] [US2] [US3] Code quality check: run PSScriptAnalyzer on scripts/update-orchestrator.ps1, verify no warnings
+- [X] T040 [US1] [US2] [US3] Run full test suite: execute tests/test-runner.ps1, verify all tests pass including new integration tests
 
 **Checkpoint**: All documentation updated, manual tests passed, performance validated
 
