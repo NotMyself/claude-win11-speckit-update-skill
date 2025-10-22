@@ -566,7 +566,13 @@ When creating commits for this repository:
 
 This skill is designed for projects using **GitHub SpecKit** (`.specify/` directories with template-driven workflows). Key integration points:
 
-- **Constitution Updates:** When constitution template changes, skill notifies user to run `/speckit.constitution`
+- **Constitution Updates:** When constitution template changes, the skill uses hash verification to detect actual content changes before notifying users:
+  - **Hash Verification**: Compares normalized hashes of current and backup constitution files to eliminate false positives
+  - **Informational Notifications** (ℹ️): Shown for clean updates with no conflicts - marked "OPTIONAL" for user review
+  - **Urgent Notifications** (⚠️): Shown for conflicts requiring manual resolution - marked "REQUIRED" with red/yellow colors
+  - **Fail-Safe Behavior**: If hash comparison fails or backup is missing, notification is shown (errs on side of caution)
+  - **Structured Logging**: Verbose mode (`-Verbose`) shows detailed hash comparison for debugging
+  - **Command**: User runs `/speckit.constitution <backup-path>` to merge changes
 - **Official Commands:** Tracks 8 official SpecKit commands (speckit.analyze, speckit.checklist, etc.)
 - **Custom Commands:** User-created commands in `.claude/commands/` are NEVER overwritten, even with `--force`
 - **Template Source:** Fetches from GitHub SpecKit releases (not from npm)
