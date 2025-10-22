@@ -9,12 +9,14 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 ## Features
 
 - **Customization Preservation**: Automatically detects and preserves your customized files
-- **Git Conflict Markers**: Writes conflict markers that VSCode CodeLens detects automatically
+- **Smart Conflict Resolution**: Intelligent two-tier conflict handling
+  - Small files (≤100 lines): Git conflict markers with VSCode CodeLens integration
+  - Large files (>100 lines): Side-by-side Markdown diff files for easier review
 - **False Positive Detection**: Auto-resolves conflicts where files are identical to upstream
 - **Conversational Approval**: Two-step workflow designed for Claude Code
 - **Version Tracking**: Maintains manifest with file hashes and version information
 - **Automatic Backups**: Creates timestamped backups with retention management
-- **Fail-Fast with Rollback**: Automatic rollback on failure
+- **Fail-Fast with Rollback**: Automatic rollback on failure, preserves diff files for debugging
 - **Dry-Run Mode**: Check what would change before applying updates
 - **Constitution Integration**: Seamless integration with `/speckit.constitution` command
 

@@ -261,18 +261,22 @@ This pattern:
 - Provides better UX than Read-Host prompts in terminal
 - Works identically in Claude Code CLI and VSCode Extension contexts
 
-## Git Conflict Markers
+## Smart Conflict Resolution
 
-When files have both local customizations AND upstream changes, the skill uses **Git-style conflict markers** instead of attempting to launch external merge editors.
+When files have both local customizations AND upstream changes, the skill uses **intelligent conflict resolution** that adapts based on file size:
 
-### Why Conflict Markers?
+### Two-Tier Resolution Strategy
 
-**Problem:** Invoking `code --merge` from PowerShell subprocess is unreliable:
-- May fail if VSCode extension host doesn't allow IPC from subprocess
-- `--wait` flag blocks PowerShell until merge complete (timeout risk)
-- Unexpected UI interruption for user
+**Small Files (≤100 lines):** Git conflict markers (standard 3-way merge)
+**Large Files (>100 lines):** Side-by-side diff files in Markdown format
 
-**Solution:** Write Git-format conflict markers directly to files:
+This dual approach provides optimal UX for different scenarios:
+- Small files: Quick inline resolution with VSCode CodeLens
+- Large files: Comprehensive side-by-side comparison in readable format
+
+### Small File Resolution: Git Conflict Markers
+
+For files with 100 lines or fewer, the skill writes Git-style conflict markers directly to the file:
 
 ```markdown
 <<<<<<< Current (Your Version)
@@ -284,37 +288,140 @@ When files have both local customizations AND upstream changes, the skill uses *
 >>>>>>> Incoming (v0.0.72)
 ```
 
-VSCode automatically detects these markers and displays **CodeLens actions**:
+**VSCode Integration:** VSCode automatically detects these markers and displays **CodeLens actions**:
 - Accept Current Change
 - Accept Incoming Change
 - Accept Both Changes
 - Compare Changes
 
 **Benefits:**
-- No external process invocation required
-- Works reliably across all contexts (CLI, Extension, terminal)
 - Familiar UX for developers (standard Git workflow)
-- Graceful degradation (other editors can parse markers manually)
-- User can resolve conflicts at their own pace
+- Immediate inline editing
+- Works in all text editors
+- User resolves conflicts at their own pace
+
+### Large File Resolution: Side-by-Side Diff Files
+
+For files with more than 100 lines, the skill generates a detailed Markdown diff file in `.specify/.tmp-conflicts/`:
+
+**Example:** If `custom-large.md` has a conflict, the skill creates `.specify/.tmp-conflicts/custom-large.diff.md`
+
+**Diff File Features:**
+- Header with version comparison and file metadata
+- Only changed sections shown (with 3-line context before/after)
+- Side-by-side comparison: "Your Version" vs "Incoming Version"
+- Syntax highlighting based on file extension
+- Summary of unchanged sections (e.g., "Lines 1-50 unchanged")
+- UTF-8 encoding without BOM for cross-platform compatibility
+
+**Why This Approach:**
+- Large files with Git markers are difficult to navigate
+- Side-by-side view makes changes easier to understand
+- Unchanged sections summary helps focus on what actually changed
+- Markdown format previews beautifully in VSCode
+- Diff files are automatically cleaned up after successful updates
+
+See [Example Diff File Output](#example-diff-file-output) below for a complete example.
 
 ### Implementation
 
-The `Write-ConflictMarkers` function (ConflictDetector.psm1) creates 3-way merge conflict markers:
+The `Write-SmartConflictResolution` function (ConflictDetector.psm1) automatically routes to the appropriate resolution method:
 
 ```powershell
-Write-ConflictMarkers -FilePath ".claude/commands/speckit.plan.md" `
-                      -CurrentContent $currentVersion `
-                      -BaseContent $originalVersion `
-                      -IncomingContent $upstreamVersion `
-                      -OriginalVersion "v0.0.71" `
-                      -NewVersion "v0.0.72"
+Write-SmartConflictResolution -FilePath ".claude/commands/custom-file.md" `
+                               -CurrentContent $currentVersion `
+                               -BaseContent $originalVersion `
+                               -IncomingContent $upstreamVersion `
+                               -OriginalVersion "v0.0.71" `
+                               -NewVersion "v0.0.72"
 ```
 
-**Requirements for VSCode Recognition:**
-- Markers must start at column 1 (no indentation)
-- Exact format: `<<<<<<<`, `|||||||`, `=======`, `>>>>>>>`
-- UTF-8 encoding (no BOM for cross-platform compatibility)
-- Text-based file types only (.md, .json, .ps1, .txt, etc.)
+The function counts lines in `CurrentContent` and:
+- If ≤100 lines: Calls `Write-ConflictMarkers` (Git markers)
+- If >100 lines: Calls `Compare-FileSections` + `Write-SideBySideDiff` (Markdown diff)
+- On error: Falls back to Git markers as a safety measure
+
+**Automatic Cleanup:** After a successful update, `.specify/.tmp-conflicts/` is automatically removed. On rollback, diff files are preserved for debugging.
+
+### Example Diff File Output
+
+Here's an example of a generated diff file for a large file conflict:
+
+```markdown
+# Conflict Resolution: speckit.plan.md
+
+**Your Version**: v0.0.71
+**Incoming Version**: v0.0.72
+**File Path**: `.claude/commands/speckit.plan.md`
+**File Size**: 150 lines
+**Changed Sections**: 2
+**Total Changed Lines**: 8
+
+---
+
+## Changed Section 1
+
+### Your Version (Lines 45-51)
+
+```markdown
+## Step 3: Design Phase
+
+Review the requirements and create a detailed implementation plan.
+Use the plan template to structure your approach.
+```
+
+### Incoming Version (Lines 45-51)
+
+```markdown
+## Step 3: Design Phase
+
+Review the requirements and create a detailed implementation plan.
+Use the plan template to structure your approach and identify dependencies.
+Consider error handling and edge cases early in the design.
+```
+
+---
+
+## Changed Section 2
+
+### Your Version (Lines 98-104)
+
+```markdown
+## Validation Checklist
+
+- [ ] All requirements met
+- [ ] Tests passing
+```
+
+### Incoming Version (Lines 98-106)
+
+```markdown
+## Validation Checklist
+
+- [ ] All requirements met
+- [ ] Unit tests passing
+- [ ] Integration tests passing
+- [ ] Documentation updated
+```
+
+---
+
+## Unchanged Sections
+
+The following sections remain unchanged between versions:
+
+- **Lines 1-44** (44 lines): Header and introduction
+- **Lines 52-97** (46 lines): Middle content sections
+- **Lines 107-150** (44 lines): Footer and references
+
+**Total Unchanged**: 134 lines (89.3%)
+```
+
+This format makes it easy to:
+1. See exactly what changed and where
+2. Compare side-by-side without scrolling through the entire file
+3. Understand the scope of changes (only 11% of the file changed)
+4. Preview beautifully in VSCode's Markdown preview
 
 ## Key Workflows
 

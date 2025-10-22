@@ -66,6 +66,7 @@ coverage/
 
 # SpecKit internals
 .specify/.tmp-merge/
+.specify/.tmp-conflicts/
 .specify/backups/
 
 # OS

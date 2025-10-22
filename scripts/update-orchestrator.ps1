@@ -586,10 +586,10 @@ try {
                     $hasRealConflict = -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $incomingHash)
 
                     if ($hasRealConflict) {
-                        # Real conflict - write markers
+                        # Real conflict - use smart resolution (Git markers for small files, diff for large files)
                         $baseContent = ""
 
-                        Write-ConflictMarkers `
+                        Write-SmartConflictResolution `
                             -FilePath $filePath `
                             -CurrentContent $currentContent `
                             -BaseContent $baseContent `
@@ -597,7 +597,7 @@ try {
                             -OriginalVersion $manifest.speckit_version `
                             -NewVersion $targetRelease.tag_name
 
-                        Write-Host "  Written conflict markers: $($conflict.path)" -ForegroundColor Cyan
+                        Write-Host "  Conflict resolution applied: $($conflict.path)" -ForegroundColor Cyan
                         $actualConflicts += $conflict.path
                     }
                     else {
@@ -722,6 +722,20 @@ try {
     catch {
         Write-Error "Failed to update manifest: $($_.Exception.Message)"
         throw
+    }
+
+    # ========================================
+    # STEP 13.5: Cleanup Temporary Conflict Diff Files
+    # ========================================
+    Write-Verbose "Step 13.5: Cleaning up temporary conflict diff files..."
+
+    try {
+        Remove-ConflictDiffFiles -ProjectRoot $projectRoot
+        Write-Verbose "Conflict diff files cleaned up successfully"
+    }
+    catch {
+        # Non-fatal - already logged as warning in function
+        Write-Verbose "Cleanup completed with warnings (non-fatal)"
     }
 
     # ========================================
