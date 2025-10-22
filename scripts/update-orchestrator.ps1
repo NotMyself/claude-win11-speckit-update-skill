@@ -681,29 +681,90 @@ try {
     $constitutionConflict = $updateResult.ConflictsResolved -contains '.specify/memory/constitution.md'
 
     if ($constitutionUpdated -or $constitutionConflict) {
-        Write-Host ""
-        Write-Host "========================================" -ForegroundColor Cyan
-        Write-Host "Constitution Update Required" -ForegroundColor Cyan
-        Write-Host "========================================" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "The constitution template has been updated." -ForegroundColor Yellow
+        # Verify if constitution content actually changed by comparing hashes
+        $constitutionPath = Join-Path $projectRoot '.specify/memory/constitution.md'
+        $backupConstitutionPath = Join-Path $backupPath '.specify/memory/constitution.md'
 
-        if ($constitutionConflict) {
-            Write-Host ""
-            Write-Host "Your customized constitution has been preserved." -ForegroundColor Green
-            Write-Host "Backup location: $backupPath/.specify/memory/constitution.md" -ForegroundColor Cyan
-            Write-Host ""
+        $actualChangeDetected = $false
+
+        try {
+            Write-Verbose "Constitution hash comparison:"
+            Write-Verbose "  CurrentPath=$constitutionPath"
+            Write-Verbose "  BackupPath=$backupConstitutionPath"
+
+            # Check if both files exist
+            if ((Test-Path $constitutionPath) -and (Test-Path $backupConstitutionPath)) {
+                # Compute normalized hashes for both files
+                $currentHash = Get-NormalizedHash -FilePath $constitutionPath
+                $backupHash = Get-NormalizedHash -FilePath $backupConstitutionPath
+
+                Write-Verbose "  CurrentHash=$currentHash"
+                Write-Verbose "  BackupHash=$backupHash"
+
+                # Compare hashes to detect actual content change
+                $actualChangeDetected = ($currentHash -ne $backupHash)
+                Write-Verbose "  Changed=$actualChangeDetected"
+
+                if (-not $actualChangeDetected) {
+                    Write-Verbose "Constitution marked as updated but content unchanged - skipping notification"
+                }
+            }
+            elseif (-not (Test-Path $backupConstitutionPath)) {
+                # Backup missing - fail-safe: show notification
+                Write-Verbose "No backup constitution found - assuming changed (fail-safe)"
+                $actualChangeDetected = $true
+            }
+            elseif (-not (Test-Path $constitutionPath)) {
+                # Current constitution missing - edge case, skip notification
+                Write-Verbose "Constitution not found in project - skipping notification"
+                $actualChangeDetected = $false
+            }
+        }
+        catch {
+            # Hash comparison failed - fail-safe: show notification
+            Write-Verbose "Constitution hash comparison failed:"
+            Write-Verbose "  Error=$($_.Exception.GetType().Name)"
+            Write-Verbose "  Message=$($_.Exception.Message)"
+            Write-Verbose "  FilePath=$constitutionPath"
+            Write-Verbose "  Action=Defaulting to showing notification (fail-safe)"
+            $actualChangeDetected = $true
         }
 
-        Write-Host "Run the following command to intelligently merge changes:" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "  /speckit.constitution" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "This will help you merge new sections from the template while" -ForegroundColor Yellow
-        Write-Host "preserving your project-specific governance rules." -ForegroundColor Yellow
-        Write-Host ""
+        # Only show notification if content actually changed
+        if ($actualChangeDetected) {
+            # Determine notification type based on conflict status
+            if ($constitutionConflict) {
+                # REQUIRED action notification (conflict detected)
+                $emojiIcon = "⚠️"
+                $primaryColor = "Red"
+                $secondaryColor = "Yellow"
+                $actionLabel = "REQUIRED"
+                $actionVerb = "Run the following command"
+                $headerText = "Constitution Conflict Detected"
+                $descriptionText = "The constitution has conflicts requiring manual resolution."
+            }
+            else {
+                # OPTIONAL review notification (clean update)
+                $emojiIcon = "ℹ️"
+                $primaryColor = "Cyan"
+                $secondaryColor = "Gray"
+                $actionLabel = "OPTIONAL"
+                $actionVerb = "Review changes by running"
+                $headerText = "Constitution Template Updated"
+                $descriptionText = "The constitution template was cleanly updated (no conflicts)."
+            }
 
-        $updateResult.ConstitutionUpdateNeeded = $true
+            # Display notification with differentiated styling
+            Write-Host ""
+            Write-Host "$emojiIcon  $headerText" -ForegroundColor $primaryColor
+            Write-Host $descriptionText -ForegroundColor $secondaryColor
+            Write-Host ""
+            Write-Host "$actionLabel`: $actionVerb`:" -ForegroundColor $secondaryColor
+            Write-Host "  /speckit.constitution $backupConstitutionPath" -ForegroundColor White
+            Write-Host ""
+
+            $updateResult.ConstitutionUpdateNeeded = $true
+        }
     }
 
     # ========================================

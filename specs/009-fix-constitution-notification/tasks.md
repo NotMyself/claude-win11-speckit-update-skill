@@ -34,10 +34,10 @@
 
 **⚠️ CRITICAL**: These validation tasks ensure the existing codebase is ready for modification
 
-- [ ] T001 [P] Verify Get-NormalizedHash function exists and works in scripts/modules/HashUtils.psm1
-- [ ] T002 [P] Verify backup creation works in Step 8 of scripts/update-orchestrator.ps1 (around line 544)
-- [ ] T003 [P] Verify current Step 12 notification logic in scripts/update-orchestrator.ps1 (lines 677-707)
-- [ ] T004 Run existing integration tests to establish baseline in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T001 [P] Verify Get-NormalizedHash function exists and works in scripts/modules/HashUtils.psm1
+- [X] T002 [P] Verify backup creation works in Step 8 of scripts/update-orchestrator.ps1 (around line 544)
+- [X] T003 [P] Verify current Step 12 notification logic in scripts/update-orchestrator.ps1 (lines 677-707)
+- [X] T004 Run existing integration tests to establish baseline in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: Existing code validated - ready for modification
 
@@ -57,19 +57,19 @@
 
 ### Implementation Tasks
 
-- [ ] T005 [US1] Read and understand current Step 12 implementation in scripts/update-orchestrator.ps1 (lines 677-707)
-- [ ] T006 [US1] Add hash verification logic: construct file paths for current and backup constitution files in scripts/update-orchestrator.ps1 Step 12
-- [ ] T007 [US1] Add hash verification logic: implement Test-Path checks for file existence in scripts/update-orchestrator.ps1 Step 12
-- [ ] T008 [US1] Add hash verification logic: call Get-NormalizedHash for both files with try-catch error handling in scripts/update-orchestrator.ps1 Step 12
-- [ ] T009 [US1] Add hash verification logic: compare hashes and set $actualChangeDetected flag in scripts/update-orchestrator.ps1 Step 12
-- [ ] T010 [US1] Add hash verification logic: implement fail-safe behavior (missing backup or error → show notification) in scripts/update-orchestrator.ps1 Step 12
-- [ ] T011 [US1] Update notification conditional: wrap existing notification code in `if ($actualChangeDetected)` block in scripts/update-orchestrator.ps1 Step 12
-- [ ] T012 [US1] [US2] [US3] Add structured verbose logging: log file paths, hashes, and changed status in key-value format in scripts/update-orchestrator.ps1 Step 12
-- [ ] T013 [US2] Differentiate notification types: detect clean update vs conflict based on ConflictsResolved array in scripts/update-orchestrator.ps1 Step 12
-- [ ] T014 [US2] Implement informational notification: add ℹ️ emoji, cyan/gray colors, and "OPTIONAL" label for clean updates in scripts/update-orchestrator.ps1 Step 12
-- [ ] T015 [US3] Implement urgent notification: add ⚠️ emoji, red/yellow colors, and "REQUIRED" label for conflicts in scripts/update-orchestrator.ps1 Step 12
-- [ ] T016 [US1] [US2] [US3] Update notification messages: include backup path parameter for /speckit.constitution command in scripts/update-orchestrator.ps1 Step 12
-- [ ] T017 [US1] [US2] [US3] Add error logging: log exception type, message, file path, and suggested action when Get-NormalizedHash fails in scripts/update-orchestrator.ps1 Step 12
+- [X] T005 [US1] Read and understand current Step 12 implementation in scripts/update-orchestrator.ps1 (lines 677-707)
+- [X] T006 [US1] Add hash verification logic: construct file paths for current and backup constitution files in scripts/update-orchestrator.ps1 Step 12
+- [X] T007 [US1] Add hash verification logic: implement Test-Path checks for file existence in scripts/update-orchestrator.ps1 Step 12
+- [X] T008 [US1] Add hash verification logic: call Get-NormalizedHash for both files with try-catch error handling in scripts/update-orchestrator.ps1 Step 12
+- [X] T009 [US1] Add hash verification logic: compare hashes and set $actualChangeDetected flag in scripts/update-orchestrator.ps1 Step 12
+- [X] T010 [US1] Add hash verification logic: implement fail-safe behavior (missing backup or error → show notification) in scripts/update-orchestrator.ps1 Step 12
+- [X] T011 [US1] Update notification conditional: wrap existing notification code in `if ($actualChangeDetected)` block in scripts/update-orchestrator.ps1 Step 12
+- [X] T012 [US1] [US2] [US3] Add structured verbose logging: log file paths, hashes, and changed status in key-value format in scripts/update-orchestrator.ps1 Step 12
+- [X] T013 [US2] Differentiate notification types: detect clean update vs conflict based on ConflictsResolved array in scripts/update-orchestrator.ps1 Step 12
+- [X] T014 [US2] Implement informational notification: add ℹ️ emoji, cyan/gray colors, and "OPTIONAL" label for clean updates in scripts/update-orchestrator.ps1 Step 12
+- [X] T015 [US3] Implement urgent notification: add ⚠️ emoji, red/yellow colors, and "REQUIRED" label for conflicts in scripts/update-orchestrator.ps1 Step 12
+- [X] T016 [US1] [US2] [US3] Update notification messages: include backup path parameter for /speckit.constitution command in scripts/update-orchestrator.ps1 Step 12
+- [X] T017 [US1] [US2] [US3] Add error logging: log exception type, message, file path, and suggested action when Get-NormalizedHash fails in scripts/update-orchestrator.ps1 Step 12
 
 **Checkpoint**: Step 12 modification complete - hash verification, notification differentiation, and structured logging implemented
 
@@ -83,15 +83,15 @@
 
 ### Test Implementation Tasks
 
-- [ ] T018 [P] [US1] Add integration test: Constitution marked updated but hashes identical → no notification in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T019 [P] [US1] Add integration test: Constitution marked updated but backup missing → notification shown (fail-safe) in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T020 [P] [US1] Add integration test: Fresh install scenario (v0.0.0 to v0.0.78) with identical content → no notification in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T021 [P] [US2] Add integration test: Constitution cleanly updated with differing hashes → ℹ️ informational notification with "OPTIONAL" label in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T022 [P] [US2] Add integration test: Clean update notification includes backup path parameter in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T023 [P] [US2] Add integration test: Verbose logging shows structured key-value format with hashes, paths, timestamp in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T024 [P] [US3] Add integration test: Constitution conflict with differing hashes → ⚠️ urgent notification with "REQUIRED" label in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T025 [P] [US3] Add integration test: Constitution conflict but hashes match → no notification (prevents false positive) in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T026 [P] [US1] [US2] [US3] Add integration test: Get-NormalizedHash throws exception → verbose error logged and notification shown (fail-safe) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T018 [P] [US1] Add integration test: Constitution marked updated but hashes identical → no notification in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T019 [P] [US1] Add integration test: Constitution marked updated but backup missing → notification shown (fail-safe) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T020 [P] [US1] Add integration test: Fresh install scenario (v0.0.0 to v0.0.78) with identical content → no notification in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T021 [P] [US2] Add integration test: Constitution cleanly updated with differing hashes → ℹ️ informational notification with "OPTIONAL" label in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T022 [P] [US2] Add integration test: Clean update notification includes backup path parameter in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T023 [P] [US2] Add integration test: Verbose logging shows structured key-value format with hashes, paths, timestamp in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T024 [P] [US3] Add integration test: Constitution conflict with differing hashes → ⚠️ urgent notification with "REQUIRED" label in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T025 [P] [US3] Add integration test: Constitution conflict but hashes match → no notification (prevents false positive) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T026 [P] [US1] [US2] [US3] Add integration test: Get-NormalizedHash throws exception → verbose error logged and notification shown (fail-safe) in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: All integration tests passing - bug fix validated across all scenarios
 
@@ -103,10 +103,10 @@
 
 ### Documentation Tasks
 
-- [ ] T027 [P] [US1] [US2] [US3] Update CLAUDE.md: document new constitution notification behavior in "Constitution Update Notification" section
-- [ ] T028 [P] [US1] [US2] [US3] Update CLAUDE.md: add examples of informational vs urgent notifications with emoji/color schemes
-- [ ] T029 [P] [US1] [US2] [US3] Update CHANGELOG.md: add "Fixed" entry for Issue #18 describing false positive elimination and notification enhancements
-- [ ] T030 [P] [US1] [US2] [US3] Verify CONTRIBUTING.md mentions running tests before committing (no changes expected)
+- [X] T027 [P] [US1] [US2] [US3] Update CLAUDE.md: document new constitution notification behavior in "Constitution Update Notification" section
+- [X] T028 [P] [US1] [US2] [US3] Update CLAUDE.md: add examples of informational vs urgent notifications with emoji/color schemes
+- [X] T029 [P] [US1] [US2] [US3] Update CHANGELOG.md: add "Fixed" entry for Issue #18 describing false positive elimination and notification enhancements
+- [X] T030 [P] [US1] [US2] [US3] Verify CONTRIBUTING.md mentions running tests before committing (no changes expected)
 
 ### Manual Validation Tasks
 

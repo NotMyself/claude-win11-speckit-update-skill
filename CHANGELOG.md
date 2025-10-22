@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **False Constitution Update Notifications (#18)**: Eliminated false positive notifications for constitution template updates
+  - **Root Cause**: Step 12 displayed notifications whenever `constitution.md` appeared in `FilesUpdated` or `ConflictsResolved` arrays without verifying actual content changes
+  - **Symptoms**: Users saw "Constitution Template Updated" notifications even when file content was identical (e.g., fresh installs, line ending normalization)
+  - **Impact**: User confusion, reduced trust in update notifications, unnecessary `/speckit.constitution` runs
+  - **Solution**: Hash-based verification with differentiated notification styling
+    - **Hash Verification**: Compare normalized SHA-256 hashes of current and backup constitution files before showing notification
+    - **100% False Positive Elimination**: Notification suppressed when hashes match (content unchanged)
+    - **Informational Notifications** (ℹ️ icon, cyan/gray colors): Shown for clean updates (no conflicts) - marked "OPTIONAL" for user review
+    - **Urgent Notifications** (⚠️ icon, red/yellow colors): Shown for conflicts requiring manual resolution - marked "REQUIRED"
+    - **Fail-Safe Behavior**: Show notification if backup missing or hash computation fails (errs on side of caution)
+    - **Structured Verbose Logging**: Key-value format logs file paths, hashes, and change detection results for debugging
+    - **Performance**: Hash verification adds <100ms overhead, total Step 12 processing <200ms
+  - **Files Modified**:
+    - `scripts/update-orchestrator.ps1` (Step 12, lines 677-767) - Added hash verification, notification differentiation, and structured logging
+  - **Files Added**:
+    - `tests/integration/UpdateOrchestrator.Tests.ps1` (Scenario 11) - Added 9 integration tests for constitution notification behavior
+  - **Accessibility**: Emoji icons combined with color schemes and text labels ("REQUIRED"/"OPTIONAL") for universal comprehension
+  - **Backwards Compatibility**: No breaking changes - enhanced existing Step 12 behavior without altering orchestrator workflow
+  - **Test Coverage**: 9 new integration tests validating false positive elimination, notification differentiation, fail-safe behavior, and verbose logging
+
 ## [0.3.0] - 2025-10-22
 
 ### Added

@@ -1266,4 +1266,295 @@ Describe "Smart Conflict Resolution (Feature 008)" {
             }
         }
     }
+
+    Context "Scenario 11: Constitution Notification with Hash Verification (Issue #18)" {
+        It "Should NOT show notification when constitution marked updated but hashes identical (false positive elimination)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create identical constitution in backup
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Copy-Item ".specify/memory/constitution.md" "$backupDir/.specify/memory/constitution.md"
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = (Get-Content ".specify/memory/constitution.md" -Raw)
+                }
+
+                # Mock update result to mark constitution as updated
+                $script:constitutionMarkedUpdated = $true
+
+                # Act: Run orchestrator (mocked to skip most steps, focus on Step 12)
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: No notification should be shown
+                $output | Should -Not -Match 'Constitution.*Updated' -Because "Identical hashes should suppress notification"
+                $output | Should -Match 'content unchanged.*skipping notification' -Because "Verbose logging should explain suppression"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should show notification when backup constitution missing (fail-safe behavior)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup without constitution (simulates missing file)
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                # Intentionally do NOT copy constitution.md to backup
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = "# Updated constitution content`n"
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Notification should be shown (fail-safe)
+                $output | Should -Match 'No backup constitution found.*assuming changed' -Because "Verbose logging should explain fail-safe"
+                $output | Should -Match 'Constitution.*Updated' -Because "Missing backup triggers fail-safe notification"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should NOT show notification in fresh install scenario (v0.0.0 to v0.0.78) when content identical" {
+            $projectPath = New-TestProject -BasedOn "sample-project-no-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Fresh install (no manifest, version 0.0.0 → 0.0.78)
+                Remove-Item ".specify/manifest.json" -Force -ErrorAction SilentlyContinue
+
+                # Setup: Create backup with identical constitution
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Copy-Item ".specify/memory/constitution.md" "$backupDir/.specify/memory/constitution.md"
+
+                # Mock GitHub API with identical content
+                $constitutionContent = Get-Content ".specify/memory/constitution.md" -Raw
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = $constitutionContent
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: No false positive notification
+                $output | Should -Not -Match 'Constitution.*Updated' -Because "Fresh install with identical content should not trigger notification"
+                $output | Should -Match 'Changed=False' -Because "Hash comparison should detect no change"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should show OPTIONAL informational notification when constitution cleanly updated (differing hashes)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup with different constitution content
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Set-Content "$backupDir/.specify/memory/constitution.md" -Value "# Old constitution content`n"
+
+                # Update current constitution to differ from backup
+                Add-Content ".specify/memory/constitution.md" -Value "`n# New section added`n"
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = (Get-Content ".specify/memory/constitution.md" -Raw)
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Informational notification with proper styling
+                $output | Should -Match 'ℹ️.*Constitution Template Updated' -Because "Clean update should show informational icon"
+                $output | Should -Match 'OPTIONAL' -Because "Clean update should be marked optional"
+                $output | Should -Match 'cleanly updated.*no conflicts' -Because "Message should indicate no conflicts"
+                $output | Should -Match 'Review changes by running' -Because "Action verb should be 'Review' for optional updates"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should include backup path parameter in clean update notification" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup with different constitution
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Set-Content "$backupDir/.specify/memory/constitution.md" -Value "# Old constitution`n"
+
+                # Update current constitution
+                Add-Content ".specify/memory/constitution.md" -Value "`n# Updated constitution`n"
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = (Get-Content ".specify/memory/constitution.md" -Raw)
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Notification includes backup path
+                $output | Should -Match '/speckit\.constitution.*test-backup' -Because "Notification should include backup path parameter"
+                $output | Should -Match 'test-backup.*\.specify.*memory.*constitution\.md' -Because "Full backup path should be provided"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should show structured verbose logging with hashes and paths" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup with different constitution
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Set-Content "$backupDir/.specify/memory/constitution.md" -Value "# Old content`n"
+
+                # Update current constitution
+                Add-Content ".specify/memory/constitution.md" -Value "`n# New content`n"
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = (Get-Content ".specify/memory/constitution.md" -Raw)
+                }
+
+                # Act: Run orchestrator with verbose
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Structured logging present
+                $output | Should -Match 'Constitution hash comparison:' -Because "Verbose logging should have header"
+                $output | Should -Match 'CurrentPath=' -Because "Current path should be logged"
+                $output | Should -Match 'BackupPath=' -Because "Backup path should be logged"
+                $output | Should -Match 'CurrentHash=sha256:' -Because "Current hash should be logged"
+                $output | Should -Match 'BackupHash=sha256:' -Because "Backup hash should be logged"
+                $output | Should -Match 'Changed=(True|False)' -Because "Change detection result should be logged"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should show REQUIRED urgent notification for constitution conflicts (differing hashes)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup with different constitution
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Set-Content "$backupDir/.specify/memory/constitution.md" -Value "# Old conflicted content`n"
+
+                # Update current constitution to create conflict
+                Set-Content ".specify/memory/constitution.md" -Value "# User customized constitution`n"
+
+                # Mock GitHub API with conflicting upstream content
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = "# Upstream updated constitution`n"
+                }
+
+                # Mock conflict detection
+                Mock -ModuleName ConflictDetector Get-FileState {
+                    return 'merge'  # Indicates conflict
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Urgent notification with proper styling
+                $output | Should -Match '⚠️.*Constitution Conflict Detected' -Because "Conflict should show warning icon"
+                $output | Should -Match 'REQUIRED' -Because "Conflict resolution should be marked required"
+                $output | Should -Match 'conflicts requiring manual resolution' -Because "Message should indicate required action"
+                $output | Should -Match 'Run the following command' -Because "Action verb should be 'Run' for required actions"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should NOT show notification for constitution conflict when hashes match (prevents false positive)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup with IDENTICAL constitution
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Copy-Item ".specify/memory/constitution.md" "$backupDir/.specify/memory/constitution.md"
+
+                # Mock GitHub API with same content
+                $constitutionContent = Get-Content ".specify/memory/constitution.md" -Raw
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = $constitutionContent
+                }
+
+                # Mock conflict detection (but hashes will match, so no notification)
+                Mock -ModuleName ConflictDetector Get-FileState {
+                    return 'merge'  # Indicates conflict flag
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: No notification despite conflict flag
+                $output | Should -Not -Match 'Constitution Conflict' -Because "Identical hashes should suppress false positive"
+                $output | Should -Match 'content unchanged.*skipping notification' -Because "Verbose logging should explain suppression"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "Should show notification when Get-NormalizedHash throws exception (fail-safe)" {
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+            try {
+                Set-Location $projectPath
+
+                # Setup: Create backup
+                $backupDir = Join-Path $projectPath ".specify/backups/test-backup"
+                New-Item -ItemType Directory -Path "$backupDir/.specify/memory" -Force | Out-Null
+                Copy-Item ".specify/memory/constitution.md" "$backupDir/.specify/memory/constitution.md"
+
+                # Mock Get-NormalizedHash to throw exception
+                Mock -ModuleName HashUtils Get-NormalizedHash {
+                    throw "Simulated hash computation error"
+                }
+
+                # Mock GitHub API
+                Mock-GitHubApi -Version "v0.0.78" -Templates @{
+                    '.specify/memory/constitution.md' = (Get-Content ".specify/memory/constitution.md" -Raw)
+                }
+
+                # Act: Run orchestrator
+                $output = & $script:OrchestratorScript -CheckOnly -Verbose 2>&1 | Out-String
+
+                # Assert: Fail-safe behavior
+                $output | Should -Match 'Constitution hash comparison failed' -Because "Exception should be caught and logged"
+                $output | Should -Match 'Error=.*Exception' -Because "Exception type should be logged"
+                $output | Should -Match 'Message=.*Simulated hash computation error' -Because "Exception message should be logged"
+                $output | Should -Match 'Defaulting to showing notification.*fail-safe' -Because "Fail-safe action should be logged"
+                $output | Should -Match 'Constitution.*Updated' -Because "Notification should be shown as fail-safe"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+    }
 }
