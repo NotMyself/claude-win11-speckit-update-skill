@@ -1557,4 +1557,30 @@ Describe "Smart Conflict Resolution (Feature 008)" {
             }
         }
     }
+
+    # ========================================
+    # Scenario 12: Helpful Error Messages
+    # ========================================
+    Context "Scenario 12: Helpful Error Messages for Non-SpecKit Projects" {
+        It "Shows helpful error when .specify/ doesn't exist" {
+            # Setup: Create temp directory without .specify/
+            $testDir = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "test-no-speckit-$(Get-Random)")
+
+            try {
+                Push-Location $testDir
+
+                # Execute update-orchestrator with -CheckOnly
+                $output = & $script:OrchestratorScript -CheckOnly 2>&1 | Out-String
+
+                # Assert: Error message contains helpful content
+                $output | Should -Match "SpecKit is a Claude Code workflow framework"
+                $output | Should -Match "(speckit\.constitution|github\.com/github/spec-kit)"
+                $output | Should -Match "Not a SpecKit project"
+            }
+            finally {
+                Pop-Location
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }

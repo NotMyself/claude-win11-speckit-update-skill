@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Automatic SpecKit Installation for Non-SpecKit Projects (#13)**: Transforms updater into installer/updater hybrid
+  - **Installation Workflow**: Offers to install SpecKit automatically when `.specify/` directory doesn't exist
+  - **Interactive Mode**: Prompts user "Would you like to install SpecKit now? (Y/n)" in terminal
+  - **Non-Interactive Mode (Claude Code)**: Shows `[PROMPT_FOR_INSTALL]` marker with explanation, waits for approval via conversational workflow
+  - **Automatic Setup**:
+    - Creates `.specify/` directory structure (`memory/`, `backups/`)
+    - Downloads latest SpecKit templates from GitHub
+    - Creates manifest with all files marked as `customized: false`
+    - Shows "Welcome to SpecKit!" with next steps after installation
+  - **Graceful Decline**: If user declines, shows helpful error with context about SpecKit and documentation link
+  - **Context-Aware Fallback**: Detects if SpecKit commands are installed to provide tailored messages
+  - **Implementation**:
+    - New `Test-SpecKitCommandsAvailable` function: Checks for official SpecKit command files in `.claude/commands/`
+    - New `Get-HelpfulSpecKitError` function: Generates educational error messages if user declines installation
+    - Modified `Invoke-PreUpdateValidation.ps1`: Offers installation instead of showing error
+    - Added Step 2.5 in `update-orchestrator.ps1`: Creates `.specify/` directory structure for first-time installs
+    - Enhanced `Show-UpdateSummary.ps1`: Displays "Welcome to SpecKit!" message with next steps for first installs
+  - **Files Modified**:
+    - `scripts/helpers/Invoke-PreUpdateValidation.ps1` - Installation offer workflow with interactive/non-interactive handling
+    - `scripts/update-orchestrator.ps1` - Added Step 2.5 for directory creation, passes `$isFirstInstall` flag
+    - `scripts/helpers/Show-UpdateSummary.ps1` - Added first-install welcome message with next steps
+  - **Files Added**:
+    - `tests/unit/Invoke-PreUpdateValidation.Tests.ps1` - 8 new unit tests for detection and message generation
+    - Integration test in `tests/integration/UpdateOrchestrator.Tests.ps1` - Install flow validation
+  - **Benefits**:
+    - ✅ Reduces friction: One command installs everything
+    - ✅ Better UX: Converts error into actionable installation flow
+    - ✅ Maintains safety: Uses conversational approval in Claude Code
+    - ✅ Clear guidance: Shows next steps after successful installation
+    - ✅ Reuses existing logic: Leverages first-time manifest creation code
+  - **User Stories Satisfied**:
+    - US1 (P1): First-time users can install SpecKit with one command
+    - US2 (P2): Experienced developers get quick installation workflow
+    - US3 (P3): Evaluators see helpful documentation links if they decline
+
 ## [0.3.1] - 2025-10-22
 
 ### Fixed

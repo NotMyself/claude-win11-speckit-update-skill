@@ -23,10 +23,10 @@
 
 **Purpose**: Project initialization and understanding existing codebase
 
-- [ ] T001 Review existing error handling in scripts/helpers/Invoke-PreUpdateValidation.ps1 lines 44-48
-- [ ] T002 Review research.md decisions for implementation approach
-- [ ] T003 Review quickstart.md for detailed implementation guide and test scenarios
-- [ ] T004 Update CHANGELOG.md under [Unreleased] section with feature description
+- [X] T001 Review existing error handling in scripts/helpers/Invoke-PreUpdateValidation.ps1 lines 44-48
+- [X] T002 Review research.md decisions for implementation approach
+- [X] T003 Review quickstart.md for detailed implementation guide and test scenarios
+- [X] T004 Update CHANGELOG.md under [Unreleased] section with feature description
 
 ---
 
@@ -38,9 +38,9 @@
 
 **Conceptual Model Note**: The spec.md defines "Error Message Variant" and "Detection Result" entities to describe the two possible error messages (Commands Available vs Not Available variants). Tasks T005-T007 implement these as conditional logic within the Get-HelpfulSpecKitError function.
 
-- [ ] T005 [P] Add Test-SpecKitCommandsAvailable function to scripts/helpers/Invoke-PreUpdateValidation.ps1 after line 21
-- [ ] T006 [P] Add Get-HelpfulSpecKitError function (generates Error Message Variants) to scripts/helpers/Invoke-PreUpdateValidation.ps1 after Test-SpecKitCommandsAvailable
-- [ ] T007 Modify line 47 in scripts/helpers/Invoke-PreUpdateValidation.ps1 to call Get-HelpfulSpecKitError
+- [X] T005 [P] Add Test-SpecKitCommandsAvailable function to scripts/helpers/Invoke-PreUpdateValidation.ps1 after line 21
+- [X] T006 [P] Add Get-HelpfulSpecKitError function (generates Error Message Variants) to scripts/helpers/Invoke-PreUpdateValidation.ps1 after Test-SpecKitCommandsAvailable
+- [X] T007 Modify line 47 in scripts/helpers/Invoke-PreUpdateValidation.ps1 to call Get-HelpfulSpecKitError
 
 **Checkpoint**: Core implementation complete - helper functions can generate context-aware error messages
 
@@ -56,21 +56,21 @@
 
 **NOTE: Write these tests FIRST, ensure they FAIL before implementation (Tasks T005-T007)**
 
-- [ ] T008 [P] [US1] Add unit test context for Test-SpecKitCommandsAvailable in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T009 [P] [US1] Add test case for commands available scenario in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T010 [P] [US1] Add test case for commands not available scenario in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T011 [P] [US1] Add test case for empty commands directory in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T008 [P] [US1] Add unit test context for Test-SpecKitCommandsAvailable in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T009 [P] [US1] Add test case for commands available scenario in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T010 [P] [US1] Add test case for commands not available scenario in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T011 [P] [US1] Add test case for empty commands directory in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
 
 ### Implementation Validation for User Story 1
 
-- [ ] T012 [US1] Add unit test context for Get-HelpfulSpecKitError in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T013 [US1] Add test case for error message with /speckit.constitution suggestion in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T014 [US1] Add test case for error message with documentation link in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T015 [US1] Add test case for fallback message when detection fails in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T016 [US1] Add integration test for non-SpecKit project scenario in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T017 [US1] Run unit tests and verify all pass using tests/test-runner.ps1 -Unit
-- [ ] T018 [US1] Verify error message includes SpecKit explanation per acceptance scenario 1
-- [ ] T019 [US1] Verify error message provides /speckit.constitution command per acceptance scenario 2
+- [X] T012 [US1] Add unit test context for Get-HelpfulSpecKitError in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T013 [US1] Add test case for error message with /speckit.constitution suggestion in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T014 [US1] Add test case for error message with documentation link in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T015 [US1] Add test case for fallback message when detection fails in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T016 [US1] Add integration test for non-SpecKit project scenario in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T017 [US1] Run unit tests and verify all pass using tests/test-runner.ps1 -Unit
+- [X] T018 [US1] Verify error message includes SpecKit explanation per acceptance scenario 1
+- [X] T019 [US1] Verify error message provides /speckit.constitution command per acceptance scenario 2
 
 **Checkpoint**: User Story 1 is fully functional - first-time users get helpful error messages with educational context
 

@@ -34,6 +34,9 @@
 
 .PARAMETER ToVersion
     Target version tag (e.g., "v0.0.72")
+
+.PARAMETER IsFirstInstall
+    Boolean indicating if this is a first-time SpecKit installation
 #>
 
 function Show-UpdateSummary {
@@ -46,7 +49,10 @@ function Show-UpdateSummary {
         [string]$FromVersion,
 
         [Parameter(Mandatory=$true)]
-        [string]$ToVersion
+        [string]$ToVersion,
+
+        [Parameter(Mandatory=$false)]
+        [bool]$IsFirstInstall = $false
     )
 
     Write-Host ""
@@ -162,4 +168,21 @@ function Show-UpdateSummary {
 
     Write-Host "========================================" -ForegroundColor Green
     Write-Host ""
+
+    # First-time install: Show helpful next steps
+    if ($IsFirstInstall) {
+        Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host "Welcome to SpecKit!" -ForegroundColor Cyan
+        Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "SpecKit has been installed successfully." -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Next steps:" -ForegroundColor Cyan
+        Write-Host "  1. Review installed templates in .specify/ and .claude/commands/" -ForegroundColor Cyan
+        Write-Host "  2. Set up your project constitution: /speckit.constitution" -ForegroundColor Cyan
+        Write-Host "  3. Start your first feature: /speckit.specify" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Learn more: https://github.com/github/spec-kit" -ForegroundColor DarkGray
+        Write-Host ""
+    }
 }
