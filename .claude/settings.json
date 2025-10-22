@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pwsh:*)"
+      "Bash(pwsh:*)",           // PowerShell commands (scripts, modules, Pester tests)
+      "Bash(git *)",            // All git operations (commit, push, pull, branch, status, etc.)
+      "Bash(gh *)",             // GitHub CLI (issues, PRs, releases)
+      "Bash(dotnet *)",         // .NET CLI (Pester may require, potential future tooling)
+      "Bash(code *)",           // VSCode CLI (opening files, diff, merge editors)
+      "Bash(az *)",             // Azure CLI (in case project needs cloud integration)
+      "Bash(docker *)",         // Docker (for containerized testing environments)
+      "Bash(npm *)",            // npm (if SpecKit or tools need Node dependencies)
+      "Bash(wget *)",           // Download files (GitHub releases, templates)
+      "Bash(curl *)"            // HTTP requests (API testing, downloads)
     ],
     "deny": [],
     "ask": []
