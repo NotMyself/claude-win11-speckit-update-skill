@@ -72,15 +72,61 @@ claude-Win11-SpecKit-Safe-Update-Skill/
 
 ## Development Workflow
 
-### 1. Create a Branch
+This project uses **SpecKit** for feature development. Follow the SpecKit workflow for all new features:
 
-```powershell
-git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/your-bug-fix
+### 1. Create a Feature Specification
+
+```
+/speckit.specify
 ```
 
-### 2. Make Changes
+This will guide you through creating a complete specification in `specs/NNN-feature-name/spec.md` with:
+- User stories and acceptance criteria
+- Data model and entities
+- API contracts (if applicable)
+- Test scenarios
+
+### 2. Generate Implementation Plan
+
+```
+/speckit.plan
+```
+
+This creates a detailed implementation plan in `specs/NNN-feature-name/plan.md` covering:
+- Tech stack decisions
+- File structure
+- Component architecture
+- Integration points
+
+### 3. Generate Task Breakdown
+
+```
+/speckit.tasks
+```
+
+This generates an actionable task list in `specs/NNN-feature-name/tasks.md` with:
+- Dependency-ordered tasks
+- Parallel execution markers
+- Test-first approach
+- Validation checkpoints
+
+### 4. Create a Branch
+
+```powershell
+git checkout -b NNN-feature-name
+```
+
+Use the spec number prefix (e.g., `010-helpful-error-messages`) for consistency.
+
+### 5. Implement the Feature
+
+```
+/speckit.implement
+```
+
+This executes the task plan, or you can implement manually following the tasks.
+
+### 6. Make Changes
 
 Follow these guidelines:
 
@@ -122,9 +168,9 @@ function Get-Example {
 }
 ```
 
-### 3. Write Tests
+### 7. Write Tests
 
-All new functionality must include tests:
+All new functionality must include tests (often generated as part of Step 5):
 
 **Unit Tests:**
 - Create in `tests/unit/`
@@ -151,7 +197,7 @@ Describe "Get-Example" {
 }
 ```
 
-### 4. Run Tests
+### 8. Run Tests
 
 ```powershell
 # Run all tests
@@ -167,15 +213,16 @@ Describe "Get-Example" {
 ./tests/test-runner.ps1 -Coverage
 ```
 
-### 5. Update Documentation
+### 9. Update Documentation
 
 - Update README.md if adding user-facing features (focus on end-user benefits)
 - Update CHANGELOG.md under [Unreleased] section (detailed technical changes)
 - Update SKILL.md if changing command behavior
 - Update CLAUDE.md if changing architecture or development patterns
 - Add inline comments for complex logic
+- Update spec files (spec.md, plan.md, tasks.md) to reflect actual implementation
 
-### 6. Commit Changes
+### 10. Commit Changes
 
 ```powershell
 git add .
@@ -193,13 +240,23 @@ git commit -m "fix: resolve issue with X"
 - `style:` Formatting changes
 - `chore:` Maintenance tasks
 
-### 7. Push and Create Pull Request
+### 11. Push and Create Pull Request
 
 ```powershell
-git push origin feature/your-feature-name
+git push origin NNN-feature-name
 ```
 
-Then create a pull request on GitHub.
+Then create a pull request on GitHub, referencing the spec number in the title and description.
+
+### Why Use SpecKit?
+
+This project dogfoods SpecKit to demonstrate its value:
+- **Complete specifications** ensure all requirements are captured upfront
+- **Implementation plans** reduce architectural surprises mid-development
+- **Task breakdowns** make complex features manageable
+- **Living documentation** in `specs/` directory serves as project memory
+
+See `specs/010-helpful-error-messages/` for a complete example of the SpecKit workflow in action.
 
 ## Pull Request Guidelines
 
