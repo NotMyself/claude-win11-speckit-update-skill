@@ -69,19 +69,9 @@ Would you like to install SpecKit now? (Y/n) Y
 ```
 
 **Non-Interactive Mode (Claude Code):**
-```
-[PROMPT_FOR_INSTALL]
+Claude will ask naturally: "SpecKit is not currently installed in this project. Would you like me to install it?"
 
-SpecKit is not installed in this project.
-
-The updater can install the latest SpecKit templates for you.
-This will:
-  • Create .specify/ directory structure
-  • Download latest SpecKit templates from GitHub
-  • Create manifest to track future updates
-
-To proceed with installation, re-run with: -Proceed
-```
+Simply reply "yes" or "install it" and Claude will handle the rest automatically.
 
 **What Gets Installed:**
 - `.specify/` directory structure (`memory/`, `backups/`)

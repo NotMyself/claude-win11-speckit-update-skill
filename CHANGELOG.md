@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Installation Flow Ignores -Proceed Flag (#011)**: Fresh SpecKit installations now respect the `-Proceed` flag for conversational workflow
+  - **Root Cause**: Installation detection logic did not check for `-Proceed` parameter, causing double prompts and blocking 100% of fresh installations
+  - **Symptoms**: Users saw installation prompt twice; second invocation with `-Proceed` showed prompt again instead of installing
+  - **Impact**: Fresh installations completely broken - impossible to complete two-command workflow (`/speckit-update` → approval → `/speckit-update -Proceed`)
+  - **Solution**: Implement consistent `-Proceed` handling matching update flow pattern
+    - **T001-T006 (Implementation)**:
+      - Added `-Proceed` switch parameter to `Invoke-PreUpdateValidation` function signature
+      - Updated installation detection to check `-Proceed` flag before showing prompt
+      - Changed exit behavior from `throw` to `exit 0` for graceful conversational workflow
+      - Added conditional branches: skip prompt if `-Proceed` set, show prompt if not set
+      - Passed `-Proceed` parameter from orchestrator to validation helper using `-Proceed:$Proceed` syntax
+    - **T007-T013 (User Story 1 Tests)**:
+      - Added 4 unit tests: parameter acceptance, exit code 0 without `-Proceed`, continue with `-Proceed`, prompt output validation
+      - Added 3 integration tests: fresh installation without `-Proceed`, with `-Proceed`, and direct proceed
+    - **T014-T019 (User Story 2 - Consistency)**:
+      - Verified installation flow matches update flow pattern (lines 381-409)
+      - Confirmed both flows use `[PROMPT_FOR_*]` markers and exit 0
+      - Added 3 integration tests: existing projects skip prompt, multiple installs are idempotent, flow comparison
+    - **T020-T030 (User Story 3 - UX)**:
+      - Implemented color-coded output: Cyan `[PROMPT_FOR_INSTALL]`, Yellow warning, Gray description, White command
+      - Added verbose logging: "Awaiting user approval" and "User approved SpecKit installation, proceeding..."
+      - Added progress indicator: `📦 Installing SpecKit...` in cyan
+      - Added 3 unit tests for prompt elements and verbose logging
+  - **Files Modified**:
+    - `scripts/helpers/Invoke-PreUpdateValidation.ps1` (lines 147-239) - Added `-Proceed` parameter, conditional logic, color-coded output
+    - `scripts/update-orchestrator.ps1` (line 189) - Pass `-Proceed` to validation helper
+    - `tests/unit/Invoke-PreUpdateValidation.Tests.ps1` - Added 7 new unit tests (T008-T010, T028-T029)
+    - `tests/integration/UpdateOrchestrator.Tests.ps1` - Added Scenario 12 with 6 integration tests (T011-T013, T017-T019)
+  - **Benefits**:
+    - ✅ Fresh installations work: Two-command workflow fully functional
+    - ✅ Consistent UX: Installation and update flows behave identically
+    - ✅ Clear guidance: Color-coded prompts with exact command to run
+    - ✅ No error states: Exit code 0 throughout conversational workflow
+    - ✅ Idempotent: Running install multiple times behaves as update check
+  - **Test Coverage**: 13 new tests (7 unit, 6 integration) validating all three user stories
+
 ## [0.4.0] - 2025-10-22
 
 ### Added

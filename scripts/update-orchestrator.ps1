@@ -186,7 +186,7 @@ try {
     # ========================================
     Write-Verbose "Step 1: Validating prerequisites..."
 
-    Invoke-PreUpdateValidation -ProjectRoot $projectRoot
+    Invoke-PreUpdateValidation -ProjectRoot $projectRoot -Proceed:$Proceed
 
     # ========================================
     # STEP 2: Handle Rollback if Requested

@@ -425,6 +425,32 @@ This format makes it easy to:
 
 ## Key Workflows
 
+### Fresh Installation Flow (Two-Phase Conversational Workflow)
+
+When running `/speckit-update` in a project without `.specify/` directory:
+
+**Phase 1: Installation Offer (No -Proceed flag)**
+1. Skill detects no `.specify/` directory exists
+2. Shows installation prompt with cyan `[PROMPT_FOR_INSTALL]` marker
+3. Displays what installation will do (create structure, download templates, create manifest)
+4. Exits gracefully with code 0 (not error)
+5. User sees offer in conversational interface
+
+**Phase 2: Installation Execution (With -Proceed flag)**
+1. User approves by running `/speckit-update -Proceed`
+2. Skill skips installation prompt
+3. Shows progress indicator: `📦 Installing SpecKit...` (cyan)
+4. Creates `.specify/` directory structure
+5. Downloads latest SpecKit templates from GitHub
+6. Creates manifest to track future updates
+7. Completes with exit code 0
+
+**Key Design Choices:**
+- **Exit code 0 (not throw)**: Enables conversational workflow - awaiting approval is not an error
+- **Consistent with update flow**: Both flows use `-Proceed` flag, `[PROMPT_FOR_*]` markers, and exit 0
+- **Idempotent**: Running install multiple times on already-installed project behaves as update check
+- **Direct proceed supported**: User can run `/speckit-update -Proceed` on first invocation to skip offer phase
+
 ### Conflict Resolution (Flow A)
 
 When a file is customized locally AND changed upstream:

@@ -148,7 +148,10 @@ function Invoke-PreUpdateValidation {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$false)]
-        [string]$ProjectRoot = $PWD
+        [string]$ProjectRoot = $PWD,
+
+        [Parameter(Mandatory=$false)]
+        [switch]$Proceed
     )
 
     $errors = @()
@@ -171,6 +174,17 @@ function Invoke-PreUpdateValidation {
     $specifyExists = Test-Path $specifyDir
 
     if (-not $specifyExists) {
+        # Check if user has already approved with -Proceed flag
+        if ($Proceed) {
+            # User approved - proceed with installation
+            Write-Verbose "User approved SpecKit installation, proceeding..."
+            Write-Host ""
+            Write-Host "📦 Installing SpecKit..." -ForegroundColor Cyan
+            Write-Host ""
+            # Continue to validation - orchestrator will handle installation
+            return
+        }
+
         # Don't add to errors - offer to install SpecKit instead
         Write-Host ""
         Write-Host "SpecKit is not installed in this project." -ForegroundColor Yellow
@@ -205,19 +219,22 @@ function Invoke-PreUpdateValidation {
         }
         else {
             # Non-interactive mode (Claude Code): Show message and exit for approval
-            Write-Host "[PROMPT_FOR_INSTALL]" -ForegroundColor Magenta
+            Write-Verbose "Awaiting user approval for SpecKit installation"
+            Write-Host "[PROMPT_FOR_INSTALL]" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "SpecKit is not installed in this project." -ForegroundColor Yellow
+            Write-Host "SpecKit is not currently installed in this project." -ForegroundColor Yellow
             Write-Host ""
-            Write-Host "The updater can install the latest SpecKit templates for you." -ForegroundColor Cyan
-            Write-Host "This will:" -ForegroundColor Cyan
-            Write-Host "  • Create .specify/ directory structure" -ForegroundColor Cyan
-            Write-Host "  • Download latest SpecKit templates from GitHub" -ForegroundColor Cyan
-            Write-Host "  • Create manifest to track future updates" -ForegroundColor Cyan
+            Write-Host "The updater can install the latest SpecKit templates for you." -ForegroundColor Gray
+            Write-Host "This will:" -ForegroundColor Gray
+            Write-Host "  • Create .specify/ directory structure" -ForegroundColor Gray
+            Write-Host "  • Download latest SpecKit templates from GitHub" -ForegroundColor Gray
+            Write-Host "  • Create manifest to track future updates" -ForegroundColor Gray
             Write-Host ""
-            Write-Host "To proceed with installation, re-run with: -Proceed" -ForegroundColor Cyan
+            Write-Host "To proceed with installation, run:" -ForegroundColor Cyan
+            Write-Host "  /speckit-update -Proceed" -ForegroundColor White
             Write-Host ""
-            throw "Awaiting user approval for SpecKit installation"
+            # Exit gracefully with code 0 (not throw) for conversational workflow
+            exit 0
         }
     }
 
