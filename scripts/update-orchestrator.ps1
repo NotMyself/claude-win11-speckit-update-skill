@@ -127,10 +127,13 @@ try {
     Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "MarkdownMerger.psm1") -Force -WarningAction SilentlyContinue
 
     # TIER 1: Modules depending on Tier 0
     # ManifestManager uses HashUtils.Get-NormalizedHash and GitHubApiClient functions
+    # FingerprintDetector uses HashUtils.Get-NormalizedHash
     Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "FingerprintDetector.psm1") -Force -WarningAction SilentlyContinue
 
     # TIER 2: Modules depending on Tier 1
     # BackupManager uses ManifestManager functions
@@ -138,7 +141,7 @@ try {
     Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "ConflictDetector.psm1") -Force -WarningAction SilentlyContinue
 
-    Write-Verbose "Modules imported successfully (6 modules in 3 tiers)"
+    Write-Verbose "Modules imported successfully (8 modules in 3 tiers)"
 }
 catch {
     Write-Error "Failed to import modules: $($_.Exception.Message)"
@@ -235,10 +238,50 @@ try {
 
     $manifest = Get-SpecKitManifest -ProjectRoot $projectRoot
     $needsManifestCreation = $false
+    $detectedVersion = $null
 
     if (-not $manifest) {
-        Write-Host "No manifest found. Will create after fetching target version..." -ForegroundColor Yellow
-        Write-Host ""
+        Write-Host "No manifest found." -ForegroundColor Yellow
+
+        # NEW: Smart version detection for frictionless onboarding
+        Write-Host "Detecting installed SpecKit version..." -ForegroundColor Cyan
+
+        try {
+            $detection = Get-InstalledSpecKitVersion -ProjectRoot $projectRoot -Verbose:$VerbosePreference
+
+            if ($detection) {
+                $detectedVersion = $detection.version_name
+                $confidence = $detection.confidence
+                $matchPct = $detection.match_percentage
+
+                Write-Host ""
+                Write-Host "✓ Version detected: $detectedVersion" -ForegroundColor Green
+                Write-Host "  Confidence: $confidence ($matchPct% match)" -ForegroundColor $(
+                    if ($confidence -eq "High") { "Green" }
+                    elseif ($confidence -eq "Medium") { "Yellow" }
+                    else { "Red" }
+                )
+                Write-Host "  Method: $($detection.detection_method)" -ForegroundColor Gray
+                Write-Host ""
+
+                if ($confidence -eq "Low") {
+                    Write-Warning "Low confidence detection. Manifest will default to v0.0.0 (all files treated as customized)."
+                    Write-Host ""
+                    $detectedVersion = $null
+                }
+            }
+            else {
+                Write-Host "⚠ Could not detect version automatically" -ForegroundColor Yellow
+                Write-Host "Manifest will default to v0.0.0 (all files treated as customized)" -ForegroundColor Yellow
+                Write-Host ""
+            }
+        }
+        catch {
+            Write-Verbose "Version detection failed: $($_.Exception.Message)"
+            Write-Host "⚠ Version detection failed, will use v0.0.0 default" -ForegroundColor Yellow
+            Write-Host ""
+        }
+
         $needsManifestCreation = $true
     }
     else {
@@ -304,22 +347,44 @@ try {
     }
 
     # ========================================
-    # STEP 3.5: Create Manifest if needed (with placeholder version)
+    # STEP 3.5: Create Manifest if needed (with detected or placeholder version)
     # ========================================
     if ($needsManifestCreation) {
-        Write-Verbose "Creating new manifest with placeholder version v0.0.0"
-        Write-Host ""
-        Write-Host "Creating new manifest (version unknown - will update to $($targetRelease.tag_name))" -ForegroundColor Yellow
-        Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
-        Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
         Write-Host ""
 
-        # Create manifest with placeholder version (unknown starting point), assuming all files are customized
-        $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version "v0.0.0" -AssumeAllCustomized
+        if ($detectedVersion) {
+            # Use detected version - enables smart merge for first-time users!
+            Write-Verbose "Creating new manifest with detected version $detectedVersion"
+            Write-Host "Creating new manifest with detected version: $detectedVersion" -ForegroundColor Cyan
+            Write-Host "This enables smart merge - only actual customizations will be flagged as conflicts" -ForegroundColor Green
+            Write-Host ""
 
-        Write-Host "Manifest created successfully" -ForegroundColor Green
-        Write-Host "Current version marked as: $($manifest.speckit_version) (placeholder - will update to $($targetRelease.tag_name))" -ForegroundColor Green
-        Write-Host ""
+            # Download the detected version's templates to get original hashes
+            Write-Host "Downloading original templates for version $detectedVersion..." -ForegroundColor Cyan
+            $templates = Download-SpecKitTemplates -Version $detectedVersion -DestinationPath ([System.IO.Path]::GetTempPath())
+
+            # Create manifest with detected version (no AssumeAllCustomized flag)
+            $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version $detectedVersion
+
+            Write-Host "Manifest created with smart version detection!" -ForegroundColor Green
+            Write-Host "Detected version: $detectedVersion" -ForegroundColor Green
+            Write-Host ""
+        }
+        else {
+            # Fallback: Unknown version - assume all files are customized (safe default)
+            Write-Verbose "Creating new manifest with placeholder version v0.0.0"
+            Write-Host "Creating new manifest (version unknown - will update to $($targetRelease.tag_name))" -ForegroundColor Yellow
+            Write-Host "This will scan your current .specify/ and .claude/ directories" -ForegroundColor Yellow
+            Write-Host "and mark all files as customized (safe default)." -ForegroundColor Yellow
+            Write-Host ""
+
+            # Create manifest with placeholder version (unknown starting point), assuming all files are customized
+            $manifest = New-SpecKitManifest -ProjectRoot $projectRoot -Version "v0.0.0" -AssumeAllCustomized
+
+            Write-Host "Manifest created successfully" -ForegroundColor Green
+            Write-Host "Current version marked as: $($manifest.speckit_version) (placeholder - will update to $($targetRelease.tag_name))" -ForegroundColor Green
+            Write-Host ""
+        }
     }
 
     # Check if already up to date
@@ -614,19 +679,98 @@ try {
                     $hasRealConflict = -not (Compare-FileHashes -Hash1 $currentHash -Hash2 $incomingHash)
 
                     if ($hasRealConflict) {
-                        # Real conflict - use smart resolution (Git markers for small files, diff for large files)
+                        # Real conflict - use 3-way smart merge
                         $baseContent = ""
 
-                        Write-SmartConflictResolution `
-                            -FilePath $filePath `
-                            -CurrentContent $currentContent `
-                            -BaseContent $baseContent `
-                            -IncomingContent $incomingContent `
-                            -OriginalVersion $manifest.speckit_version `
-                            -NewVersion $targetRelease.tag_name
+                        # Try to fetch base content from original version for true 3-way merge
+                        if ($manifest.speckit_version -and $manifest.speckit_version -ne "v0.0.0") {
+                            try {
+                                Write-Verbose "Fetching base version file: $($conflict.path) from $($manifest.speckit_version)"
+                                $baseContent = Get-SpecKitFile -Version $manifest.speckit_version -FilePath $conflict.path
+                                if ($baseContent) {
+                                    Write-Verbose "Base content fetched successfully ($($baseContent.Length) bytes)"
+                                }
+                            }
+                            catch {
+                                Write-Verbose "Could not fetch base content: $($_.Exception.Message)"
+                            }
+                        }
 
-                        Write-Host "  Conflict resolution applied: $($conflict.path)" -ForegroundColor Cyan
-                        $actualConflicts += $conflict.path
+                        # Use 3-way smart merge for markdown files
+                        if ($filePath -like "*.md") {
+                            try {
+                                Write-Verbose "Attempting smart merge for: $($conflict.path)"
+
+                                # Create temp files for merge operation
+                                $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "speckit-merge-$(New-Guid)"
+                                New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+
+                                $basePath = Join-Path $tempDir "base.md"
+                                $currentPath = Join-Path $tempDir "current.md"
+                                $incomingPath = Join-Path $tempDir "incoming.md"
+                                $outputPath = Join-Path $tempDir "merged.md"
+
+                                # Write content to temp files
+                                if ($baseContent) {
+                                    $baseContent | Set-Content -Path $basePath -Encoding UTF8 -NoNewline
+                                } else {
+                                    "" | Set-Content -Path $basePath -Encoding UTF8 -NoNewline
+                                }
+                                $currentContent | Set-Content -Path $currentPath -Encoding UTF8 -NoNewline
+                                $incomingContent | Set-Content -Path $incomingPath -Encoding UTF8 -NoNewline
+
+                                # Perform 3-way merge
+                                $mergeResult = Merge-MarkdownFiles `
+                                    -BasePath $basePath `
+                                    -CurrentPath $currentPath `
+                                    -IncomingPath $incomingPath `
+                                    -OutputPath $outputPath `
+                                    -BaseVersion $manifest.speckit_version `
+                                    -IncomingVersion $targetRelease.tag_name `
+                                    -Verbose:$VerbosePreference
+
+                                # Copy merged result to actual file
+                                Copy-Item -Path $outputPath -Destination $filePath -Force
+
+                                # Cleanup
+                                Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+
+                                if ($mergeResult.ConflictCount -eq 0) {
+                                    Write-Host "  ✓ Clean merge: $($conflict.path) (no conflicts)" -ForegroundColor Green
+                                } else {
+                                    Write-Host "  ⚠ Merged with $($mergeResult.ConflictCount) conflict(s): $($conflict.path)" -ForegroundColor Yellow
+                                    $actualConflicts += $conflict.path
+                                }
+                            }
+                            catch {
+                                Write-Warning "Smart merge failed for $($conflict.path), falling back to basic conflict markers: $($_.Exception.Message)"
+
+                                # Fallback to basic conflict markers
+                                Write-SmartConflictResolution `
+                                    -FilePath $filePath `
+                                    -CurrentContent $currentContent `
+                                    -BaseContent $baseContent `
+                                    -IncomingContent $incomingContent `
+                                    -OriginalVersion $manifest.speckit_version `
+                                    -NewVersion $targetRelease.tag_name
+
+                                Write-Host "  Conflict resolution applied: $($conflict.path)" -ForegroundColor Cyan
+                                $actualConflicts += $conflict.path
+                            }
+                        }
+                        else {
+                            # Non-markdown files: use basic conflict markers
+                            Write-SmartConflictResolution `
+                                -FilePath $filePath `
+                                -CurrentContent $currentContent `
+                                -BaseContent $baseContent `
+                                -IncomingContent $incomingContent `
+                                -OriginalVersion $manifest.speckit_version `
+                                -NewVersion $targetRelease.tag_name
+
+                            Write-Host "  Conflict resolution applied: $($conflict.path)" -ForegroundColor Cyan
+                            $actualConflicts += $conflict.path
+                        }
                     }
                     else {
                         # False positive - file is actually the same, just marked as customized
