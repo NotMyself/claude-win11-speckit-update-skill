@@ -268,56 +268,6 @@ If an error occurs during update:
 3. Files are restored to pre-update state
 4. Exit code 6 is returned
 
-## Development
-
-### Project Structure
-
-```
-claude-Win11-SpecKit-Safe-Update-Skill/
-├── scripts/
-│   ├── update-orchestrator.ps1       # Main entry point
-│   ├── modules/                       # PowerShell modules
-│   │   ├── HashUtils.psm1
-│   │   ├── VSCodeIntegration.psm1
-│   │   ├── GitHubApiClient.psm1
-│   │   ├── ManifestManager.psm1
-│   │   ├── BackupManager.psm1
-│   │   └── ConflictDetector.psm1
-│   └── helpers/                       # Helper functions
-│       ├── Invoke-PreUpdateValidation.ps1
-│       ├── Show-UpdateSummary.ps1
-│       ├── Show-UpdateReport.ps1
-│       ├── Get-UpdateConfirmation.ps1
-│       ├── Invoke-ConflictResolutionWorkflow.ps1
-│       └── Invoke-RollbackWorkflow.ps1
-├── templates/
-│   └── manifest-template.json
-├── specs/
-│   └── 001-safe-update/
-│       └── spec.md
-├── SKILL.md                          # Claude Code skill definition
-└── README.md                         # This file
-```
-
-### Testing
-
-Run the test suite:
-
-```powershell
-# Run all tests
-./tests/test-runner.ps1
-
-# Run unit tests only
-./tests/test-runner.ps1 -Unit
-
-# Run integration tests only
-./tests/test-runner.ps1 -Integration
-```
-
-## Specification
-
-Full specification available in `specs/001-safe-update/spec.md`.
-
 ## Contributing
 
 This skill follows the specification in `specs/001-safe-update/spec.md`.
