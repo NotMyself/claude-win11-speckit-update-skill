@@ -25,19 +25,48 @@ Thank you for your interest in contributing! This document provides guidelines f
    Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser
    ```
 
+## Current State (v0.4.0)
+
+The project is **feature-complete** and released. Recent additions include:
+
+- ✅ **Automatic SpecKit Installation** (v0.4.0): Offers to install SpecKit in non-SpecKit projects
+- ✅ **Smart Conflict Resolution**: Two-tier system (Git markers for small files, side-by-side diffs for large files)
+- ✅ **False Positive Detection**: Auto-resolves conflicts where files are identical to upstream
+- ✅ **Customization Preservation**: Detects and preserves user customizations
+- ✅ **Automatic Backups**: Timestamped backups with retention management
+- ✅ **Conversational Approval**: Two-step workflow designed for Claude Code
+- ✅ **Constitution Integration**: Seamless integration with `/speckit.constitution` command
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
 ## Project Structure
 
 ```
 claude-Win11-SpecKit-Safe-Update-Skill/
 ├── scripts/
-│   ├── update-orchestrator.ps1       # Main entry point
+│   ├── update-orchestrator.ps1       # Main entry point (16-step workflow)
 │   ├── modules/                       # PowerShell modules (6 files)
+│   │   ├── HashUtils.psm1            # Normalized hashing
+│   │   ├── VSCodeIntegration.psm1    # Context detection
+│   │   ├── GitHubApiClient.psm1      # GitHub Releases API
+│   │   ├── ManifestManager.psm1      # Manifest CRUD
+│   │   ├── BackupManager.psm1        # Backup/restore
+│   │   └── ConflictDetector.psm1     # File state analysis
 │   └── helpers/                       # Helper functions (7 files)
+│       ├── Invoke-PreUpdateValidation.ps1  # Prerequisites & installation offer
+│       ├── Show-UpdateSummary.ps1          # Results display
+│       ├── Show-UpdateReport.ps1           # Check-only mode
+│       ├── Get-UpdateConfirmation.ps1      # Conversational approval
+│       ├── Invoke-ConflictResolutionWorkflow.ps1
+│       ├── Invoke-RollbackWorkflow.ps1
+│       └── Invoke-ThreeWayMerge.ps1
 ├── tests/
-│   ├── unit/                          # Unit tests
-│   ├── integration/                   # Integration tests
+│   ├── unit/                          # Unit tests (245+ tests)
+│   ├── integration/                   # Integration tests (12 scenarios)
 │   └── fixtures/                      # Test data
-├── specs/                             # Specifications
+├── specs/                             # Feature specifications
+│   ├── 001-safe-update/              # Core update spec
+│   └── 010-helpful-error-messages/   # Installation feature spec
 └── templates/                         # Template files
 ```
 
@@ -140,9 +169,10 @@ Describe "Get-Example" {
 
 ### 5. Update Documentation
 
-- Update README.md if adding user-facing features
-- Update CHANGELOG.md under [Unreleased] section
+- Update README.md if adding user-facing features (focus on end-user benefits)
+- Update CHANGELOG.md under [Unreleased] section (detailed technical changes)
 - Update SKILL.md if changing command behavior
+- Update CLAUDE.md if changing architecture or development patterns
 - Add inline comments for complex logic
 
 ### 6. Commit Changes
