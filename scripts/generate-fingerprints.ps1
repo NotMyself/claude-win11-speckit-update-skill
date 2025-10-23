@@ -39,7 +39,7 @@
 #>
 
 param(
-    [string]$GithubToken = $env:GITHUB_PAT,
+    [string]$GithubToken = $(if ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } else { $env:GITHUB_PAT }),
 
     [int]$MaxVersions = 0,  # 0 = all versions
 
@@ -294,3 +294,6 @@ Write-Host "  1. Review the generated database: $OutputPath" -ForegroundColor Wh
 Write-Host "  2. Commit to repository: git add $OutputPath" -ForegroundColor White
 Write-Host "  3. Commit: git commit -m 'chore: Add fingerprint database (77 versions)'" -ForegroundColor White
 Write-Host ""
+
+# Exit with success
+exit 0
