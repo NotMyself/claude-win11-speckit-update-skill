@@ -144,107 +144,53 @@ Skip backup creation. Use only if you're absolutely sure.
 
 ## How It Works
 
-### Update Workflow (16 Steps)
+### Customization Detection
 
-1. **Validate Prerequisites**: Check Git, write permissions, Git state, offer SpecKit installation if needed
-2. **Handle Rollback**: Process rollback request if specified
-3. **Create .specify/ Structure** (First-Time Install): Create directories for new installations
-4. **Load/Create Manifest**: Load `.specify/manifest.json` or create new one
-5. **Fetch Target Version**: Get latest or specific version from GitHub Releases
-6. **Analyze File States**: Compare current files with manifest and upstream
-7. **Check-Only Mode**: Show detailed report and exit (if `--check-only`)
-8. **Get Confirmation**: Show summary and exit for user approval (conversational workflow)
-9. **Create Backup**: Create timestamped backup in `.specify/backups/`
-10. **Download Templates**: Fetch templates from GitHub release
-11. **Apply Updates**: Update files that aren't customized or conflicts
-12. **Handle Conflicts**: Write Git conflict markers for VSCode CodeLens detection
-13. **Update Constitution**: Delegate to `/speckit.constitution` with backup path if needed
-14. **Update Manifest**: Update version and file hashes
-15. **Cleanup Old Backups**: Optionally remove backups older than 5 most recent
-16. **Show Summary**: Display detailed update results (includes "Welcome to SpecKit!" for first installs)
+The updater automatically detects which files you've customized by comparing file hashes:
 
-### Conflict Resolution
+- **Customized files** are preserved and never overwritten
+- **Unchanged files** are safely updated to the latest version
+- **Your custom commands** are always protected, even with `--force`
 
-When conflicts are detected (file customized locally AND changed upstream):
+### Smart Update Process
 
-1. **Detects conflicts** during file analysis
-2. **Writes Git conflict markers** to conflicted files:
-   ```
-   <<<<<<< Current (Your Version)
-   Your local changes
-   ||||||| Base (v0.1.5)
-   Original content
-   =======
-   New upstream content
-   >>>>>>> Incoming (v0.2.0)
-   ```
-3. **VSCode CodeLens** automatically detects markers and shows actions:
-   - Accept Current Change
-   - Accept Incoming Change
-   - Accept Both Changes
-   - Compare Changes
-4. **False positive detection**: Auto-resolves when content is identical to upstream
-5. **Constitution special handling**: Uses `/speckit.constitution` workflow instead of markers
+When you run `/speckit-updater`:
 
-### File State Detection
+1. **Safety First**: Creates a timestamped backup before making any changes
+2. **Intelligent Analysis**: Compares your files with the latest SpecKit templates
+3. **Conflict Detection**: Identifies files that need your attention
+4. **Conversational Approval**: Shows you exactly what will change and waits for your approval
+5. **Safe Application**: Updates only what's safe, preserving your customizations
+6. **Automatic Rollback**: If anything goes wrong, automatically restores from backup
 
-Files are categorized based on hash comparison:
+### Handling Conflicts
 
-- **Update**: Not customized, has upstream changes → Apply update
-- **Preserve**: Customized, no upstream changes → Keep as-is
-- **Merge**: Customized AND has upstream changes → Conflict resolution
-- **Add**: New file in upstream → Add to project
-- **Remove**: File removed from upstream → Remove from project
-- **Skip**: No changes needed
+When a file has been customized locally **and** changed in the upstream template, you'll see conflict markers:
 
-## Architecture
-
-### Modules
-
-- **HashUtils.psm1**: Normalized hashing (handles line endings, whitespace)
-- **VSCodeIntegration.psm1**: Execution context detection, notifications
-- **GitHubApiClient.psm1**: GitHub Releases API interaction
-- **ManifestManager.psm1**: Manifest CRUD operations
-- **BackupManager.psm1**: Backup creation and restoration
-- **ConflictDetector.psm1**: File state analysis, conflict detection, conflict marker writing
-
-### Helper Functions
-
-- **Invoke-PreUpdateValidation.ps1**: Prerequisites validation
-- **Show-UpdateSummary.ps1**: Detailed results display
-- **Show-UpdateReport.ps1**: Check-only mode output
-- **Get-UpdateConfirmation.ps1**: Conversational approval workflow and summary generation
-- **Invoke-ConflictResolutionWorkflow.ps1**: Conflict detection and marker writing (legacy name)
-- **Invoke-RollbackWorkflow.ps1**: Backup restoration workflow
-
-### Main Orchestrator
-
-- **update-orchestrator.ps1**: Main entry point coordinating all 15 steps
-
-## Manifest Structure
-
-The `.specify/manifest.json` file tracks:
-
-```json
-{
-  "version": "1.0",
-  "speckit_version": "v0.0.72",
-  "initialized_at": "2025-01-19T12:34:56Z",
-  "last_updated": "2025-01-19T14:22:10Z",
-  "agent": "claude-code",
-  "speckit_commands": ["speckit.constitution.md", "speckit.specify.md", ...],
-  "tracked_files": [
-    {
-      "path": ".claude/commands/speckit.specify.md",
-      "original_hash": "sha256:abc123...",
-      "customized": false,
-      "is_official": true
-    }
-  ],
-  "custom_files": [".claude/commands/custom-deploy.md"],
-  "backup_history": [...]
-}
+```markdown
+<<<<<<< Current (Your Version)
+Your local changes
+||||||| Base (v0.1.5)
+Original content
+=======
+New upstream content
+>>>>>>> Incoming (v0.2.0)
 ```
+
+**VSCode automatically detects these markers** and shows you options:
+- Accept Current Change (keep yours)
+- Accept Incoming Change (use upstream)
+- Accept Both Changes (merge manually)
+- Compare Changes (side-by-side view)
+
+**Large files** (>100 lines) get special treatment with side-by-side Markdown diff files for easier review.
+
+### Backup & Recovery
+
+- **Automatic backups** created before every update in `.specify/backups/`
+- **Timestamped folders** make it easy to find the right backup
+- **Quick rollback** with `/speckit-updater --rollback`
+- **Automatic cleanup** keeps your 5 most recent backups
 
 ## Error Handling
 
