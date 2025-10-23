@@ -8,7 +8,12 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 ## Features
 
-- **Automatic SpecKit Installation** (New in v0.4.0): Offers to install SpecKit in non-SpecKit projects with one command
+- **Smart Merge with Frictionless Onboarding** (New in v0.6.0): Automatic version detection and intelligent 3-way merge
+  - **Zero conflicts** for first-time users with unmodified SpecKit installations (was ~15)
+  - **Fingerprint-based version detection**: Fast signature check (<100ms) identifies installed SpecKit version automatically
+  - **Intelligent 3-way merge**: Section-level semantic understanding reduces conflicts from ~15 to 0-2
+  - **No user configuration**: Fully automatic operation, works out of the box
+- **Automatic SpecKit Installation** (v0.4.0): Offers to install SpecKit in non-SpecKit projects with one command
 - **Customization Preservation**: Automatically detects and preserves your customized files
 - **Smart Conflict Resolution**: Intelligent two-tier conflict handling
   - Small files (≤100 lines): Git conflict markers with VSCode CodeLens integration

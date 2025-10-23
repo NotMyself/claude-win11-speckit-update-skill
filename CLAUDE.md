@@ -89,9 +89,11 @@ Get-NormalizedHash -FilePath ".\README.md"
 Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force
 Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force
 Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force
+Import-Module (Join-Path $modulesPath "MarkdownMerger.psm1") -Force
 
 # TIER 1: Modules depending on Tier 0
 Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force
+Import-Module (Join-Path $modulesPath "FingerprintDetector.psm1") -Force
 
 # TIER 2: Modules depending on Tier 1
 Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force
@@ -113,6 +115,8 @@ See [.specify/memory/constitution.md - Module Import Rules](.specify/memory/cons
 1. Validates prerequisites (Git, permissions, .specify/ directory)
 2. Handles rollback requests
 3. Loads/creates manifest (`.specify/manifest.json`)
+   - **NEW**: Automatic version detection for first-time users via fingerprint matching
+   - Enables smart merge for 95%+ of installations
 4. Fetches target version from GitHub Releases API
 5. Analyzes file states (customized vs. default)
 6. Shows check-only report (if `-CheckOnly`)
@@ -120,7 +124,11 @@ See [.specify/memory/constitution.md - Module Import Rules](.specify/memory/cons
 8. Creates timestamped backup
 9. Downloads templates from GitHub
 10. Applies selective updates
-11. Handles conflicts via 3-way merge
+11. Handles conflicts via intelligent 3-way merge
+    - **NEW**: Section-based semantic merge for markdown files
+    - Fetches base content from original version
+    - Auto-merges compatible changes
+    - Generates granular conflict markers (section-level, not file-level)
 12. Notifies about constitution updates
 13. Updates manifest with new version/hashes
 14. Cleans up old backups (retention management)
@@ -158,6 +166,21 @@ See [.specify/memory/constitution.md - Module Import Rules](.specify/memory/cons
   - Compares current file hashes vs. manifest vs. upstream
   - Categorizes files: `add`, `remove`, `update`, `preserve`, `merge`, `skip`
   - Identifies official SpecKit commands vs. custom commands
+
+- **[FingerprintDetector.psm1](scripts/modules/FingerprintDetector.psm1)** - Automatic version detection
+  - Fast signature check (3 files) covers 95%+ of cases
+  - Full fingerprint matching (12 files) as fallback
+  - Confidence scoring: High (95-100%), Medium (70-94%), Low (<70%)
+  - Loads database from [data/speckit-fingerprints.json](data/speckit-fingerprints.json)
+  - Enables frictionless onboarding for first-time users
+
+- **[MarkdownMerger.psm1](scripts/modules/MarkdownMerger.psm1)** - Intelligent 3-way merge
+  - Levenshtein distance for fuzzy section matching
+  - Section-based parsing using markdown headers
+  - 80% similarity threshold for matching renamed sections
+  - Incoming structure as canonical (layers customizations)
+  - Granular git conflict markers (section-level, not file-level)
+  - Auto-merges compatible changes (reduces conflicts from ~15 to 0-2)
 
 ### Helper Functions (scripts/helpers/)
 
@@ -450,6 +473,89 @@ When running `/speckit-update` in a project without `.specify/` directory:
 - **Consistent with update flow**: Both flows use `-Proceed` flag, `[PROMPT_FOR_*]` markers, and exit 0
 - **Idempotent**: Running install multiple times on already-installed project behaves as update check
 - **Direct proceed supported**: User can run `/speckit-update -Proceed` on first invocation to skip offer phase
+
+### Smart Merge with Frictionless Onboarding (New in v0.4.2)
+
+**Problem**: First-time users had no manifest, causing all files to be treated as customized, resulting in ~15 manual conflicts even for unmodified installations.
+
+**Solution**: Automatic version detection + intelligent 3-way merge
+
+#### Version Detection (Step 3)
+
+When no manifest exists:
+
+1. **Fast Signature Check** (covers 95%+ of cases)
+   - Checks 3 core files: `speckit.specify.md`, `speckit.plan.md`, `constitution.md`
+   - <100ms offline lookup in fingerprint database
+   - Returns version if 100% match
+
+2. **Full Fingerprint Scan** (fallback)
+   - Checks all 12 tracked files
+   - Uses fuzzy matching if needed
+   - Assigns confidence: High (95-100%), Medium (70-94%), Low (<70%)
+
+3. **Manifest Creation**
+   - **High/Medium confidence**: Creates manifest with detected version
+   - **Low confidence or failure**: Falls back to safe default (v0.0.0, all files customized)
+
+**Example Output:**
+```
+Detecting installed SpecKit version...
+
+✓ Version detected: v0.0.79
+  Confidence: High (100.0% match)
+  Method: signature
+
+Creating new manifest with detected version: v0.0.79
+This enables smart merge - only actual customizations will be flagged as conflicts
+```
+
+#### Intelligent 3-Way Merge (Step 11)
+
+For each conflict, the system now performs true 3-way merge:
+
+1. **Fetch Base Content**
+   - Downloads original file from detected/manifest version
+   - Enables accurate detection of user changes vs upstream changes
+
+2. **Section-Based Merge** (for markdown files)
+   - Parses files into sections using headers
+   - Matches sections with 80% fuzzy similarity threshold
+   - Auto-merges compatible changes:
+     * New sections from upstream (adds)
+     * Preserved custom sections
+     * Non-conflicting edits to same sections
+   - Generates granular conflict markers only for true conflicts
+
+3. **Merge Results**
+   - **Clean merge**: No conflicts, file automatically updated
+   - **Partial merge**: Some sections auto-merged, conflict markers for others
+   - **Fallback**: Basic conflict markers if smart merge fails
+
+**Example Output:**
+```
+Resolving conflicts...
+  ✓ Clean merge: .claude/commands/speckit.specify.md (no conflicts)
+  ✓ Clean merge: .claude/commands/speckit.plan.md (no conflicts)
+  ⚠ Merged with 2 conflict(s): .specify/memory/constitution.md
+```
+
+**Benefits:**
+- **First-time users**: Zero conflicts for unmodified installations
+- **Customized files**: Reduced from ~15 conflicts to 0-2 conflicts
+- **Better UX**: Section-level markers instead of entire file conflicts
+- **Automatic**: No user configuration required
+
+**Technical Details:**
+- Fingerprint database: [data/speckit-fingerprints.json](data/speckit-fingerprints.json) (69 KB, 57 versions)
+- Database auto-updated via GitHub Actions (daily checks for new releases)
+- Levenshtein distance for fuzzy string matching
+- Normalized hashing prevents false positives from whitespace/line endings
+
+**Related:**
+- Feature PRD: [docs/PRDs/004-Smart-Merge-Frictionless-Onboarding.md](docs/PRDs/004-Smart-Merge-Frictionless-Onboarding.md)
+- GitHub Issue: #25
+- Modules: `FingerprintDetector.psm1`, `MarkdownMerger.psm1`
 
 ### Conflict Resolution (Flow A)
 

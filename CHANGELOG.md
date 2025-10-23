@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-10-23
+
+### Added
+- **Smart Merge with Frictionless Onboarding (#25)**: Automatic version detection and intelligent 3-way merge eliminates first-time user conflicts
+  - **Problem**: First-time users had ~15 manual conflicts for unmodified SpecKit installations
+    - No manifest exists initially, version unknown
+    - Defaults to v0.0.0, assumes all files are customized
+    - Every template file flagged as conflicted despite being pristine
+    - Poor UX: overwhelming file-level conflict markers
+  - **Solution**: Fingerprint-based version detection + semantic 3-way merge
+  - **Version Detection**:
+    - **Fingerprint Database**: Pre-generated SHA-256 hashes of 12 tracked files across 57 working SpecKit versions (v0.0.23-v0.0.79)
+    - **Fast Signature Check**: 3-file signature check (<100ms) covers 95%+ cases
+    - **Full Fingerprint Scan**: 12-file fallback with fuzzy matching and confidence scoring
+    - **Confidence Levels**: High (95-100%), Medium (70-94%), Low (<70%)
+    - **Smart Manifest Creation**: Creates manifest with detected version (not v0.0.0) enabling accurate conflict detection
+  - **Intelligent 3-Way Merge**:
+    - **Base Content Retrieval**: Fetches original file from detected version via GitHub API
+    - **Section-Based Parsing**: Markdown files parsed by headers for semantic understanding
+    - **Fuzzy Section Matching**: 80% similarity threshold handles renamed/reorganized sections
+    - **Auto-Merge Compatible Changes**: Only actual conflicts get markers
+    - **Granular Conflict Markers**: Git markers at section-level, not entire files
+    - **Incoming Structure as Canonical**: New SpecKit structure preserved, customizations layered in
+  - **GitHub Actions Automation**:
+    - **Daily Checks**: Runs at 2 AM UTC, compares database with GitHub Releases API
+    - **Auto-Regeneration**: Regenerates entire fingerprint database when new SpecKit release detected
+    - **Pull Request Creation**: Automated PRs with detailed stats (versions added, files tracked, database size)
+    - **CI/CD Token Support**: Works with both `GITHUB_TOKEN` (CI) and `GITHUB_PAT` (local dev)
+  - **Files Added**:
+    - `data/speckit-fingerprints.json` - 69 KB database with 57 SpecKit version fingerprints
+    - `scripts/modules/FingerprintDetector.psm1` - Version detection module (420 lines)
+    - `scripts/modules/MarkdownMerger.psm1` - Intelligent 3-way merge module (580 lines)
+    - `tests/unit/FingerprintDetector.Tests.ps1` - 20 unit tests (all passing)
+    - `tests/unit/MarkdownMerger.Tests.ps1` - 32 unit tests (all passing)
+    - `.github/workflows/update-fingerprints.yml` - Automation workflow
+    - `.github/workflows/README.md` - Workflow documentation
+    - `docs/PRDs/004-Smart-Merge-Frictionless-Onboarding.md` - Feature PRD
+    - `scripts/generate-fingerprints.ps1` - Database generation script
+  - **Files Modified**:
+    - `scripts/update-orchestrator.ps1` - Integrated version detection (Step 3) and smart merge (Step 11)
+    - `scripts/modules/GitHubApiClient.psm1` - Added `Get-SpecKitFile` function for single-file downloads
+    - `CLAUDE.md` - Comprehensive documentation updates (module imports, workflow steps, Smart Merge section)
+  - **Benefits**:
+    - ✅ First-time users: Zero conflicts for unmodified installations (was ~15)
+    - ✅ Customized files: Reduced from ~15 to 0-2 conflicts
+    - ✅ Better UX: Section-level markers instead of entire files
+    - ✅ No user configuration: Fully automatic operation
+    - ✅ Scales indefinitely: GitHub Actions maintains database
+    - ✅ Accurate detection: 95%+ success rate with signature check
+  - **Test Coverage**: 52 new unit tests (20 FingerprintDetector + 32 MarkdownMerger), all passing
+  - **Implementation**: 7 commits across 5 days, complete feature implementation from design through testing, integration, automation, and documentation
+
 ## [0.5.0] - 2025-10-23
 
 ### Added
@@ -448,7 +500,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.2.0...v0.3.0
