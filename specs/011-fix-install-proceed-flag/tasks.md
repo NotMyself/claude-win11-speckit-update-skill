@@ -48,22 +48,22 @@ description: "Implementation tasks for fixing installation flow -Proceed flag bu
 
 ### Implementation for User Story 1
 
-- [ ] T001 [US1] Add `-Proceed` switch parameter to function signature in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T002 [US1] Update installation detection logic to check `-Proceed` flag in scripts/helpers/Invoke-PreUpdateValidation.ps1 (lines 206-221)
-- [ ] T003 [US1] Change exit behavior from `throw` to `exit 0` when awaiting approval in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T004 [US1] Add conditional branch for `-Proceed` flag: if not set, show prompt and exit gracefully in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T005 [US1] Add conditional branch for `-Proceed` flag: if set, skip prompt and continue validation in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T006 [US1] Pass `-Proceed` parameter from orchestrator to validation helper using `-Proceed:$Proceed` syntax in scripts/update-orchestrator.ps1 (line 189)
+- [X] T001 [US1] Add `-Proceed` switch parameter to function signature in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T002 [US1] Update installation detection logic to check `-Proceed` flag in scripts/helpers/Invoke-PreUpdateValidation.ps1 (lines 206-221)
+- [X] T003 [US1] Change exit behavior from `throw` to `exit 0` when awaiting approval in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T004 [US1] Add conditional branch for `-Proceed` flag: if not set, show prompt and exit gracefully in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T005 [US1] Add conditional branch for `-Proceed` flag: if set, skip prompt and continue validation in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T006 [US1] Pass `-Proceed` parameter from orchestrator to validation helper using `-Proceed:$Proceed` syntax in scripts/update-orchestrator.ps1 (line 189)
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] Create unit test file tests/unit/Invoke-PreUpdateValidation.Tests.ps1 if it doesn't exist
-- [ ] T008 [P] [US1] Add unit test: validation helper accepts `-Proceed` parameter without errors in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T009 [P] [US1] Add unit test: without `-Proceed`, installation detection exits with code 0 (not throw) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T010 [P] [US1] Add unit test: with `-Proceed`, installation detection continues (no exit, no throw) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T011 [US1] Add integration test: fresh installation flow without `-Proceed` shows prompt and exits gracefully in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T012 [US1] Add integration test: fresh installation flow with `-Proceed` completes installation successfully in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T013 [US1] Add integration test: direct proceed on first invocation works (scenario 3) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T007 [P] [US1] Create unit test file tests/unit/Invoke-PreUpdateValidation.Tests.ps1 if it doesn't exist
+- [X] T008 [P] [US1] Add unit test: validation helper accepts `-Proceed` parameter without errors in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T009 [P] [US1] Add unit test: without `-Proceed`, installation detection exits with code 0 (not throw) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T010 [P] [US1] Add unit test: with `-Proceed`, installation detection continues (no exit, no throw) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T011 [US1] Add integration test: fresh installation flow without `-Proceed` shows prompt and exits gracefully in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T012 [US1] Add integration test: fresh installation flow with `-Proceed` completes installation successfully in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T013 [US1] Add integration test: direct proceed on first invocation works (scenario 3) in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - fresh installations work with two-command workflow
 
@@ -77,15 +77,15 @@ description: "Implementation tasks for fixing installation flow -Proceed flag bu
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Review update flow `-Proceed` pattern in scripts/update-orchestrator.ps1 (lines 381-409) and verify installation flow matches
-- [ ] T015 [US2] Ensure installation prompt format matches update prompt format (both use `[PROMPT_FOR_*]` markers) in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T016 [US2] Verify installation flow exits gracefully like update flow (code 0, not error) in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T014 [US2] Review update flow `-Proceed` pattern in scripts/update-orchestrator.ps1 (lines 381-409) and verify installation flow matches
+- [X] T015 [US2] Ensure installation prompt format matches update prompt format (both use `[PROMPT_FOR_*]` markers) in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T016 [US2] Verify installation flow exits gracefully like update flow (code 0, not error) in scripts/helpers/Invoke-PreUpdateValidation.ps1
 
 ### Tests for User Story 2
 
-- [ ] T017 [P] [US2] Add integration test: existing SpecKit project shows no installation prompt in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T018 [P] [US2] Add integration test: multiple installations are idempotent (no duplicate installs) in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T019 [US2] Add comparison test: installation and update flows both handle `-Proceed` identically in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T017 [P] [US2] Add integration test: existing SpecKit project shows no installation prompt in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T018 [P] [US2] Add integration test: multiple installations are idempotent (no duplicate installs) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T019 [US2] Add comparison test: installation and update flows both handle `-Proceed` identically in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: At this point, installation and update flows should behave consistently - same UX patterns
 
@@ -99,20 +99,20 @@ description: "Implementation tasks for fixing installation flow -Proceed flag bu
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] Update installation prompt to include exact command instruction (`/speckit-update -Proceed`) in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T021 [US3] Add cyan-colored `[PROMPT_FOR_INSTALL]` marker to installation prompt in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T022 [US3] Add yellow warning text "SpecKit is not currently installed in this project." in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T023 [US3] Add gray description text describing what installation will do in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T024 [US3] Add white command text showing exact proceed command in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T025 [US3] Add verbose logging message "Awaiting user approval for SpecKit installation" when awaiting approval in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T026 [US3] Add verbose logging message "User approved SpecKit installation, proceeding..." when proceeding in scripts/helpers/Invoke-PreUpdateValidation.ps1
-- [ ] T027 [US3] Add progress indicator "📦 Installing SpecKit..." in cyan when installation proceeds in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T020 [US3] Update installation prompt to include exact command instruction (`/speckit-update -Proceed`) in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T021 [US3] Add cyan-colored `[PROMPT_FOR_INSTALL]` marker to installation prompt in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T022 [US3] Add yellow warning text "SpecKit is not currently installed in this project." in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T023 [US3] Add gray description text describing what installation will do in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T024 [US3] Add white command text showing exact proceed command in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T025 [US3] Add verbose logging message "Awaiting user approval for SpecKit installation" when awaiting approval in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T026 [US3] Add verbose logging message "User approved SpecKit installation, proceeding..." when proceeding in scripts/helpers/Invoke-PreUpdateValidation.ps1
+- [X] T027 [US3] Add progress indicator "📦 Installing SpecKit..." in cyan when installation proceeds in scripts/helpers/Invoke-PreUpdateValidation.ps1
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Add unit test: installation prompt contains all required elements with exact colors (Cyan marker, Yellow warning, Gray description, White command) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T029 [P] [US3] Add unit test: verbose logging shows correct approval state transitions in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
-- [ ] T030 [US3] Add integration test: no error thrown when awaiting approval (graceful exit) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T028 [P] [US3] Add unit test: installation prompt contains all required elements with exact colors (Cyan marker, Yellow warning, Gray description, White command) in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T029 [P] [US3] Add unit test: verbose logging shows correct approval state transitions in tests/unit/Invoke-PreUpdateValidation.Tests.ps1
+- [X] T030 [US3] Add integration test: no error thrown when awaiting approval (graceful exit) in tests/integration/UpdateOrchestrator.Tests.ps1
 
 **Checkpoint**: All user stories complete - installation flow fully functional with clear UX
 
@@ -122,18 +122,18 @@ description: "Implementation tasks for fixing installation flow -Proceed flag bu
 
 **Purpose**: Documentation updates, final validation, edge case testing, and release preparation
 
-- [ ] T031 [P] Add installation flow documentation section to CLAUDE.md (Key Workflows section)
-- [ ] T032 [P] Update installation example in SKILL.md with two-command workflow
-- [ ] T033 [P] Add bug fix entry to CHANGELOG.md under "Fixed" section for next release
-- [ ] T034 Run manual test scenarios from specs/011-fix-install-proceed-flag/quickstart.md (scenarios 1-5)
-- [ ] T035 Run full test suite with ./tests/test-runner.ps1 and verify all tests pass
-- [ ] T036 Run unit tests only with ./tests/test-runner.ps1 -Unit and verify all pass
-- [ ] T037 Run integration tests only with ./tests/test-runner.ps1 -Integration and verify all pass
-- [ ] T038 Verify exit code is 0 for installation prompt (not error code)
-- [ ] T039 Verify no double prompts occur in any scenario
-- [ ] T040 Verify installation completes successfully with `-Proceed` flag
-- [ ] T041 [P] Add integration test: network failure during template download shows clear error (edge case 2) in tests/integration/UpdateOrchestrator.Tests.ps1
-- [ ] T042 [P] Add integration test: empty or corrupt .specify/ directory detected and handled correctly (edge case 3) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T031 [P] Add installation flow documentation section to CLAUDE.md (Key Workflows section)
+- [X] T032 [P] Update installation example in SKILL.md with two-command workflow
+- [X] T033 [P] Add bug fix entry to CHANGELOG.md under "Fixed" section for next release
+- [X] T034 Run manual test scenarios from specs/011-fix-install-proceed-flag/quickstart.md (scenarios 1-5)
+- [X] T035 Run full test suite with ./tests/test-runner.ps1 and verify all tests pass
+- [X] T036 Run unit tests only with ./tests/test-runner.ps1 -Unit and verify all pass
+- [X] T037 Run integration tests only with ./tests/test-runner.ps1 -Integration and verify all pass
+- [X] T038 Verify exit code is 0 for installation prompt (not error code)
+- [X] T039 Verify no double prompts occur in any scenario
+- [X] T040 Verify installation completes successfully with `-Proceed` flag
+- [X] T041 [P] Add integration test: network failure during template download shows clear error (edge case 2) in tests/integration/UpdateOrchestrator.Tests.ps1
+- [X] T042 [P] Add integration test: empty or corrupt .specify/ directory detected and handled correctly (edge case 3) in tests/integration/UpdateOrchestrator.Tests.ps1
 
 ---
 

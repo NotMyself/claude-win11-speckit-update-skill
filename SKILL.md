@@ -11,24 +11,34 @@ When the user invokes `/speckit-updater`, you should:
    pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1'"
    ```
 
-2. **Parse the output** for the `[PROMPT_FOR_APPROVAL]` marker
+2. **Parse the output** for markers:
+   - **`[PROMPT_FOR_APPROVAL]`** - Update scenario (existing SpecKit installation)
+   - **`[PROMPT_FOR_INSTALL]`** - Fresh installation scenario (no .specify/ directory)
 
-3. **Present the Markdown summary** to the user showing:
-   - Current version vs. available version
-   - Files to update/add/remove
-   - Conflicts detected (if any)
-   - Files preserved (customized)
-   - Backup location
-   - Custom commands
+3. **For Updates** (`[PROMPT_FOR_APPROVAL]` marker found):
+   - **Present the Markdown summary** showing:
+     - Current version vs. available version
+     - Files to update/add/remove
+     - Conflicts detected (if any)
+     - Files preserved (customized)
+     - Backup location
+     - Custom commands
+   - **Ask the user for approval** to proceed with the update
+   - **If approved**, re-run with `-Proceed` flag
+   - **If declined**, inform the user the update was cancelled
 
-4. **Ask the user for approval** to proceed with the update
+4. **For Fresh Installations** (`[PROMPT_FOR_INSTALL]` marker found):
+   - **Present a natural installation offer** to the user, such as:
+     - "SpecKit is not currently installed in this project. Would you like me to install it?"
+     - "I can install the latest SpecKit templates for you. This will create the .specify/ directory structure and download the templates from GitHub."
+   - **Do NOT mention the `-Proceed` flag** to the user (this is an implementation detail)
+   - **If user approves** (says "yes", "proceed", "install it", etc.), re-run with `-Proceed` flag
+   - **If user declines**, inform them the installation was cancelled
 
-5. **If approved**, re-run with `-Proceed` flag:
+5. **Execute approved action** by re-running with `-Proceed` flag:
    ```powershell
    pwsh -NoProfile -Command "& 'C:\Users\bobby\.claude\skills\speckit-updater\scripts\update-wrapper.ps1' -Proceed"
    ```
-
-6. **If declined**, inform the user the update was cancelled
 
 **Special cases:**
 - If user requests `-CheckOnly`: run with that flag and show the report
@@ -42,13 +52,22 @@ When the user invokes `/speckit-updater`, you should:
 Updates SpecKit templates, commands, and scripts while preserving customizations.
 
 **Usage:**
-- `/speckit-updater` - Interactive update with conversational approval workflow (recommended for Claude Code)
-- `/speckit-updater -Proceed` - Proceed with update after approval (used by Claude after user confirms)
+- `/speckit-updater` - Interactive update/install with conversational approval workflow (recommended for Claude Code)
+- `/speckit-updater -Proceed` - Proceed with update/install after approval (used by Claude after user confirms)
 - `/speckit-updater -CheckOnly` - Check for updates without applying
 - `/speckit-updater -Version v0.0.72` - Update to specific version
 - `/speckit-updater -Force` - Force overwrite SpecKit files (preserves custom commands)
 - `/speckit-updater -Rollback` - Restore from previous backup
 - `/speckit-updater -Auto` - DEPRECATED: Use conversational workflow instead (shows warning, maps to -Proceed)
+
+**Fresh Installation (No .specify/ directory):**
+- First invocation shows installation offer with `[PROMPT_FOR_INSTALL]` marker
+- Claude Code presents natural question to user (e.g., "Would you like me to install SpecKit?")
+- User approves via conversational response (e.g., "yes", "proceed", "install it")
+- Claude re-invokes with `-Proceed` flag automatically (implementation detail hidden from user)
+- Script creates `.specify/` structure, downloads templates, creates manifest
+- Exit code 0 throughout (awaiting approval is not an error)
+- Consistent with update flow: both use conversational approval workflow
 
 **Process:**
 1. Validates prerequisites (Git installed, clean Git state, write permissions)
@@ -64,12 +83,14 @@ Updates SpecKit templates, commands, and scripts while preserving customizations
 
 **When you invoke this command, I will:**
 1. Execute the update-orchestrator.ps1 script
-2. Present a Markdown summary of proposed changes with `[PROMPT_FOR_APPROVAL]` marker
-3. Wait for your approval via chat conversation
-4. After approval: re-invoke with `-Proceed` flag to apply updates
-5. Guide you through conflict resolution one file at a time
-6. Open VSCode diff/merge tools as needed
-7. Report results with detailed summary
+2. Parse output for markers (`[PROMPT_FOR_APPROVAL]` for updates, `[PROMPT_FOR_INSTALL]` for fresh installations)
+3. **For updates**: Present Markdown summary of proposed changes
+4. **For installations**: Ask naturally if you want to install SpecKit (without mentioning `-Proceed` flag)
+5. Wait for your approval via chat conversation
+6. After approval: automatically re-invoke with `-Proceed` flag to execute
+7. Guide you through conflict resolution one file at a time (updates only)
+8. Open VSCode diff/merge tools as needed (updates only)
+9. Report results with detailed summary
 
 **Conversational Workflow:** The skill uses a two-step approval process:
 - **Step 1**: Outputs summary → script exits → waits for approval

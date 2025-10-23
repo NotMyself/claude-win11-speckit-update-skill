@@ -1583,4 +1583,324 @@ Describe "Smart Conflict Resolution (Feature 008)" {
             }
         }
     }
+
+    Context "Scenario 12: Fresh Installation Flow with -Proceed Flag (Bug Fix #011)" {
+        It "T011: Fresh installation without -Proceed shows prompt and exits gracefully with code 0" {
+            # Arrange: Create test directory without .specify/
+            $testDir = Join-Path $env:TEMP "test-fresh-install-$(Get-Random)"
+            New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+
+            try {
+                Set-Location $testDir
+
+                # Mock GitHub API (should not be called without -Proceed)
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    throw "GitHub API should not be called without -Proceed"
+                }
+
+                # Act: Run orchestrator WITHOUT -Proceed flag
+                $output = & $script:OrchestratorScript 2>&1 | Out-String
+                $exitCode = $LASTEXITCODE
+
+                # Assert: Exit code is 0 (graceful exit, not error)
+                $exitCode | Should -Be 0 -Because "Installation prompt should exit gracefully with code 0"
+
+                # Assert: Installation prompt shown
+                $output | Should -Match '\[PROMPT_FOR_INSTALL\]' -Because "Non-interactive mode should show installation prompt"
+                $output | Should -Match 'not currently installed' -Because "Prompt should explain SpecKit is not installed"
+                $output | Should -Match '/speckit-update -Proceed' -Because "Prompt should show exact proceed command"
+
+                # Assert: No installation occurred
+                Test-Path (Join-Path $testDir ".specify") | Should -BeFalse -Because "Installation should not proceed without -Proceed flag"
+            }
+            finally {
+                Set-Location $script:OriginalLocation
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It "T012: Fresh installation WITH -Proceed completes installation successfully" {
+            # Arrange: Create test directory without .specify/
+            $testDir = Join-Path $env:TEMP "test-fresh-install-proceed-$(Get-Random)"
+            New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+
+            try {
+                Set-Location $testDir
+
+                # Mock GitHub API to return successful response
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    return @{
+                        tag_name = "v0.0.72"
+                        name = "Release v0.0.72"
+                        published_at = "2025-01-15T10:30:00Z"
+                        assets = @(
+                            @{
+                                name = "claude-templates.zip"
+                                browser_download_url = "https://example.com/templates.zip"
+                                size = 245678
+                            }
+                        )
+                    }
+                }
+
+                Mock -ModuleName GitHubApiClient Download-SpecKitTemplates {
+                    param([string]$DownloadUrl, [string]$OutputPath)
+
+                    # Create minimal SpecKit structure
+                    $claudeCommandsDir = Join-Path $testDir ".claude\commands"
+                    $specifyMemoryDir = Join-Path $testDir ".specify\memory"
+                    New-Item -ItemType Directory -Path $claudeCommandsDir -Force | Out-Null
+                    New-Item -ItemType Directory -Path $specifyMemoryDir -Force | Out-Null
+
+                    # Create sample template files
+                    @"
+# SpecKit Constitution Template
+"@ | Out-File (Join-Path $specifyMemoryDir "constitution.md") -Encoding utf8
+
+                    return $OutputPath
+                }
+
+                # Act: Run orchestrator WITH -Proceed flag
+                $output = & $script:OrchestratorScript -Proceed -Verbose 2>&1 | Out-String
+                $exitCode = $LASTEXITCODE
+
+                # Assert: Exit code is 0 (success)
+                $exitCode | Should -Be 0 -Because "Installation should complete successfully"
+
+                # Assert: Installation proceeded
+                $output | Should -Match '📦 Installing SpecKit' -Because "Installation progress indicator should be shown"
+                $output | Should -Match 'approved SpecKit installation' -Because "Verbose output should indicate approval"
+
+                # Assert: .specify/ directory created
+                Test-Path (Join-Path $testDir ".specify") | Should -BeTrue -Because "Installation should create .specify/ directory"
+                Test-Path (Join-Path $testDir ".specify\manifest.json") | Should -BeTrue -Because "Installation should create manifest"
+            }
+            finally {
+                Set-Location $script:OriginalLocation
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It "T013: Direct proceed on first invocation (skip first step) works correctly" {
+            # Arrange: Create test directory without .specify/
+            $testDir = Join-Path $env:TEMP "test-direct-proceed-$(Get-Random)"
+            New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+
+            try {
+                Set-Location $testDir
+
+                # Mock GitHub API
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    return @{
+                        tag_name = "v0.0.72"
+                        name = "Release v0.0.72"
+                        published_at = "2025-01-15T10:30:00Z"
+                        assets = @(
+                            @{
+                                name = "claude-templates.zip"
+                                browser_download_url = "https://example.com/templates.zip"
+                                size = 245678
+                            }
+                        )
+                    }
+                }
+
+                Mock -ModuleName GitHubApiClient Download-SpecKitTemplates {
+                    param([string]$DownloadUrl, [string]$OutputPath)
+
+                    # Create minimal SpecKit structure
+                    $claudeCommandsDir = Join-Path $testDir ".claude\commands"
+                    $specifyMemoryDir = Join-Path $testDir ".specify\memory"
+                    New-Item -ItemType Directory -Path $claudeCommandsDir -Force | Out-Null
+                    New-Item -ItemType Directory -Path $specifyMemoryDir -Force | Out-Null
+
+                    # Create sample template files
+                    @"
+# SpecKit Constitution Template
+"@ | Out-File (Join-Path $specifyMemoryDir "constitution.md") -Encoding utf8
+
+                    return $OutputPath
+                }
+
+                # Act: Run orchestrator WITH -Proceed flag on first invocation (no prior prompt)
+                $output = & $script:OrchestratorScript -Proceed -Verbose 2>&1 | Out-String
+                $exitCode = $LASTEXITCODE
+
+                # Assert: Exit code is 0 (success)
+                $exitCode | Should -Be 0 -Because "Direct proceed should work on first invocation"
+
+                # Assert: No prompt shown (direct proceed)
+                $output | Should -Not -Match '\[PROMPT_FOR_INSTALL\]' -Because "Direct proceed should skip prompt"
+
+                # Assert: Installation proceeded immediately
+                $output | Should -Match '📦 Installing SpecKit' -Because "Installation should proceed immediately"
+
+                # Assert: .specify/ directory created
+                Test-Path (Join-Path $testDir ".specify") | Should -BeTrue -Because "Direct proceed should complete installation"
+            }
+            finally {
+                Set-Location $script:OriginalLocation
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It "T017: Existing SpecKit project shows no installation prompt" {
+            # Arrange: Create test project WITH .specify/
+            $projectPath = New-TestProject -BasedOn "sample-project-with-manifest"
+
+            try {
+                Set-Location $projectPath
+
+                # Mock GitHub API
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    return @{
+                        tag_name = "v0.0.72"
+                        name = "Release v0.0.72"
+                        published_at = "2025-01-15T10:30:00Z"
+                    }
+                }
+
+                # Act: Run orchestrator (should treat as update check, not installation)
+                $output = & $script:OrchestratorScript -CheckOnly 2>&1 | Out-String
+
+                # Assert: No installation prompt shown
+                $output | Should -Not -Match '\[PROMPT_FOR_INSTALL\]' -Because "Existing projects should not show installation prompt"
+                $output | Should -Not -Match 'not currently installed' -Because "Existing projects are already installed"
+
+                # Assert: Normal update check flow
+                $output | Should -Match '(Checking|Already|Up to date)' -Because "Existing projects should show update check flow"
+            }
+            finally {
+                Remove-TestProject -ProjectPath $projectPath
+            }
+        }
+
+        It "T018: Multiple installations are idempotent (no duplicate installs)" {
+            # Arrange: Create test directory without .specify/
+            $testDir = Join-Path $env:TEMP "test-idempotent-install-$(Get-Random)"
+            New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+
+            try {
+                Set-Location $testDir
+
+                # Mock GitHub API
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    return @{
+                        tag_name = "v0.0.72"
+                        name = "Release v0.0.72"
+                        published_at = "2025-01-15T10:30:00Z"
+                        assets = @(
+                            @{
+                                name = "claude-templates.zip"
+                                browser_download_url = "https://example.com/templates.zip"
+                                size = 245678
+                            }
+                        )
+                    }
+                }
+
+                Mock -ModuleName GitHubApiClient Download-SpecKitTemplates {
+                    param([string]$DownloadUrl, [string]$OutputPath)
+
+                    # Create minimal SpecKit structure
+                    $claudeCommandsDir = Join-Path $testDir ".claude\commands"
+                    $specifyMemoryDir = Join-Path $testDir ".specify\memory"
+                    New-Item -ItemType Directory -Path $claudeCommandsDir -Force | Out-Null
+                    New-Item -ItemType Directory -Path $specifyMemoryDir -Force | Out-Null
+
+                    @"
+# SpecKit Constitution Template
+"@ | Out-File (Join-Path $specifyMemoryDir "constitution.md") -Encoding utf8
+
+                    return $OutputPath
+                }
+
+                # Act: First installation
+                $output1 = & $script:OrchestratorScript -Proceed 2>&1 | Out-String
+                $exitCode1 = $LASTEXITCODE
+
+                # Assert: First installation succeeds
+                $exitCode1 | Should -Be 0
+                Test-Path (Join-Path $testDir ".specify") | Should -BeTrue
+
+                # Act: Second installation attempt
+                $output2 = & $script:OrchestratorScript -Proceed 2>&1 | Out-String
+                $exitCode2 = $LASTEXITCODE
+
+                # Assert: Second run behaves as update check (not duplicate install)
+                $exitCode2 | Should -Be 0
+                $output2 | Should -Not -Match '\[PROMPT_FOR_INSTALL\]' -Because "Already installed projects should not show installation prompt"
+                $output2 | Should -Not -Match '📦 Installing' -Because "Should not duplicate installation"
+            }
+            finally {
+                Set-Location $script:OriginalLocation
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        It "T019: Installation and update flows both handle -Proceed identically" {
+            # This test verifies that installation flow uses the same -Proceed pattern as update flow
+            # Both should: check $Proceed flag, exit 0 without throw, use [PROMPT_FOR_*] markers
+
+            # Arrange: Test installation flow pattern
+            $testDir = Join-Path $env:TEMP "test-proceed-consistency-$(Get-Random)"
+            New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+
+            try {
+                Set-Location $testDir
+
+                # Part 1: Verify installation flow exits gracefully without -Proceed
+                $output1 = & $script:OrchestratorScript 2>&1 | Out-String
+                $exitCode1 = $LASTEXITCODE
+
+                $exitCode1 | Should -Be 0 -Because "Installation flow should exit 0 (like update flow line 404)"
+                $output1 | Should -Match '\[PROMPT_FOR_INSTALL\]' -Because "Installation flow should use [PROMPT_FOR_*] marker (like update flow)"
+
+                # Part 2: Mock GitHub API and verify installation proceeds with -Proceed
+                Mock -ModuleName GitHubApiClient Get-LatestSpecKitRelease {
+                    return @{
+                        tag_name = "v0.0.72"
+                        name = "Release v0.0.72"
+                        published_at = "2025-01-15T10:30:00Z"
+                        assets = @(
+                            @{
+                                name = "claude-templates.zip"
+                                browser_download_url = "https://example.com/templates.zip"
+                                size = 245678
+                            }
+                        )
+                    }
+                }
+
+                Mock -ModuleName GitHubApiClient Download-SpecKitTemplates {
+                    param([string]$DownloadUrl, [string]$OutputPath)
+
+                    # Create minimal SpecKit structure
+                    $claudeCommandsDir = Join-Path $testDir ".claude\commands"
+                    $specifyMemoryDir = Join-Path $testDir ".specify\memory"
+                    New-Item -ItemType Directory -Path $claudeCommandsDir -Force | Out-Null
+                    New-Item -ItemType Directory -Path $specifyMemoryDir -Force | Out-Null
+
+                    @"
+# SpecKit Constitution Template
+"@ | Out-File (Join-Path $specifyMemoryDir "constitution.md") -Encoding utf8
+
+                    return $OutputPath
+                }
+
+                $output2 = & $script:OrchestratorScript -Proceed -Verbose 2>&1 | Out-String
+                $exitCode2 = $LASTEXITCODE
+
+                $exitCode2 | Should -Be 0 -Because "Installation with -Proceed should succeed (like update flow line 383)"
+                $output2 | Should -Match 'approved.*installation' -Because "Installation flow should skip prompt when -Proceed set (like update flow line 382)"
+
+                # Assert: Consistent behavior patterns verified
+                # Both flows: use $Proceed flag, exit 0, show [PROMPT_FOR_*], proceed when flag set
+            }
+            finally {
+                Set-Location $script:OriginalLocation
+                Remove-Item $testDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
 }
