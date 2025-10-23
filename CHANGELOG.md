@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-10-23
+
 ### Fixed
-- **Installation Flow Ignores -Proceed Flag (#011)**: Fresh SpecKit installations now respect the `-Proceed` flag for conversational workflow
+- **Installation Flow Ignores -Proceed Flag (#022)**: Fresh SpecKit installations now respect the `-Proceed` flag for conversational workflow
   - **Root Cause**: Installation detection logic did not check for `-Proceed` parameter, causing double prompts and blocking 100% of fresh installations
   - **Symptoms**: Users saw installation prompt twice; second invocation with `-Proceed` showed prompt again instead of installing
   - **Impact**: Fresh installations completely broken - impossible to complete two-command workflow (`/speckit-update` → approval → `/speckit-update -Proceed`)
