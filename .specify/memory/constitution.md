@@ -1,19 +1,18 @@
 <!--
 Sync Impact Report:
-- Version change: 1.2.0 → 1.3.0
-- Modified principles:
-  * Principle VI: Added Text-Only I/O Constraint subsection and anti-pattern examples
+- Version change: 1.3.0 → 1.3.1
+- Modified principles: N/A
 - Added sections:
-  * Text-Only I/O Constraint guidance for Claude Code skills
-  * Anti-pattern examples (Show-QuickPick, Out-GridView, VSCode UI assumptions)
-  * Conversational approval workflow pattern
+  * Pull Request Requirements subsection in Git & Version Control
+  * Requirement to reference GitHub issues in PRs using "Fixes #N", "Closes #N", or "Relates to #N"
 - Removed sections: N/A
 - Templates requiring updates:
-  ✅ plan-template.md - reviewed, Constitution Check section remains generic (no changes needed)
-  ✅ spec-template.md - reviewed, no conflicts with enhanced principle
-  ✅ tasks-template.md - reviewed, no task-type changes required
+  ✅ plan-template.md - reviewed, no PR-related guidance present (no changes needed)
+  ✅ spec-template.md - reviewed, no PR-related sections (no changes needed)
+  ✅ tasks-template.md - reviewed, no PR task requirements (no changes needed)
+  ✅ All command templates - reviewed, no PR workflow references (no changes needed)
 - Follow-up TODOs: None
-- Amendment Rationale: MINOR version bump (enhanced existing principle with new guidance, no breaking changes)
+- Amendment Rationale: PATCH version bump (added clarifying governance guidance for PR workflow, no breaking changes to principles or development patterns)
 -->
 
 # SpecKit Safe Update Skill Constitution
@@ -334,6 +333,17 @@ Before committing:
 - Feature branches - `feature/description` or `fix/description`
 - No direct commits to `main` without PR review
 
+### Pull Request Requirements
+
+Pull requests MUST reference related GitHub issues using standard GitHub linking syntax:
+
+- **Use "Fixes #N"** for bug fixes that close an issue upon merge
+- **Use "Closes #N"** for features that close an issue upon merge
+- **Use "Relates to #N"** or "See #N"** for related work that doesn't close the issue
+- Include issue reference in PR description, ideally near the top for visibility
+
+**Rationale**: Linking PRs to issues creates traceability, enables automatic issue closure on merge, maintains project history, and helps reviewers understand context and original requirements.
+
 ## Distribution & Installation
 
 This skill is distributed as a **Git repository**, NOT via npm or PowerShell Gallery.
@@ -437,4 +447,4 @@ For runtime development guidance, consult:
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Development workflow and PR guidelines
 - [specs/001-safe-update/spec.md](../../specs/001-safe-update/spec.md) - Full specification
 
-**Version**: 1.3.0 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-21 | **Amendment**: Enhanced Principle VI with Text-Only I/O Constraint guidance and anti-pattern examples
+**Version**: 1.3.1 | **Ratified**: 2025-10-20 | **Last Amended**: 2025-10-23 | **Amendment**: Added Pull Request Requirements section requiring GitHub issue references

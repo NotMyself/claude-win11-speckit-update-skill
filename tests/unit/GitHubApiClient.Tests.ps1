@@ -503,4 +503,284 @@ Describe 'GitHubApiClient Module' {
             { Get-LatestSpecKitRelease } | Should -Throw '*GitHub API error*'
         }
     }
+
+    # Phase 2: Token Support Unit Tests (T009-T020)
+    Context 'Token Support - User Story 1 (Backward Compatibility)' {
+        BeforeEach {
+            # Ensure no token is set
+            $env:GITHUB_PAT = $null
+        }
+
+        AfterEach {
+            # Clean up
+            $env:GITHUB_PAT = $null
+        }
+
+        It '[T009] Unauthenticated request has no Authorization header' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                param($Uri, $Method, $Headers)
+
+                # Verify Authorization header is NOT present
+                $Headers.ContainsKey('Authorization') | Should -Be $false
+
+                return $mockLatestRelease
+            }
+
+            $release = Get-LatestSpecKitRelease
+            $release | Should -Not -BeNullOrEmpty
+        }
+
+        It '[T010] Verbose output shows unauthenticated status' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $mockLatestRelease
+            }
+
+            # Capture verbose output
+            $verboseOutput = Get-LatestSpecKitRelease -Verbose 4>&1 | Out-String
+
+            $verboseOutput | Should -BeLike '*Using unauthenticated request*'
+            $verboseOutput | Should -BeLike '*60 req/hour*'
+        }
+
+        It '[T011] Existing tests still pass without token set' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $mockLatestRelease
+            }
+
+            # This test represents backward compatibility - all existing functionality works
+            $release = Get-LatestSpecKitRelease
+            $release.tag_name | Should -Be 'v0.0.72'
+            $release.assets | Should -HaveCount 1
+        }
+    }
+
+    Context 'Token Support - User Story 2 (Authenticated Requests)' {
+        BeforeEach {
+            # Set a test token
+            $env:GITHUB_PAT = 'ghp_TestToken1234567890123456789012345678'
+        }
+
+        AfterEach {
+            # Clean up
+            $env:GITHUB_PAT = $null
+        }
+
+        It '[T012] Token detection when GITHUB_PAT environment variable set' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                param($Uri, $Method, $Headers)
+
+                # Verify Authorization header IS present
+                $Headers.ContainsKey('Authorization') | Should -Be $true
+
+                return $mockLatestRelease
+            }
+
+            $release = Get-LatestSpecKitRelease
+            $release | Should -Not -BeNullOrEmpty
+        }
+
+        It '[T013] Authorization header constructed as "Bearer {token}"' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                param($Uri, $Method, $Headers)
+
+                # Verify Authorization header format
+                $Headers['Authorization'] | Should -Be "Bearer $env:GITHUB_PAT"
+                $Headers['Authorization'] | Should -BeLike 'Bearer ghp_*'
+
+                return $mockLatestRelease
+            }
+
+            $release = Get-LatestSpecKitRelease
+            $release | Should -Not -BeNullOrEmpty
+        }
+
+        It '[T014] Verbose output shows authenticated status with 5,000 req/hour' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $mockLatestRelease
+            }
+
+            # Capture verbose output
+            $verboseOutput = Get-LatestSpecKitRelease -Verbose 4>&1 | Out-String
+
+            $verboseOutput | Should -BeLike '*Using authenticated request*'
+            $verboseOutput | Should -BeLike '*5,000 req/hour*'
+        }
+
+        It '[T015] Token value never appears in verbose output (security check)' {
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                return $mockLatestRelease
+            }
+
+            # Capture all output streams
+            $allOutput = Get-LatestSpecKitRelease -Verbose 4>&1 | Out-String
+
+            # Verify token value is NOT present
+            $allOutput | Should -Not -BeLike '*ghp_TestToken*'
+            $allOutput | Should -Not -BeLike "*$env:GITHUB_PAT*"
+        }
+    }
+
+    Context 'Token Support - User Story 5 (Error Message Guidance)' {
+        AfterEach {
+            # Clean up
+            $env:GITHUB_PAT = $null
+        }
+
+        It '[T016] Rate limit error without token includes setup tip' {
+            $env:GITHUB_PAT = $null
+
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = New-Object PSObject
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 403
+
+                # Create headers for rate limit
+                $headers = New-Object 'System.Collections.Generic.List[System.Collections.Generic.KeyValuePair[string,string[]]]'
+
+                $remainingKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Remaining', @('0')
+                $headers.Add($remainingKvp)
+
+                $resetKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Reset', @('1737294000')
+                $headers.Add($resetKvp)
+
+                $response | Add-Member -NotePropertyName Headers -NotePropertyValue $headers
+
+                $exception = New-Object System.Exception 'Rate limit exceeded'
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            $errorThrown = $false
+            $errorMessage = ''
+            try {
+                Get-LatestSpecKitRelease
+            }
+            catch {
+                $errorThrown = $true
+                $errorMessage = $_.Exception.Message
+            }
+
+            $errorThrown | Should -Be $true
+            $errorMessage | Should -BeLike '*Set GITHUB_PAT environment variable*'
+            $errorMessage | Should -BeLike '*60 to 5,000 requests/hour*'
+        }
+
+        It '[T017] Rate limit error without token includes documentation link' {
+            $env:GITHUB_PAT = $null
+
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = New-Object PSObject
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 403
+
+                $headers = New-Object 'System.Collections.Generic.List[System.Collections.Generic.KeyValuePair[string,string[]]]'
+                $remainingKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Remaining', @('0')
+                $headers.Add($remainingKvp)
+
+                $response | Add-Member -NotePropertyName Headers -NotePropertyValue $headers
+
+                $exception = New-Object System.Exception 'Rate limit exceeded'
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            try {
+                Get-LatestSpecKitRelease
+            }
+            catch {
+                $_.Exception.Message | Should -BeLike '*Learn more:*github.com*'
+                $_.Exception.Message | Should -BeLike '*#using-github-tokens*'
+            }
+        }
+
+        It '[T018] Rate limit error WITH token does NOT show setup tip' {
+            $env:GITHUB_PAT = 'ghp_TestToken1234567890123456789012345678'
+
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = New-Object PSObject
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 403
+
+                $headers = New-Object 'System.Collections.Generic.List[System.Collections.Generic.KeyValuePair[string,string[]]]'
+                $remainingKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Remaining', @('0')
+                $headers.Add($remainingKvp)
+
+                $response | Add-Member -NotePropertyName Headers -NotePropertyValue $headers
+
+                $exception = New-Object System.Exception 'Rate limit exceeded'
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            try {
+                Get-LatestSpecKitRelease
+            }
+            catch {
+                # Should have rate limit error message
+                $_.Exception.Message | Should -BeLike '*rate limit exceeded*'
+
+                # Should NOT have token setup tip (user already has token)
+                $_.Exception.Message | Should -Not -BeLike '*Set GITHUB_PAT*'
+            }
+        }
+
+        It '[T019] Rate limit error shows reset time in local timezone' {
+            $env:GITHUB_PAT = $null
+
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = New-Object PSObject
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 403
+
+                $headers = New-Object 'System.Collections.Generic.List[System.Collections.Generic.KeyValuePair[string,string[]]]'
+
+                $remainingKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Remaining', @('0')
+                $headers.Add($remainingKvp)
+
+                $resetKvp = New-Object 'System.Collections.Generic.KeyValuePair[string,string[]]' -ArgumentList 'X-RateLimit-Reset', @('1737294000')
+                $headers.Add($resetKvp)
+
+                $response | Add-Member -NotePropertyName Headers -NotePropertyValue $headers
+
+                $exception = New-Object System.Exception 'Rate limit exceeded'
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            try {
+                Get-LatestSpecKitRelease
+            }
+            catch {
+                # Should contain "Resets at:" with a timestamp
+                $_.Exception.Message | Should -BeLike '*Resets at:*'
+
+                # Verify timestamp format (should contain date/time components)
+                # Unix timestamp 1737294000 = 2025-01-19 12:00:00 UTC (varies by timezone)
+                $_.Exception.Message | Should -Match 'Resets at: \d'
+            }
+        }
+
+        It '[T020] Invalid token (401) produces clear error message' {
+            $env:GITHUB_PAT = 'ghp_InvalidToken123456789012345678901234'
+
+            Mock -ModuleName GitHubApiClient Invoke-RestMethod {
+                $response = New-Object PSObject
+                $response | Add-Member -NotePropertyName StatusCode -NotePropertyValue 401
+
+                $exception = New-Object System.Exception 'Unauthorized'
+                $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response -Force
+
+                throw $exception
+            }
+
+            try {
+                Get-LatestSpecKitRelease
+            }
+            catch {
+                $_.Exception.Message | Should -BeLike '*401 Unauthorized*'
+                $_.Exception.Message | Should -BeLike '*GITHUB_PAT may be invalid*'
+                $_.Exception.Message | Should -BeLike '*https://github.com/settings/tokens*'
+            }
+        }
+    }
 }
