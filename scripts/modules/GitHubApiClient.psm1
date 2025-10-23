@@ -75,7 +75,8 @@ function Invoke-GitHubApiRequest {
         # Security Decision: Read token once from environment variable
         # Token value stored in local $token variable for header construction only
         # Never logged, never included in error messages, never written to files
-        $token = $env:GITHUB_PAT
+        # Priority: GITHUB_TOKEN (CI) > GITHUB_PAT (local development)
+        $token = if ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } else { $env:GITHUB_PAT }
         $isAuthenticated = -not [string]::IsNullOrWhiteSpace($token)
 
         # T002: Add Authorization Bearer header when token present
@@ -457,6 +458,104 @@ function Download-SpecKitTemplates {
 
 <#
 .SYNOPSIS
+    Downloads and extracts a specific file from a SpecKit release.
+
+.DESCRIPTION
+    Downloads the Claude templates asset from a specific SpecKit release,
+    extracts the specified file only, and returns its content. Optimized
+    for 3-way merge operations where only specific files are needed.
+
+.PARAMETER Version
+    The release version tag (e.g., "v0.0.72" or "0.0.72").
+
+.PARAMETER FilePath
+    The relative file path within the archive (e.g., ".claude/commands/speckit.specify.md").
+
+.PARAMETER DestinationPath
+    The temporary directory for intermediate files. Default: system temp directory.
+
+.EXAMPLE
+    $content = Get-SpecKitFile -Version "v0.0.72" `
+                                -FilePath ".claude/commands/speckit.specify.md"
+
+.EXAMPLE
+    # Get file for 3-way merge (base version)
+    $baseContent = Get-SpecKitFile -Version "v0.0.71" `
+                                    -FilePath ".specify/memory/constitution.md"
+
+.OUTPUTS
+    String
+    The file content, or $null if file not found in archive.
+#>
+function Get-SpecKitFile {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Version,
+
+        [Parameter(Mandatory)]
+        [string]$FilePath,
+
+        [Parameter()]
+        [string]$DestinationPath = [System.IO.Path]::GetTempPath()
+    )
+
+    # Get release assets
+    $assets = Get-SpecKitReleaseAssets -Version $Version
+
+    # Find the Claude templates asset
+    $templateAsset = $assets | Where-Object { $_.name -like "spec-kit-template-claude-ps-*.zip" }
+
+    if (-not $templateAsset) {
+        throw "Claude PowerShell templates asset not found in release $Version"
+    }
+
+    # Create unique temp directory for this operation
+    $tempDir = Join-Path $DestinationPath "speckit-$Version-$(New-Guid)"
+    $zipPath = Join-Path $tempDir "archive.zip"
+
+    try {
+        # Create temp directory
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+
+        # Download the ZIP file
+        Write-Verbose "Downloading archive from: $($templateAsset.browser_download_url)"
+        Invoke-WebRequest -Uri $templateAsset.browser_download_url -OutFile $zipPath -ErrorAction Stop
+
+        # Extract only the specific file we need
+        Write-Verbose "Extracting file: $FilePath"
+
+        # Expand archive to temp location
+        $extractPath = Join-Path $tempDir "extracted"
+        Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force -ErrorAction Stop
+
+        # Normalize file path for Windows
+        $normalizedPath = $FilePath -replace '/', '\'
+
+        # Find the extracted file
+        $targetFile = Join-Path $extractPath $normalizedPath
+
+        if (-not (Test-Path $targetFile)) {
+            Write-Warning "File not found in archive: $FilePath"
+            return $null
+        }
+
+        # Read and return content
+        $content = Get-Content -Path $targetFile -Raw -ErrorAction Stop
+        Write-Verbose "Successfully extracted file ($($content.Length) bytes)"
+
+        return $content
+    }
+    finally {
+        # Cleanup
+        if (Test-Path $tempDir) {
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+<#
+.SYNOPSIS
     Tests the GitHub API rate limit status.
 
 .DESCRIPTION
@@ -488,5 +587,6 @@ Export-ModuleMember -Function @(
     'Get-SpecKitRelease',
     'Get-SpecKitReleaseAssets',
     'Download-SpecKitTemplates',
+    'Get-SpecKitFile',
     'Test-GitHubApiRateLimit'
 )
