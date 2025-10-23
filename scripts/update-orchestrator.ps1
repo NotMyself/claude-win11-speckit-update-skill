@@ -200,6 +200,34 @@ try {
     Write-Verbose "Step 2: No rollback requested, continuing with update"
 
     # ========================================
+    # STEP 2.5: Create .specify/ Directory Structure (First-Time Install)
+    # ========================================
+    $specifyDir = Join-Path $projectRoot ".specify"
+    $isFirstInstall = -not (Test-Path $specifyDir)
+
+    if ($isFirstInstall) {
+        Write-Verbose "Step 2.5: Creating .specify/ directory structure for first-time install..."
+        Write-Host "Creating .specify/ directory structure..." -ForegroundColor Cyan
+
+        try {
+            # Create directory structure
+            $memoryDir = Join-Path $specifyDir "memory"
+            $backupsDir = Join-Path $specifyDir "backups"
+
+            New-Item -ItemType Directory -Path $specifyDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $memoryDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $backupsDir -Force | Out-Null
+
+            Write-Host "Directory structure created successfully" -ForegroundColor Green
+            Write-Host ""
+        }
+        catch {
+            Write-Error "Failed to create .specify/ directory structure: $($_.Exception.Message)"
+            exit 1
+        }
+    }
+
+    # ========================================
     # STEP 3: Load Manifest (or prepare to create one)
     # ========================================
     Write-Verbose "Step 3: Loading manifest..."
@@ -835,7 +863,7 @@ try {
     # ========================================
     Write-Verbose "Step 15: Showing success summary..."
 
-    Show-UpdateSummary -Result $updateResult -FromVersion $manifest.speckit_version -ToVersion $targetRelease.tag_name
+    Show-UpdateSummary -Result $updateResult -FromVersion $manifest.speckit_version -ToVersion $targetRelease.tag_name -IsFirstInstall $isFirstInstall
 
     # Calculate elapsed time
     $elapsedTime = (Get-Date) - $startTime

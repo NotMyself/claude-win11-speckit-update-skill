@@ -19,6 +19,131 @@
     Returns successfully if all checks pass or user confirms to continue despite warnings.
 #>
 
+<#
+.SYNOPSIS
+    Checks if SpecKit commands are installed in Claude Code.
+
+.DESCRIPTION
+    Detects whether SpecKit slash commands exist in the user's .claude/commands/
+    directory by checking for at least one official SpecKit command file.
+
+.OUTPUTS
+    [bool] True if any SpecKit command is found, False otherwise.
+
+.EXAMPLE
+    Test-SpecKitCommandsAvailable
+    # Returns: $true or $false
+#>
+function Test-SpecKitCommandsAvailable {
+    [CmdletBinding()]
+    param()
+
+    try {
+        $claudeCommandsDir = Join-Path $env:USERPROFILE ".claude\commands"
+
+        if (-not (Test-Path $claudeCommandsDir)) {
+            Write-Verbose "Claude commands directory not found: $claudeCommandsDir"
+            return $false
+        }
+
+        # Check for any of the core SpecKit commands
+        $coreCommands = @(
+            "speckit.constitution.md",
+            "speckit.specify.md",
+            "speckit.plan.md"
+        )
+
+        foreach ($cmd in $coreCommands) {
+            $cmdPath = Join-Path $claudeCommandsDir $cmd
+            if (Test-Path $cmdPath) {
+                Write-Verbose "SpecKit command found: $cmdPath"
+                return $true
+            }
+        }
+
+        Write-Verbose "No SpecKit commands found in: $claudeCommandsDir"
+        return $false
+    }
+    catch {
+        Write-Verbose "Error checking for SpecKit commands: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+<#
+.SYNOPSIS
+    Generates a helpful error message for non-SpecKit projects.
+
+.DESCRIPTION
+    Creates context-aware error messages based on whether SpecKit commands are
+    detected in the user's environment. Provides actionable next steps:
+    - If commands available: Suggest running /speckit.constitution
+    - If not available: Provide link to SpecKit documentation
+    - If detection fails: Show both options as fallback
+
+.OUTPUTS
+    [string] Formatted error message with educational content and next steps.
+
+.EXAMPLE
+    Get-HelpfulSpecKitError
+    # Returns multi-line error message string
+#>
+function Get-HelpfulSpecKitError {
+    [CmdletBinding()]
+    param()
+
+    try {
+        $hasSpecKitCommands = Test-SpecKitCommandsAvailable
+
+        if ($hasSpecKitCommands) {
+            # Variant A: Commands available - suggest initialization
+            $message = @"
+Not a SpecKit project (.specify/ directory not found)
+
+SpecKit is a Claude Code workflow framework that helps build features with specs, plans, and tasks.
+
+To initialize SpecKit in this project, run:
+
+    /speckit.constitution
+
+Then you can use /speckit-update to keep templates up to date.
+"@
+        }
+        else {
+            # Variant B: Commands not available - provide documentation link
+            $message = @"
+Not a SpecKit project (.specify/ directory not found)
+
+SpecKit is a Claude Code workflow framework that helps build features with specs, plans, and tasks.
+
+This updater requires SpecKit to be installed first.
+
+Learn more: https://github.com/github/spec-kit
+"@
+        }
+
+        return $message
+    }
+    catch {
+        # Fallback: Show both options if detection fails
+        Write-Verbose "Failed to detect SpecKit commands, using fallback message: $($_.Exception.Message)"
+
+        $message = @"
+Not a SpecKit project (.specify/ directory not found)
+
+SpecKit is a Claude Code workflow framework that helps build features with specs, plans, and tasks.
+
+If SpecKit is already installed:
+  • Run: /speckit.constitution
+
+If SpecKit is not installed:
+  • Learn more: https://github.com/github/spec-kit
+"@
+
+        return $message
+    }
+}
+
 function Invoke-PreUpdateValidation {
     [CmdletBinding()]
     param(
@@ -43,8 +168,57 @@ function Invoke-PreUpdateValidation {
 
     # 2. Check if .specify/ directory exists
     $specifyDir = Join-Path $ProjectRoot ".specify"
-    if (-not (Test-Path $specifyDir)) {
-        $errors += "Not a SpecKit project (.specify/ directory not found)"
+    $specifyExists = Test-Path $specifyDir
+
+    if (-not $specifyExists) {
+        # Don't add to errors - offer to install SpecKit instead
+        Write-Host ""
+        Write-Host "SpecKit is not installed in this project." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "This skill can install the latest SpecKit templates and create a manifest to track future updates." -ForegroundColor Cyan
+        Write-Host ""
+
+        # Detect non-interactive mode (Claude Code)
+        try {
+            $isInteractive = -not [Console]::IsInputRedirected
+        }
+        catch {
+            $isInteractive = $true
+        }
+
+        if ($isInteractive) {
+            # Interactive mode: prompt user
+            $response = Read-Host "Would you like to install SpecKit now? (Y/n)"
+            if ($response -eq 'n' -or $response -eq 'N') {
+                Write-Host ""
+                Write-Host "SpecKit installation cancelled." -ForegroundColor Yellow
+                Write-Host ""
+                $helpfulError = Get-HelpfulSpecKitError
+                Write-Host $helpfulError -ForegroundColor Cyan
+                Write-Host ""
+                throw "User declined SpecKit installation"
+            }
+            # If yes, continue - orchestrator will handle first-time setup
+            Write-Host ""
+            Write-Host "Proceeding with SpecKit installation..." -ForegroundColor Green
+            Write-Host ""
+        }
+        else {
+            # Non-interactive mode (Claude Code): Show message and exit for approval
+            Write-Host "[PROMPT_FOR_INSTALL]" -ForegroundColor Magenta
+            Write-Host ""
+            Write-Host "SpecKit is not installed in this project." -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "The updater can install the latest SpecKit templates for you." -ForegroundColor Cyan
+            Write-Host "This will:" -ForegroundColor Cyan
+            Write-Host "  • Create .specify/ directory structure" -ForegroundColor Cyan
+            Write-Host "  • Download latest SpecKit templates from GitHub" -ForegroundColor Cyan
+            Write-Host "  • Create manifest to track future updates" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "To proceed with installation, re-run with: -Proceed" -ForegroundColor Cyan
+            Write-Host ""
+            throw "Awaiting user approval for SpecKit installation"
+        }
     }
 
     # 3. Check write permissions
