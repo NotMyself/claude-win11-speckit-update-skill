@@ -8,6 +8,7 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 ## Features
 
+- **Automatic SpecKit Installation** (New in v0.4.0): Offers to install SpecKit in non-SpecKit projects with one command
 - **Customization Preservation**: Automatically detects and preserves your customized files
 - **Smart Conflict Resolution**: Intelligent two-tier conflict handling
   - Small files (≤100 lines): Git conflict markers with VSCode CodeLens integration
@@ -19,6 +20,7 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 - **Fail-Fast with Rollback**: Automatic rollback on failure, preserves diff files for debugging
 - **Dry-Run Mode**: Check what would change before applying updates
 - **Constitution Integration**: Seamless integration with `/speckit.constitution` command
+- **Welcome Experience**: First-time installs show helpful next steps
 
 ## Prerequisites
 
@@ -48,6 +50,47 @@ git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit
 **Verify installation**: After restarting VSCode, the `/speckit-updater` command should be available in Claude Code.
 
 ## Usage
+
+### First-Time Installation (New in v0.4.0!)
+
+If you run `/speckit-updater` in a project **without SpecKit installed**, the updater will automatically offer to install it for you:
+
+```
+/speckit-updater
+```
+
+**Interactive Mode (Terminal):**
+```
+SpecKit is not installed in this project.
+
+This skill can install the latest SpecKit templates and create a manifest to track future updates.
+
+Would you like to install SpecKit now? (Y/n) Y
+```
+
+**Non-Interactive Mode (Claude Code):**
+```
+[PROMPT_FOR_INSTALL]
+
+SpecKit is not installed in this project.
+
+The updater can install the latest SpecKit templates for you.
+This will:
+  • Create .specify/ directory structure
+  • Download latest SpecKit templates from GitHub
+  • Create manifest to track future updates
+
+To proceed with installation, re-run with: -Proceed
+```
+
+**What Gets Installed:**
+- `.specify/` directory structure (`memory/`, `backups/`)
+- Latest SpecKit templates from GitHub
+- All official SpecKit slash commands in `.claude/commands/`
+- Manifest file to track future updates
+- Welcome message with next steps
+
+**Graceful Decline:** If you decline installation, you'll see a helpful error message explaining what SpecKit is and how to install it manually.
 
 ### Check for Updates (Dry-Run)
 
@@ -101,23 +144,24 @@ Skip backup creation. Use only if you're absolutely sure.
 
 ## How It Works
 
-### Update Workflow (15 Steps)
+### Update Workflow (16 Steps)
 
-1. **Validate Prerequisites**: Check Git, .specify/, write permissions, Git state
+1. **Validate Prerequisites**: Check Git, write permissions, Git state, offer SpecKit installation if needed
 2. **Handle Rollback**: Process rollback request if specified
-3. **Load/Create Manifest**: Load `.specify/manifest.json` or create new one
-4. **Fetch Target Version**: Get latest or specific version from GitHub Releases
-5. **Analyze File States**: Compare current files with manifest and upstream
-6. **Check-Only Mode**: Show detailed report and exit (if `--check-only`)
-7. **Get Confirmation**: Show summary and exit for user approval (conversational workflow)
-8. **Create Backup**: Create timestamped backup in `.specify/backups/`
-9. **Download Templates**: Fetch templates from GitHub release
-10. **Apply Updates**: Update files that aren't customized or conflicts
-11. **Handle Conflicts**: Write Git conflict markers for VSCode CodeLens detection
-12. **Update Constitution**: Delegate to `/speckit.constitution` with backup path if needed
-13. **Update Manifest**: Update version and file hashes
-14. **Cleanup Old Backups**: Optionally remove backups older than 5 most recent
-15. **Show Summary**: Display detailed update results
+3. **Create .specify/ Structure** (First-Time Install): Create directories for new installations
+4. **Load/Create Manifest**: Load `.specify/manifest.json` or create new one
+5. **Fetch Target Version**: Get latest or specific version from GitHub Releases
+6. **Analyze File States**: Compare current files with manifest and upstream
+7. **Check-Only Mode**: Show detailed report and exit (if `--check-only`)
+8. **Get Confirmation**: Show summary and exit for user approval (conversational workflow)
+9. **Create Backup**: Create timestamped backup in `.specify/backups/`
+10. **Download Templates**: Fetch templates from GitHub release
+11. **Apply Updates**: Update files that aren't customized or conflicts
+12. **Handle Conflicts**: Write Git conflict markers for VSCode CodeLens detection
+13. **Update Constitution**: Delegate to `/speckit.constitution` with backup path if needed
+14. **Update Manifest**: Update version and file hashes
+15. **Cleanup Old Backups**: Optionally remove backups older than 5 most recent
+16. **Show Summary**: Display detailed update results (includes "Welcome to SpecKit!" for first installs)
 
 ### Conflict Resolution
 
