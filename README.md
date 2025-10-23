@@ -214,36 +214,6 @@ If an error occurs during update:
 3. Files are restored to pre-update state
 4. Exit code 6 is returned
 
-## Contributing
-
-This skill follows the specification in `specs/001-safe-update/spec.md`.
-
-### General Contributions
-
-Contributions should:
-1. Follow PowerShell best practices
-2. Include appropriate error handling
-3. Add tests for new functionality
-4. Update documentation
-
-### Multi-Platform/Multi-Model Support
-
-**The project owner only supports Windows + PowerShell + Claude Code** and does not have the environment to test other configurations.
-
-However, **community contributions are welcome** for:
-- macOS/Linux support (Bash, Zsh, or PowerShell Core)
-- Other AI models (GPT-4, local LLMs, etc.)
-- Other shells (Fish, Nushell, etc.)
-
-**See [Issue #15](https://github.com/NotMyself/claude-win11-speckit-update-skill/issues/15)** for detailed guidance on contributing multi-platform support.
-
-**Requirements for multi-platform PRs**:
-- Must maintain backward compatibility with Windows/PowerShell/Claude
-- Must pass all existing tests (193 tests)
-- Must add tests for new platforms
-- Must update documentation
-- Contributor must test on target platform (maintainer cannot)
-
 ## License
 
 MIT License - see [LICENSE](./LICENSE)
