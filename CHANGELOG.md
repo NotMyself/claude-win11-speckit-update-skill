@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-10-22
+
 ### Added
 - **Automatic SpecKit Installation for Non-SpecKit Projects (#13)**: Transforms updater into installer/updater hybrid
   - **Installation Workflow**: Offers to install SpecKit automatically when `.specify/` directory doesn't exist
@@ -387,7 +389,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All file operations validated before execution
 - Backup preservation during rollback to maintain history
 
-[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.5...v0.2.0
 [0.1.5]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/NotMyself/claude-win11-speckit-update-skill/compare/v0.1.3...v0.1.4
