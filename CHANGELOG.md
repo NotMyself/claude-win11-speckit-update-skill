@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-10-23
+
 ### Added
 - **GitHub Personal Access Token Support (#012)**: Optional token authentication for increased API rate limits
   - **Environment Variable**: Set `GITHUB_PAT` to authenticate GitHub API requests
