@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **GitHub Personal Access Token Support (#012)**: Optional token authentication for increased API rate limits
+  - **Environment Variable**: Set `GITHUB_PAT` to authenticate GitHub API requests
+  - **Rate Limit Increase**: From 60 req/hour (unauthenticated) to 5,000 req/hour (authenticated)
+  - **Backward Compatible**: Zero breaking changes - works identically without token
+  - **Security**: Token value never logged or exposed in any output stream
+  - **Conditional Error Messages**: Context-aware guidance based on authentication status
+    - Rate limit errors without token show setup tip and documentation link
+    - Rate limit errors with token omit redundant setup guidance
+    - 401 errors provide clear token troubleshooting steps
+  - **Documentation**: Comprehensive setup guide in README.md and quickstart.md
+    - Token creation walkthrough (no scopes required)
+    - Three setup methods: PowerShell session, profile, and system variable
+    - Team collaboration guidance (individual tokens, isolated rate limits)
+    - CI/CD integration examples (GitHub Actions, Azure Pipelines, Jenkins, CircleCI)
+    - Security best practices and troubleshooting guide
+  - **Testing**: 12 unit tests + 9 integration tests covering all user scenarios
+
 ## [0.4.1] - 2025-10-23
 
 ### Fixed

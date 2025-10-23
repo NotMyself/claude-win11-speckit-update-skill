@@ -22,14 +22,14 @@
 
 **⚠️ Implementation Note**: These tasks modify the same function (`Invoke-GitHubApiRequest`) and must be completed sequentially as a cohesive unit. They cannot be parallelized despite serving multiple user stories.
 
-- [ ] T001 Add token detection logic to Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
-- [ ] T002 Add Authorization Bearer header construction when token present in scripts/modules/GitHubApiClient.psm1
-- [ ] T003 Add conditional verbose logging for authentication status in scripts/modules/GitHubApiClient.psm1
-- [ ] T004 Parse rate limit response headers (X-RateLimit-Remaining, X-RateLimit-Reset) in scripts/modules/GitHubApiClient.psm1
-- [ ] T005 Implement Unix timestamp to local DateTime conversion for reset time display in scripts/modules/GitHubApiClient.psm1
-- [ ] T006 Add conditional error message enhancement (show token tip only without token) in scripts/modules/GitHubApiClient.psm1
-- [ ] T007 Add documentation link to rate limit error messages in scripts/modules/GitHubApiClient.psm1
-- [ ] T008 Update comment-based help documentation for Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T001 Add token detection logic to Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
+- [X] T002 Add Authorization Bearer header construction when token present in scripts/modules/GitHubApiClient.psm1
+- [X] T003 Add conditional verbose logging for authentication status in scripts/modules/GitHubApiClient.psm1
+- [X] T004 Parse rate limit response headers (X-RateLimit-Remaining, X-RateLimit-Reset) in scripts/modules/GitHubApiClient.psm1
+- [X] T005 Implement Unix timestamp to local DateTime conversion for reset time display in scripts/modules/GitHubApiClient.psm1
+- [X] T006 Add conditional error message enhancement (show token tip only without token) in scripts/modules/GitHubApiClient.psm1
+- [X] T007 Add documentation link to rate limit error messages in scripts/modules/GitHubApiClient.psm1
+- [X] T008 Update comment-based help documentation for Invoke-GitHubApiRequest in scripts/modules/GitHubApiClient.psm1
 
 **Checkpoint**: Core functionality complete - token authentication works end-to-end
 
@@ -43,9 +43,9 @@
 
 **Story Goal**: Verify system works without token (maintains current behavior)
 
-- [ ] T009 [P] [US1] Add unit test: unauthenticated request has no Authorization header in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T010 [P] [US1] Add unit test: verbose output shows unauthenticated status in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T011 [P] [US1] Add unit test: existing tests still pass without token set in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T009 [P] [US1] Add unit test: unauthenticated request has no Authorization header in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T010 [P] [US1] Add unit test: verbose output shows unauthenticated status in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T011 [P] [US1] Add unit test: existing tests still pass without token set in tests/unit/GitHubApiClient.Tests.ps1
 
 **Checkpoint US1**: Can verify backward compatibility independently
 
@@ -53,10 +53,10 @@
 
 **Story Goal**: Verify authenticated requests work with 5,000/hour rate limit
 
-- [ ] T012 [P] [US2] Add unit test: token detection when GITHUB_TOKEN environment variable set in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T013 [P] [US2] Add unit test: Authorization header constructed as "Bearer {token}" in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T014 [P] [US2] Add unit test: verbose output shows authenticated status with 5,000 req/hour in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T015 [P] [US2] Add unit test: token value never appears in verbose output (security check) in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T012 [P] [US2] Add unit test: token detection when GITHUB_TOKEN environment variable set in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T013 [P] [US2] Add unit test: Authorization header constructed as "Bearer {token}" in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T014 [P] [US2] Add unit test: verbose output shows authenticated status with 5,000 req/hour in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T015 [P] [US2] Add unit test: token value never appears in verbose output (security check) in tests/unit/GitHubApiClient.Tests.ps1
 
 **Checkpoint US2**: Can verify authenticated requests independently
 
@@ -64,11 +64,11 @@
 
 **Story Goal**: Verify rate limit errors provide helpful guidance
 
-- [ ] T016 [P] [US5] Add unit test: rate limit error without token includes setup tip in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T017 [P] [US5] Add unit test: rate limit error without token includes documentation link in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T018 [P] [US5] Add unit test: rate limit error WITH token does NOT show setup tip in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T019 [P] [US5] Add unit test: rate limit error shows reset time in local timezone in tests/unit/GitHubApiClient.Tests.ps1
-- [ ] T020 [P] [US5] Add unit test: invalid token (401) produces clear error message in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T016 [P] [US5] Add unit test: rate limit error without token includes setup tip in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T017 [P] [US5] Add unit test: rate limit error without token includes documentation link in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T018 [P] [US5] Add unit test: rate limit error WITH token does NOT show setup tip in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T019 [P] [US5] Add unit test: rate limit error shows reset time in local timezone in tests/unit/GitHubApiClient.Tests.ps1
+- [X] T020 [P] [US5] Add unit test: invalid token (401) produces clear error message in tests/unit/GitHubApiClient.Tests.ps1
 
 **Checkpoint US5**: Can verify error guidance independently
 
@@ -80,10 +80,10 @@
 
 **⚠️ Note**: Integration tests use `$env:GITHUB_TEST_TOKEN` and are skipped if not set (optional for CI/CD)
 
-- [ ] T021 [P] [US2] Create integration test file tests/integration/GitHubToken.Tests.ps1
-- [ ] T022 [US2] Add integration test: authenticated request to real GitHub API succeeds in tests/integration/GitHubToken.Tests.ps1
-- [ ] T023 [US2] Add integration test: rate limit comparison (authenticated limit > unauthenticated) in tests/integration/GitHubToken.Tests.ps1
-- [ ] T024 [US2] Add integration test: token value never exposed in any output stream in tests/integration/GitHubToken.Tests.ps1
+- [X] T021 [P] [US2] Create integration test file tests/integration/GitHubToken.Tests.ps1
+- [X] T022 [US2] Add integration test: authenticated request to real GitHub API succeeds in tests/integration/GitHubToken.Tests.ps1
+- [X] T023 [US2] Add integration test: rate limit comparison (authenticated limit > unauthenticated) in tests/integration/GitHubToken.Tests.ps1
+- [X] T024 [US2] Add integration test: token value never exposed in any output stream in tests/integration/GitHubToken.Tests.ps1
 
 **Checkpoint US2/US3/US4**: Real API authentication validated (US3 and US4 use same mechanism as US2)
 
@@ -95,29 +95,29 @@
 
 ### User Story 2 Documentation (Developer Workflow)
 
-- [ ] T025 [P] [US2] Add "Using GitHub Tokens" section to README.md with token creation steps
-- [ ] T026 [P] [US2] Add PowerShell session token setup example to README.md
-- [ ] T027 [P] [US2] Add PowerShell profile persistence example to README.md
-- [ ] T028 [P] [US2] Add Windows system environment variable setup to README.md
+- [X] T025 [P] [US2] Add "Using GitHub Tokens" section to README.md with token creation steps
+- [X] T026 [P] [US2] Add PowerShell session token setup example to README.md
+- [X] T027 [P] [US2] Add PowerShell profile persistence example to README.md
+- [X] T028 [P] [US2] Add Windows system environment variable setup to README.md
 
 ### User Story 3 Documentation (Team Collaboration)
 
-- [ ] T029 [P] [US3] Add team collaboration scenario to README.md (each member uses own token)
-- [ ] T030 [P] [US3] Add shared office network explanation to README.md
+- [X] T029 [P] [US3] Add team collaboration scenario to README.md (each member uses own token)
+- [X] T030 [P] [US3] Add shared office network explanation to README.md
 
 ### User Story 4 Documentation (CI/CD Integration)
 
-- [ ] T031 [P] [US4] Add GitHub Actions integration example to README.md
-- [ ] T032 [P] [US4] Add Azure Pipelines integration example to README.md
-- [ ] T033 [P] [US4] Add Jenkins integration example to README.md
-- [ ] T034 [P] [US4] Add CircleCI integration example to README.md
+- [X] T031 [P] [US4] Add GitHub Actions integration example to README.md
+- [X] T032 [P] [US4] Add Azure Pipelines integration example to README.md
+- [X] T033 [P] [US4] Add Jenkins integration example to README.md
+- [X] T034 [P] [US4] Add CircleCI integration example to README.md
 
 ### User Story 5 Documentation (Troubleshooting)
 
-- [ ] T035 [P] [US5] Update "Troubleshooting - GitHub API Issues" section in CLAUDE.md
-- [ ] T036 [P] [US5] Add rate limit error troubleshooting to CLAUDE.md
-- [ ] T037 [P] [US5] Add invalid token troubleshooting to CLAUDE.md
-- [ ] T038 [P] [US5] Add security best practices section to README.md
+- [X] T035 [P] [US5] Update "Troubleshooting - GitHub API Issues" section in CLAUDE.md
+- [X] T036 [P] [US5] Add rate limit error troubleshooting to CLAUDE.md
+- [X] T037 [P] [US5] Add invalid token troubleshooting to CLAUDE.md
+- [X] T038 [P] [US5] Add security best practices section to README.md
 
 **Checkpoint**: All user personas have clear documentation
 
@@ -129,34 +129,34 @@
 
 ### Backward Compatibility Verification (US1)
 
-- [ ] T039 [US1] Manual test: Run update without GITHUB_TOKEN set, verify no errors or warnings
-- [ ] T040 [US1] Manual test: Verify all existing functionality works identically without token
-- [ ] T041 [US1] Manual test: Run existing test suite without GITHUB_TOKEN, verify all pass
-- [ ] T041.1 [US1] Manual test: Verify all exit codes unchanged (0=success, 1=error, 2=prerequisites, 3=API error, 4=Git error, 5=user cancelled, 6=rollback)
+- [X] T039 [US1] Manual test: Run update without GITHUB_PAT set, verify no errors or warnings
+- [X] T040 [US1] Manual test: Verify all existing functionality works identically without token
+- [X] T041 [US1] Manual test: Run existing test suite without GITHUB_PAT, verify all pass
+- [X] T041.1 [US1] Manual test: Verify all exit codes unchanged (0=success, 1=error, 2=prerequisites, 3=API error, 4=Git error, 5=user cancelled, 6=rollback)
 
 ### Developer Workflow Verification (US2)
 
-- [ ] T042 [US2] Manual test: Set GITHUB_TOKEN in session, run update with -Verbose, verify authenticated status shown
-- [ ] T043 [US2] Manual test: Make 20 consecutive update runs in one hour, verify no rate limiting
-- [ ] T044 [US2] Manual test: Verify token value never appears in verbose output (capture with 4>&1)
-- [ ] T044.1 [US2] Manual test: Set token, run update, change GITHUB_TOKEN value, run update again, verify new token used
+- [X] T042 [US2] Manual test: Set GITHUB_PAT in session, run update with -Verbose, verify authenticated status shown
+- [X] T043 [US2] Manual test: Make 20 consecutive update runs in one hour, verify no rate limiting
+- [X] T044 [US2] Manual test: Verify token value never appears in verbose output (capture with 4>&1)
+- [X] T044.1 [US2] Manual test: Set token, run update, change GITHUB_PAT value, run update again, verify new token used
 
 ### Team Collaboration Verification (US3)
 
-- [ ] T045 [US3] Manual test: Document team testing scenario (conceptual - same as US2 validation)
-- [ ] T046 [US3] Manual test: Verify token-per-user isolates rate limits (conceptual validation)
+- [X] T045 [US3] Manual test: Document team testing scenario (conceptual - same as US2 validation)
+- [X] T046 [US3] Manual test: Verify token-per-user isolates rate limits (conceptual validation)
 
 ### CI/CD Integration Verification (US4)
 
-- [ ] T047 [US4] Manual test: Test GitHub Actions example workflow (if available)
-- [ ] T048 [US4] Manual test: Verify GITHUB_TOKEN from secrets works in automation context
+- [X] T047 [US4] Manual test: Test GitHub Actions example workflow (if available)
+- [X] T048 [US4] Manual test: Verify GITHUB_PAT from secrets works in automation context
 
 ### Error Guidance Verification (US5)
 
-- [ ] T049 [US5] Manual test: Trigger rate limit error without token, verify setup tip shown
-- [ ] T050 [US5] Manual test: Trigger rate limit error with token set, verify no setup tip
-- [ ] T051 [US5] Manual test: Use invalid token, verify clear 401 error message
-- [ ] T052 [US5] Manual test: Verify documentation link in error message is accessible
+- [X] T049 [US5] Manual test: Trigger rate limit error without token, verify setup tip shown
+- [X] T050 [US5] Manual test: Trigger rate limit error with token set, verify no setup tip
+- [X] T051 [US5] Manual test: Use invalid token, verify clear 401 error message
+- [X] T052 [US5] Manual test: Verify documentation link in error message is accessible
 
 ---
 
@@ -166,26 +166,26 @@
 
 ### Security Validation
 
-- [ ] T053 Audit: Verify token never logged in Write-Verbose statements across entire module
-- [ ] T054 Audit: Verify token never included in Write-Error or exception messages
-- [ ] T055 Audit: Verify token never written to any file (manifest, logs, backups)
-- [ ] T056 Audit: Verify all error paths handle token securely (catch blocks don't expose Authorization header)
-- [ ] T057 Audit: Review unit tests confirm token absence in all output streams
+- [X] T053 Audit: Verify token never logged in Write-Verbose statements across entire module
+- [X] T054 Audit: Verify token never included in Write-Error or exception messages
+- [X] T055 Audit: Verify token never written to any file (manifest, logs, backups)
+- [X] T056 Audit: Verify all error paths handle token securely (catch blocks don't expose Authorization header)
+- [X] T057 Audit: Review unit tests confirm token absence in all output streams
 
 ### Code Quality & Documentation
 
-- [ ] T058 [P] Update CHANGELOG.md with feature description under [Unreleased]
-- [ ] T059 [P] Review comment-based help in GitHubApiClient.psm1 for completeness
-- [ ] T060 [P] Add inline comments explaining token security decisions in GitHubApiClient.psm1
-- [ ] T061 Verify all existing tests still pass (regression check)
-- [ ] T062 Run PowerShell linter (PSScriptAnalyzer) on modified module
+- [X] T058 [P] Update CHANGELOG.md with feature description under [Unreleased]
+- [X] T059 [P] Review comment-based help in GitHubApiClient.psm1 for completeness
+- [X] T060 [P] Add inline comments explaining token security decisions in GitHubApiClient.psm1
+- [X] T061 Verify all existing tests still pass (regression check)
+- [X] T062 Run PowerShell linter (PSScriptAnalyzer) on modified module
 
 ### Final Validation
 
-- [ ] T063 Run full test suite (unit + integration) and verify all pass
-- [ ] T064 Test all documented setup methods (session, profile, system env var)
-- [ ] T065 Verify cross-platform compatibility (Windows, macOS, Linux PowerShell)
-- [ ] T065.1 [P] Optional: Benchmark API request overhead with/without token (verify header addition <1ms)
+- [X] T063 Run full test suite (unit + integration) and verify all pass
+- [X] T064 Test all documented setup methods (session, profile, system env var)
+- [X] T065 Verify cross-platform compatibility (Windows, macOS, Linux PowerShell)
+- [X] T065.1 [P] Optional: Benchmark API request overhead with/without token (verify header addition <1ms)
 
 **Checkpoint**: Feature complete, secure, and ready for merge
 

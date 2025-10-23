@@ -23,7 +23,7 @@ This guide shows you how to set up GitHub Personal Access Token authentication t
 ```powershell
 # 1. Create token at https://github.com/settings/tokens (no scopes needed)
 # 2. Set environment variable (copy your token from GitHub)
-$env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
 
 # 3. Verify it works
 /speckit-update -CheckOnly -Verbose
@@ -78,10 +78,10 @@ Choose one method based on your needs:
 
 ```powershell
 # Set token for current PowerShell window only
-$env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
 
 # Verify it's set
-$env:GITHUB_TOKEN
+$env:GITHUB_PAT
 # Should output: ghp_YOUR_TOKEN_HERE
 ```
 
@@ -107,7 +107,7 @@ notepad $PROFILE
 
 **Add this line** to your profile:
 ```powershell
-$env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
 ```
 
 **Save and reload** profile:
@@ -116,7 +116,7 @@ $env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
 . $PROFILE
 
 # Verify it's set
-$env:GITHUB_TOKEN
+$env:GITHUB_PAT
 ```
 
 **Lifetime**: Persists across all future PowerShell sessions
@@ -139,7 +139,7 @@ $env:GITHUB_TOKEN
 1. Press **Win + R**, type `sysdm.cpl`, press Enter
 2. Click **"Environment Variables"** button (bottom right)
 3. Under **"User variables"**, click **"New"**
-4. **Variable name**: `GITHUB_TOKEN`
+4. **Variable name**: `GITHUB_PAT`
 5. **Variable value**: `ghp_YOUR_TOKEN_HERE` (paste your token)
 6. Click **OK** on all dialogs
 7. **Restart PowerShell** (required for variable to load)
@@ -149,7 +149,7 @@ $env:GITHUB_TOKEN
 ```powershell
 # Set user environment variable (persists system-wide)
 [System.Environment]::SetEnvironmentVariable(
-    "GITHUB_TOKEN",
+    "GITHUB_PAT",
     "ghp_YOUR_TOKEN_HERE",
     [System.EnvironmentVariableTarget]::User
 )
@@ -158,7 +158,7 @@ $env:GITHUB_TOKEN
 exit
 
 # In new PowerShell window, verify:
-$env:GITHUB_TOKEN
+$env:GITHUB_PAT
 ```
 
 **Lifetime**: Persists across all applications and sessions
@@ -211,7 +211,7 @@ $output -match "ghp_"
 
 ```powershell
 # Remove token temporarily
-$env:GITHUB_TOKEN = $null
+$env:GITHUB_PAT = $null
 
 # Make multiple requests (will hit rate limit after ~60)
 1..65 | ForEach-Object {
@@ -222,14 +222,14 @@ $env:GITHUB_TOKEN = $null
 # After ~60 requests, you'll see:
 # ERROR: GitHub API rate limit exceeded. Resets at: 3:00 PM
 #
-# Tip: Set GITHUB_TOKEN environment variable to increase rate limit...
+# Tip: Set GITHUB_PAT environment variable to increase rate limit...
 ```
 
 ### After (With Token)
 
 ```powershell
 # Set token
-$env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
 
 # Make 100 requests (all succeed with token)
 1..100 | ForEach-Object {
@@ -246,7 +246,7 @@ $env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
 
 ### GitHub Actions
 
-**Zero configuration required** - GitHub automatically provides `GITHUB_TOKEN`
+**Zero configuration required** - GitHub automatically provides `GITHUB_PAT`
 
 ```yaml
 name: Check SpecKit Updates
@@ -261,7 +261,7 @@ jobs:
 
       - name: Check SpecKit Updates
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatic
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}  # Automatic
         run: |
           pwsh -Command "& '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly"
 ```
@@ -283,7 +283,7 @@ jobs:
 1. Go to your pipeline in Azure DevOps
 2. Click **"Edit"** → **"Variables"**
 3. Click **"New variable"**
-4. **Name**: `GITHUB_TOKEN`
+4. **Name**: `GITHUB_PAT`
 5. **Value**: Your personal access token
 6. **Check**: "Keep this value secret" ✅
 7. Click **"OK"** and save pipeline
@@ -301,7 +301,7 @@ steps:
 - task: PowerShell@2
   displayName: 'Check SpecKit Updates'
   env:
-    GITHUB_TOKEN: $(GITHUB_TOKEN)  # From pipeline variables
+    GITHUB_PAT: $(GITHUB_PAT)  # From pipeline variables
   inputs:
     targetType: 'inline'
     script: |
@@ -331,7 +331,7 @@ pipeline {
     agent any
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')  // From credentials store
+        GITHUB_PAT = credentials('github-token')  // From credentials store
     }
 
     stages {
@@ -357,7 +357,7 @@ pipeline {
 1. Go to your project in CircleCI
 2. Click **"Project Settings"** → **"Environment Variables"**
 3. Click **"Add Environment Variable"**
-4. **Name**: `GITHUB_TOKEN`
+4. **Name**: `GITHUB_PAT`
 5. **Value**: Your personal access token
 6. Click **"Add Variable"**
 
@@ -376,7 +376,7 @@ jobs:
           name: Check SpecKit Updates
           command: |
             pwsh -Command "& '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly"
-          # GITHUB_TOKEN automatically available from environment
+          # GITHUB_PAT automatically available from environment
 
 workflows:
   version: 2
@@ -396,16 +396,16 @@ workflows:
 **Solution**:
 ```powershell
 # 1. Check if token is set
-$env:GITHUB_TOKEN
+$env:GITHUB_PAT
 # Should output your token
 
 # 2. Verify token format (should start with ghp_)
-$env:GITHUB_TOKEN -match "^ghp_"
+$env:GITHUB_PAT -match "^ghp_"
 # Should return True
 
 # 3. Test token manually
 $headers = @{
-    "Authorization" = "Bearer $env:GITHUB_TOKEN"
+    "Authorization" = "Bearer $env:GITHUB_PAT"
     "User-Agent"    = "Test"
 }
 Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
@@ -423,16 +423,16 @@ Invoke-RestMethod -Uri "https://api.github.com/user" -Headers $headers
 
 **Solution**:
 ```powershell
-# 1. Verify GITHUB_TOKEN is set (exact spelling)
-Get-ChildItem env: | Where-Object Name -eq "GITHUB_TOKEN"
-# Should show: Name=GITHUB_TOKEN, Value=ghp_...
+# 1. Verify GITHUB_PAT is set (exact spelling)
+Get-ChildItem env: | Where-Object Name -eq "GITHUB_PAT"
+# Should show: Name=GITHUB_PAT, Value=ghp_...
 
 # 2. Check for typos (case-sensitive on some platforms)
-$env:GITHUB_TOKEN.Length
+$env:GITHUB_PAT.Length
 # Should be 40 characters (ghp_ + 36 chars)
 
 # 3. Try setting in current session explicitly
-$env:GITHUB_TOKEN = "ghp_YOUR_TOKEN_HERE"
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
 
 # 4. Restart PowerShell after setting system env var
 exit
@@ -470,7 +470,7 @@ exit
 ```powershell
 # Check your current rate limit status
 $headers = @{
-    "Authorization" = "Bearer $env:GITHUB_TOKEN"
+    "Authorization" = "Bearer $env:GITHUB_PAT"
     "User-Agent"    = "Test"
 }
 $rateLimit = Invoke-RestMethod -Uri "https://api.github.com/rate_limit" -Headers $headers
@@ -495,13 +495,13 @@ $rateLimit.rate | Format-List
 **Solution**:
 ```powershell
 # Add token to PowerShell profile (persistent)
-Add-Content $PROFILE "`n`$env:GITHUB_TOKEN = 'ghp_YOUR_TOKEN_HERE'"
+Add-Content $PROFILE "`n`$env:GITHUB_PAT = 'ghp_YOUR_TOKEN_HERE'"
 
 # Reload profile
 . $PROFILE
 
 # Verify
-$env:GITHUB_TOKEN
+$env:GITHUB_PAT
 ```
 
 ---
@@ -543,7 +543,7 @@ A: Yes, but it's better to create separate tokens for different purposes (easier
 A: Run `/speckit-update -CheckOnly -Verbose` and look for "Using authenticated request (rate limit: 5,000 req/hour)"
 
 **Q: Will this work on macOS/Linux?**
-A: Yes! PowerShell 7+ is cross-platform. Same `$env:GITHUB_TOKEN` variable works everywhere.
+A: Yes! PowerShell 7+ is cross-platform. Same `$env:GITHUB_PAT` variable works everywhere.
 
 **Q: Can I use fine-grained tokens instead of classic tokens?**
 A: Yes, fine-grained tokens (format: `github_pat_...`) work identically. Our code doesn't validate format.
@@ -552,7 +552,7 @@ A: Yes, fine-grained tokens (format: `github_pat_...`) work identically. Our cod
 A: 1) Revoke it immediately at github.com/settings/tokens, 2) Remove from Git history, 3) Create new token
 
 **Q: How do I remove the token?**
-A: `$env:GITHUB_TOKEN = $null` (session), or delete line from $PROFILE (persistent), or remove from system environment variables (global)
+A: `$env:GITHUB_PAT = $null` (session), or delete line from $PROFILE (persistent), or remove from system environment variables (global)
 
 ---
 

@@ -8,13 +8,52 @@
     Provides functions to interact with the GitHub Releases API to fetch
     SpecKit release information and download templates.
 
+    Supports GitHub Personal Access Token authentication via the GITHUB_PAT
+    environment variable to increase rate limits from 60 to 5,000 requests/hour.
+
 .NOTES
     Author: SpecKit Safe Update Skill
-    Version: 1.0
+    Version: 1.1
+
+.ENVIRONMENT VARIABLES
+    GITHUB_PAT - Optional GitHub Personal Access Token for authenticated requests.
+                 When set, increases API rate limit from 60 to 5,000 requests/hour.
+                 No scopes are required for reading public repository releases.
 #>
 
 # Internal helper function for making GitHub API requests
 function Invoke-GitHubApiRequest {
+    <#
+    .SYNOPSIS
+        Makes authenticated or unauthenticated requests to the GitHub API.
+
+    .DESCRIPTION
+        Internal helper function that handles GitHub API requests with optional
+        token authentication. Detects GITHUB_PAT environment variable and adds
+        Authorization Bearer header when present. Provides enhanced error messages
+        with rate limit guidance.
+
+    .PARAMETER Uri
+        The GitHub API endpoint URI to request.
+
+    .PARAMETER Method
+        The HTTP method to use (GET or HEAD). Defaults to GET.
+
+    .NOTES
+        Token Detection: Checks $env:GITHUB_PAT for Personal Access Token.
+        Rate Limits: 60 req/hour (unauthenticated) or 5,000 req/hour (authenticated).
+        Security: Token value is never logged or included in error messages.
+
+    .EXAMPLE
+        # Unauthenticated request (no GITHUB_PAT set)
+        $release = Invoke-GitHubApiRequest -Uri 'https://api.github.com/repos/owner/repo/releases/latest'
+
+    .EXAMPLE
+        # Authenticated request (GITHUB_PAT environment variable set)
+        $env:GITHUB_PAT = "ghp_..."
+        $release = Invoke-GitHubApiRequest -Uri 'https://api.github.com/repos/owner/repo/releases/latest' -Verbose
+        # Output: VERBOSE: Using authenticated request (rate limit: 5,000 req/hour)
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -26,9 +65,36 @@ function Invoke-GitHubApiRequest {
     )
 
     try {
+        # Build base headers
         $headers = @{
             'Accept' = 'application/vnd.github+json'
-            'User-Agent' = 'SpecKit-Update-Skill/1.0'
+            'User-Agent' = 'SpecKit-Update-Skill/1.1'
+        }
+
+        # T001: Token detection logic
+        # Security Decision: Read token once from environment variable
+        # Token value stored in local $token variable for header construction only
+        # Never logged, never included in error messages, never written to files
+        $token = $env:GITHUB_PAT
+        $isAuthenticated = -not [string]::IsNullOrWhiteSpace($token)
+
+        # T002: Add Authorization Bearer header when token present
+        # Security Decision: Only use of $token variable - added to Authorization header
+        # Header sent over HTTPS (GitHub API only accessible via HTTPS)
+        # Token transmitted securely, never exposed in logs or error messages
+        if ($isAuthenticated) {
+            $headers['Authorization'] = "Bearer $token"
+        }
+
+        # T003: Conditional verbose logging for authentication status
+        # Security Decision: Log only boolean authentication status, never token value
+        # Using $isAuthenticated boolean flag instead of referencing $token
+        # Provides visibility for debugging without exposing sensitive data
+        if ($isAuthenticated) {
+            Write-Verbose "Using authenticated request (rate limit: 5,000 req/hour)"
+        }
+        else {
+            Write-Verbose "Using unauthenticated request (rate limit: 60 req/hour)"
         }
 
         Write-Verbose "Calling GitHub API: $Method $Uri"
@@ -45,25 +111,71 @@ function Invoke-GitHubApiRequest {
             $statusCode = [int]$_.Exception.Response.StatusCode
             Write-Verbose "HTTP Status Code: $statusCode"
 
-            if ($statusCode -eq 403) {
-                # Rate limit exceeded
+            # T006 & T007: Handle 401 Unauthorized (invalid token)
+            if ($statusCode -eq 401) {
+                $errorMsg = "GitHub API request failed: 401 Unauthorized"
+
+                # Check if token was used
+                if ($isAuthenticated) {
+                    $errorMsg += "`n`nYour GITHUB_PAT may be invalid, expired, or revoked."
+                    $errorMsg += "`nVerify your token at https://github.com/settings/tokens"
+                    $errorMsg += "`nOr remove the token to use unauthenticated requests."
+                }
+
+                throw $errorMsg
+            }
+            # T004, T005, T006, T007: Enhanced rate limit error handling
+            elseif ($statusCode -eq 403) {
+                # T004: Parse rate limit response headers
                 $resetTime = $null
+                $remaining = $null
+
                 try {
                     $resetHeader = $_.Exception.Response.Headers | Where-Object { $_.Key -eq 'X-RateLimit-Reset' }
+                    $remainingHeader = $_.Exception.Response.Headers | Where-Object { $_.Key -eq 'X-RateLimit-Remaining' }
+
                     if ($resetHeader) {
                         $resetUnix = $resetHeader.Value[0]
+                        # T005: Unix timestamp to local DateTime conversion
                         $resetTime = [DateTimeOffset]::FromUnixTimeSeconds($resetUnix).LocalDateTime
+                    }
+
+                    if ($remainingHeader) {
+                        $remaining = $remainingHeader.Value[0]
                     }
                 }
                 catch {
-                    # If we can't parse the reset time, just continue without it
+                    # If we can't parse headers, continue without them
+                    Write-Verbose "Unable to parse rate limit headers: $($_.Exception.Message)"
                 }
 
-                if ($resetTime) {
-                    throw "GitHub API rate limit exceeded. Resets at: $resetTime. Please try again later."
+                # Check if this is a rate limit error (remaining = 0)
+                if ($remaining -eq "0" -or $remaining -eq 0) {
+                    # T006: Conditional error message enhancement
+                    $errorMsg = "GitHub API rate limit exceeded"
+
+                    if ($resetTime) {
+                        $errorMsg += ". Resets at: $resetTime"
+                    }
+                    else {
+                        $errorMsg += ". Please try again later"
+                    }
+
+                    # T006: Show token tip only WITHOUT token (conditional guidance)
+                    # Security Decision: Context-aware error messages
+                    # Only show token setup tip to users who don't have token set
+                    # Avoids redundant/confusing guidance for authenticated users
+                    if (-not $isAuthenticated) {
+                        $errorMsg += "`n`nTip: Set GITHUB_PAT environment variable to increase rate limit from 60 to 5,000 requests/hour."
+                        # T007: Add documentation link
+                        $errorMsg += "`n     Learn more: https://github.com/NotMyself/claude-win11-speckit-update-skill#using-github-tokens"
+                    }
+
+                    throw $errorMsg
                 }
                 else {
-                    throw "GitHub API rate limit exceeded. Please try again later."
+                    # Other 403 errors (not rate limiting)
+                    throw "GitHub API access forbidden (HTTP 403). Check repository permissions: $($_.Exception.Message)"
                 }
             }
             elseif ($statusCode -eq 404) {

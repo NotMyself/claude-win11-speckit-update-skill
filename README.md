@@ -33,6 +33,225 @@ This Claude Code skill provides a safe, automated way to update SpecKit template
 
 **Note**: This skill is designed specifically for Windows + PowerShell + Claude Code. Community contributions for other platforms/models are welcome but not maintained by the project owner.
 
+## Using GitHub Tokens
+
+The updater fetches SpecKit templates from the GitHub Releases API. By default, requests are **unauthenticated** with a rate limit of **60 requests/hour** per IP address. This is usually sufficient for normal use.
+
+### When Do You Need a Token?
+
+You should set up a GitHub Personal Access Token if you:
+
+- Develop or test the updater frequently
+- Work on a team sharing the same office network/IP address
+- Run updates in CI/CD pipelines
+- Hit rate limit errors: `GitHub API rate limit exceeded`
+
+**With a token**, your rate limit increases to **5,000 requests/hour** per user.
+
+### Quick Setup
+
+**1. Create a GitHub Personal Access Token:**
+
+Go to [github.com/settings/tokens](https://github.com/settings/tokens) and click "Generate new token (classic)".
+
+- **Note**: `SpecKit Updater`
+- **Expiration**: 90 days (recommended)
+- **Scopes**: Leave all unchecked ✅ (no scopes needed for public repos)
+
+Copy the token (format: `ghp_...`) immediately - it's shown only once!
+
+**2. Set the Environment Variable:**
+
+Choose one method:
+
+**PowerShell Session** (temporary - testing):
+```powershell
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
+```
+
+**PowerShell Profile** (persistent - daily use):
+```powershell
+# Open profile in editor
+notepad $PROFILE
+
+# Add this line and save:
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
+
+# Reload profile
+. $PROFILE
+```
+
+**Windows System Variable** (global - all applications):
+```powershell
+# Via GUI: Win+R → sysdm.cpl → Environment Variables → New
+# Variable name: GITHUB_PAT
+# Variable value: ghp_YOUR_TOKEN_HERE
+
+# Or via PowerShell:
+[System.Environment]::SetEnvironmentVariable(
+    "GITHUB_PAT",
+    "ghp_YOUR_TOKEN_HERE",
+    [System.EnvironmentVariableTarget]::User
+)
+# Restart PowerShell after this
+```
+
+**3. Verify It Works:**
+
+```powershell
+/speckit-updater --check-only -Verbose
+# Should show: "Using authenticated request (rate limit: 5,000 req/hour)"
+```
+
+### Team Collaboration
+
+Each team member should create their own Personal Access Token. This provides:
+
+- **Isolated rate limits**: Each person gets 5,000 req/hour independently
+- **Better security**: Tokens can be revoked individually
+- **Audit trail**: GitHub tracks API usage per token
+
+**Shared IP address scenario**: If your team shares an office network, you're all sharing the same 60 req/hour limit without tokens. Individual tokens solve this completely.
+
+### CI/CD Integration
+
+#### GitHub Actions (Zero Configuration)
+
+GitHub automatically provides `GITHUB_PAT` - no setup needed:
+
+```yaml
+name: Check SpecKit Updates
+
+on: [push, pull_request]
+
+jobs:
+  check-updates:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check SpecKit Updates
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}  # Automatic
+        run: |
+          pwsh -Command "& '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly"
+```
+
+#### Azure Pipelines
+
+Add `GITHUB_PAT` as a secret variable in your pipeline settings, then:
+
+```yaml
+trigger:
+  - main
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+- task: PowerShell@2
+  displayName: 'Check SpecKit Updates'
+  env:
+    GITHUB_PAT: $(GITHUB_PAT)  # From pipeline variables
+  inputs:
+    targetType: 'inline'
+    script: |
+      & '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly
+```
+
+#### Jenkins
+
+Add token via Credentials Plugin (Secret text with ID `github-token`), then:
+
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        GITHUB_PAT = credentials('github-token')
+    }
+
+    stages {
+        stage('Check Updates') {
+            steps {
+                pwsh '''
+                    & '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly
+                '''
+            }
+        }
+    }
+}
+```
+
+#### CircleCI
+
+Add `GITHUB_PAT` as an environment variable in project settings, then:
+
+```yaml
+version: 2.1
+
+jobs:
+  check-updates:
+    docker:
+      - image: mcr.microsoft.com/powershell:latest
+    steps:
+      - checkout
+      - run:
+          name: Check SpecKit Updates
+          command: |
+            pwsh -Command "& '.\.claude\skills\speckit-updater\scripts\update-orchestrator.ps1' -CheckOnly"
+          # GITHUB_PAT automatically available from environment
+```
+
+### Security Best Practices
+
+**✅ DO:**
+- Use tokens with **no scopes** (reading public repos doesn't require permissions)
+- Set **expiration dates** (90 days recommended)
+- Store tokens in **password managers**
+- Create **separate tokens** for different purposes (dev vs CI/CD)
+- **Revoke immediately** if compromised
+
+**❌ DON'T:**
+- Commit tokens to Git repositories
+- Share tokens between team members
+- Use tokens with unnecessary scopes
+- Store in plain text files (except PowerShell profile with proper permissions)
+- Keep tokens indefinitely without expiration
+
+**Token Exposure Prevention**: The updater NEVER logs token values. Security check:
+```powershell
+# Verify token not exposed (should return False)
+$output = /speckit-updater --check-only -Verbose 4>&1 | Out-String
+$output -match "ghp_"
+```
+
+### Troubleshooting
+
+**"GitHub API rate limit exceeded"**
+- **Without token**: Wait until reset time (shown in error) or set up token
+- **With token**: You've exceeded 5,000 requests/hour - wait until reset
+
+**"401 Unauthorized"**
+- Token is invalid, expired, or revoked
+- Verify at [github.com/settings/tokens](https://github.com/settings/tokens)
+- Create new token or remove `GITHUB_PAT` to use unauthenticated mode
+
+**Token not working**
+```powershell
+# Check token is set correctly
+$env:GITHUB_PAT
+# Should output your token (ghp_...)
+
+# Check token format (should be True)
+$env:GITHUB_PAT -match "^ghp_"
+
+# Try setting in current session
+$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"
+```
+
+For detailed setup instructions, see [specs/012-github-token-support/quickstart.md](specs/012-github-token-support/quickstart.md).
+
 ## Installation
 
 Skills must be installed manually to the Claude Code skills directory:

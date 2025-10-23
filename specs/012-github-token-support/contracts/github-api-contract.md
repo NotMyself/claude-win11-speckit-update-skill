@@ -43,8 +43,8 @@ $headers = @{
     "User-Agent" = "SpecKit-Updater-PowerShell"
 }
 
-if ($env:GITHUB_TOKEN) {
-    $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN"
+if ($env:GITHUB_PAT) {
+    $headers["Authorization"] = "Bearer $env:GITHUB_PAT"
 }
 
 $uri = "https://api.github.com/repos/github/spec-kit/releases/latest"
@@ -142,8 +142,8 @@ catch {
             $errorMsg = "GitHub API rate limit exceeded. Resets at: $resetTime"
 
             # Suggest token if not using one
-            if (-not $env:GITHUB_TOKEN) {
-                $errorMsg += "`n`nTip: Set GITHUB_TOKEN environment variable"
+            if (-not $env:GITHUB_PAT) {
+                $errorMsg += "`n`nTip: Set GITHUB_PAT environment variable"
                 $errorMsg += " to increase rate limit from 60 to 5,000 requests/hour."
                 $errorMsg += "`n     Learn more: https://github.com/NotMyself/claude-win11-speckit-update-skill#github-token"
             }
@@ -193,7 +193,7 @@ catch {
 
     if ($statusCode -eq 401) {
         $errorMsg = "GitHub API request failed: 401 Unauthorized"
-        $errorMsg += "`nYour GITHUB_TOKEN may be invalid, expired, or revoked."
+        $errorMsg += "`nYour GITHUB_PAT may be invalid, expired, or revoked."
         $errorMsg += "`nVerify your token or remove it to use unauthenticated requests."
 
         Write-Error $errorMsg
@@ -330,7 +330,7 @@ Write-Host "Resets at: $resetTime"
 
 | Error Type | Status Code | Message Must Include | Example |
 |------------|-------------|----------------------|---------|
-| Rate Limit | 403 | Reset time, token suggestion (if no token) | "Resets at: 3:00 PM. Tip: Set GITHUB_TOKEN..." |
+| Rate Limit | 403 | Reset time, token suggestion (if no token) | "Resets at: 3:00 PM. Tip: Set GITHUB_PAT..." |
 | Unauthorized | 401 | Token validity hint | "Your token may be invalid or expired" |
 | Not Found | 404 | Resource identification | "Repository or release not found" |
 | Network | N/A | Connectivity context | "Failed to connect to api.github.com" |
@@ -398,13 +398,13 @@ Mock Invoke-RestMethod {
 
 **Real API Call** (with test token):
 ```powershell
-$env:GITHUB_TOKEN = $env:GITHUB_TEST_TOKEN  # From CI secrets
+$env:GITHUB_PAT = $env:GITHUB_TEST_TOKEN  # From CI secrets
 
 $uri = "https://api.github.com/repos/github/spec-kit/releases/latest"
 $headers = @{
     "Accept"        = "application/vnd.github.v3+json"
     "User-Agent"    = "SpecKit-Updater-PowerShell"
-    "Authorization" = "Bearer $env:GITHUB_TOKEN"
+    "Authorization" = "Bearer $env:GITHUB_PAT"
 }
 
 $release = Invoke-RestMethod -Uri $uri -Method GET -Headers $headers
@@ -423,10 +423,10 @@ $release.tarball_url | Should -Match "^https://api.github.com/"
 **Safe Operations**:
 ```powershell
 # ✅ SAFE: Add token to Authorization header
-$headers["Authorization"] = "Bearer $env:GITHUB_TOKEN"
+$headers["Authorization"] = "Bearer $env:GITHUB_PAT"
 
 # ✅ SAFE: Check for token presence
-if ($env:GITHUB_TOKEN) { ... }
+if ($env:GITHUB_PAT) { ... }
 
 # ✅ SAFE: Log authentication status
 Write-Verbose "Using authenticated request"
@@ -435,13 +435,13 @@ Write-Verbose "Using authenticated request"
 **Unsafe Operations** (FORBIDDEN):
 ```powershell
 # ❌ FORBIDDEN: Log token value
-Write-Verbose "Token: $env:GITHUB_TOKEN"
+Write-Verbose "Token: $env:GITHUB_PAT"
 
 # ❌ FORBIDDEN: Include token in error
-Write-Error "Failed with token $env:GITHUB_TOKEN"
+Write-Error "Failed with token $env:GITHUB_PAT"
 
 # ❌ FORBIDDEN: Write token to file
-Set-Content "token.txt" $env:GITHUB_TOKEN
+Set-Content "token.txt" $env:GITHUB_PAT
 ```
 
 ### HTTPS Requirement

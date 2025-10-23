@@ -618,11 +618,13 @@ The skill fetches SpecKit templates from GitHub Releases API. Common issues:
   - Use `-Verbose` flag to see detailed connection attempts
 
 **"GitHub API rate limit exceeded"**
-- **Cause**: Exceeded 60 requests/hour limit for unauthenticated API calls
+- **Cause**: Exceeded 60 requests/hour limit (unauthenticated) or 5,000 requests/hour limit (authenticated)
 - **Solution**:
-  - Wait until rate limit resets (time shown in error message)
+  - **Without token**: Set up GitHub Personal Access Token (see "Using GitHub Tokens" in README.md)
+  - **With token**: Wait until rate limit resets (time shown in error message)
   - Error message shows exact reset time: "Resets at: {timestamp}"
   - Rate limits reset on the hour (e.g., if exceeded at 2:45pm, resets at 3:00pm)
+  - **Quick fix**: `$env:GITHUB_PAT = "ghp_YOUR_TOKEN_HERE"` increases limit to 5,000 req/hour
 
 **"GitHub API returned empty response"**
 - **Cause**: GitHub API returned null or invalid JSON
