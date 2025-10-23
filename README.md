@@ -314,11 +314,6 @@ Run the test suite:
 ./tests/test-runner.ps1 -Integration
 ```
 
-**Test Results (v0.2.0)**:
-- ✅ 193 tests passing
-- ⚠️ 59 tests failing (pre-existing integration test issues - modules work correctly)
-- ⚠️ 7 tests skipped (VSCodeIntegration mocking limitations)
-
 ## Specification
 
 Full specification available in `specs/001-safe-update/spec.md`.
