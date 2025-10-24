@@ -56,13 +56,9 @@
         'PSAvoidUsingWriteHost',                  # Use Write-Output instead (Write-Host bypasses pipeline)
         'PSAvoidUsingEmptyCatchBlock',            # Catch blocks should have error handling
         'PSUseOutputTypeCorrectly',               # [OutputType()] should match actual output
-        'PSUseSupportsShouldProcess',             # Functions modifying state should declare SupportsShouldProcess
-        'PSUseBOMForUnicodeEncodedFile',          # Unicode files should have BOM (for compatibility)
-
-        # Compatibility (commented out - requires complex profile configuration)
-        # 'PSUseCompatibleCmdlets',                 # Use cmdlets available in target PowerShell versions
-        # 'PSUseCompatibleSyntax',                  # Syntax compatible with target PowerShell versions
-        # 'PSUseCompatibleTypes'                    # Types available in target PowerShell versions
+        'PSUseSupportsShouldProcess'              # Functions modifying state should declare SupportsShouldProcess
+        # Note: PSUseBOMForUnicodeEncodedFile excluded (see ExcludeRules)
+        # Note: Compatibility rules (PSUseCompatible*) excluded (require complex profile configuration)
     )
 
     # Rules to exclude (disabled)
