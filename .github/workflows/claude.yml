@@ -120,6 +120,7 @@ jobs:
           echo "authorized=false" >> $GITHUB_OUTPUT
           echo "association=$AUTHOR_ASSOCIATION" >> $GITHUB_OUTPUT
           echo "reason=Not authorized" >> $GITHUB_OUTPUT
+          exit 0  # Exit cleanly even when not authorized
 
       - name: Log authorization result
         if: always()
