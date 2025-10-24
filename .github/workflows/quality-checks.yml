@@ -157,51 +157,10 @@ jobs:
           Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0
           Write-Host "Installed version: $(Get-Module Pester -ListAvailable | Select-Object -ExpandProperty Version -First 1)" -ForegroundColor Green
 
-      - name: Run unit tests with coverage
+      - name: Run unit tests
         shell: pwsh
         run: |
-          Write-Host "`n=== Running Unit Tests ===" -ForegroundColor Cyan
-
-          try {
-              Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
-
-              $config = New-PesterConfiguration
-              $config.Run.Path = "tests/unit"
-              $config.Output.Verbosity = 'Detailed'
-
-              # Disable code coverage for now to isolate test running issues
-              $config.CodeCoverage.Enabled = $false
-
-              # Run tests
-              Write-Host "Running Pester with configuration..." -ForegroundColor Cyan
-              $result = Invoke-Pester -Configuration $config
-
-              # Check if Pester returned a result
-              if (-not $result) {
-                  Write-Host "`n❌ Pester returned null result" -ForegroundColor Red
-                  exit 1
-              }
-
-              # Check test results
-              Write-Host "`n=== Test Results ===" -ForegroundColor Cyan
-              Write-Host "Total: $($result.TotalCount)" -ForegroundColor White
-              Write-Host "Passed: $($result.PassedCount)" -ForegroundColor Green
-              Write-Host "Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
-              Write-Host "Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
-
-              if ($result.FailedCount -gt 0) {
-                  Write-Host "`n❌ $($result.FailedCount) test(s) failed" -ForegroundColor Red
-                  exit 1
-              }
-
-              Write-Host "`n✅ All tests passed" -ForegroundColor Green
-              exit 0
-          }
-          catch {
-              Write-Host "`n❌ Error running tests: $($_.Exception.Message)" -ForegroundColor Red
-              Write-Host $_.ScriptStackTrace -ForegroundColor Gray
-              exit 1
-          }
+          ./tests/test-runner.ps1 -Unit
 
       - name: Upload test results
         if: always()

@@ -1,70 +1,28 @@
 # PSScriptAnalyzer Settings for SpecKit Safe Update Skill
 #
 # This configuration defines the linting rules for PowerShell code quality.
-# Enforces best practices, security, performance, and style guidelines.
+# Uses default PSScriptAnalyzer rules with specific exclusions.
 #
 # See: https://github.com/PowerShell/PSScriptAnalyzer
 
 @{
-    # Severity levels to include (Error, Warning, Information)
+    # Severity levels to include (Error, Warning)
+    # Only errors will block CI, warnings are informational
     Severity = @(
         'Error',
         'Warning'
-        # 'Information'  # Uncomment for stricter checking
     )
 
-    # Include only specific rules (comment out to include all)
-    # IncludeDefaultRules = $true
-
-    # Specific rules to include (enforced)
-    IncludeRules = @(
-        # Cmdlet design rules
-        'PSAvoidUsingCmdletAliases',              # Use full cmdlet names, not aliases (% -> ForEach-Object)
-        'PSUseApprovedVerbs',                     # Use approved PowerShell verbs (Get, Set, New, Remove, etc.)
-        'PSUseSingularNouns',                     # Function names should use singular nouns
-        'PSReservedCmdletChar',                   # Avoid special characters in cmdlet names
-        'PSReservedParams',                       # Don't override reserved parameter names
-
-        # Script functions
-        'PSProvideCommentHelp',                   # Functions must have comment-based help
-        'PSAvoidDefaultValueSwitchParameter',     # Switch parameters shouldn't have default values
-
-        # Security rules
-        'PSAvoidUsingPlainTextForPassword',       # Use SecureString for passwords
-        'PSAvoidUsingConvertToSecureStringWithPlainText',  # Don't convert plain text to SecureString
-        'PSUsePSCredentialType',                  # Use PSCredential type for credentials
-        'PSAvoidUsingUsernameAndPasswordParams',  # Use PSCredential instead of separate username/password
-
-        # Performance rules
-        'PSUseDeclaredVarsMoreThanAssignments',   # Variables should be used after assignment
-        'PSAvoidUsingInvokeExpression',           # Avoid Invoke-Expression (security risk)
-        'PSAvoidAssignmentToAutomaticVariable',   # Don't assign to $?, $input, etc.
-
-        # Code quality rules
-        'PSAvoidUsingPositionalParameters',       # Use named parameters for clarity
-        'PSAvoidGlobalVars',                      # Avoid $global: scope (use parameters instead)
-        'PSUseCmdletCorrectly',                   # Cmdlets should follow correct syntax
-        'PSUseConsistentWhitespace',              # Enforce consistent whitespace
-        'PSUseConsistentIndentation',             # Enforce consistent indentation
-        'PSAlignAssignmentStatement',             # Align assignment statements for readability
-
-        # Error handling
-        'PSAvoidShouldContinueWithoutForce',      # ShouldContinue requires -Force parameter
-        'PSUseShouldProcessForStateChangingFunctions',  # State-changing functions should support -WhatIf
-
-        # Best practices
-        # 'PSAvoidUsingWriteHost' is excluded (see ExcludeRules) - we use Write-Host intentionally
-        'PSAvoidUsingEmptyCatchBlock',            # Catch blocks should have error handling
-        'PSUseOutputTypeCorrectly',               # [OutputType()] should match actual output
-        'PSUseSupportsShouldProcess'              # Functions modifying state should declare SupportsShouldProcess
-        # Note: PSUseBOMForUnicodeEncodedFile excluded (see ExcludeRules)
-        # Note: Compatibility rules (PSUseCompatible*) excluded (require complex profile configuration)
-    )
+    # Use all default PSScriptAnalyzer rules except those explicitly excluded
+    IncludeDefaultRules = $true
 
     # Rules to exclude (disabled)
     ExcludeRules = @(
         'PSAvoidUsingWriteHost',  # We use Write-Host intentionally for colored user-facing output
-        'PSUseBOMForUnicodeEncodedFile'  # We explicitly avoid BOM in HashUtils for cross-platform compatibility
+        'PSUseBOMForUnicodeEncodedFile',  # We explicitly avoid BOM in HashUtils for cross-platform compatibility
+        'PSUseCompatibleCmdlets',  # Requires complex profile configuration
+        'PSUseCompatibleSyntax',  # Requires complex profile configuration
+        'PSUseCompatibleTypes'  # Requires complex profile configuration
     )
 
     # Rules configuration (custom settings for specific rules)
