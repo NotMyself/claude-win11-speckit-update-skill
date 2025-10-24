@@ -168,12 +168,18 @@ jobs:
           $config.Run.Path = "tests/unit"
           $config.Output.Verbosity = 'Detailed'
           $config.CodeCoverage.Enabled = $true
-          $config.CodeCoverage.Path = "scripts/**/*.ps1", "scripts/**/*.psm1"
-          $config.CodeCoverage.OutputPath = "tests/coverage/coverage.xml"
+          $config.CodeCoverage.Path = "scripts\**\*.ps1", "scripts\**\*.psm1"  # Windows path separators
+          $config.CodeCoverage.OutputPath = "tests\coverage\coverage.xml"
           $config.CodeCoverage.OutputFormat = 'JaCoCo'
 
           # Run tests
           $result = Invoke-Pester -Configuration $config
+
+          # Check if Pester ran successfully
+          if (-not $result) {
+              Write-Host "`n❌ Pester failed to run tests" -ForegroundColor Red
+              exit 1
+          }
 
           # Display coverage summary
           Write-Host "`n=== Code Coverage Summary ===" -ForegroundColor Cyan
@@ -202,6 +208,7 @@ jobs:
               exit 1
           } else {
               Write-Host "`n✅ All tests passed ($($result.PassedCount) passed)" -ForegroundColor Green
+              exit 0
           }
 
       - name: Upload test results
