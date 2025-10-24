@@ -1,0 +1,245 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'scripts/**/*.ps1'
+      - 'scripts/**/*.psm1'
+      - 'tests/**/*.ps1'
+      - 'PSScriptAnalyzerSettings.psd1'
+      - '.github/workflows/quality-checks.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'scripts/**/*.ps1'
+      - 'scripts/**/*.psm1'
+      - 'tests/**/*.ps1'
+      - 'PSScriptAnalyzerSettings.psd1'
+      - '.github/workflows/quality-checks.yml'
+
+jobs:
+  lint:
+    name: PSScriptAnalyzer Linting
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Write-Host "Installing PSScriptAnalyzer..." -ForegroundColor Cyan
+          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "Installed version: $(Get-Module PSScriptAnalyzer -ListAvailable | Select-Object -ExpandProperty Version)" -ForegroundColor Green
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Write-Host "`n=== Running PSScriptAnalyzer ===" -ForegroundColor Cyan
+
+          # Analyze all PowerShell files
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings PSScriptAnalyzerSettings.psd1
+
+          if ($results) {
+              Write-Host "`n❌ PSScriptAnalyzer found $($results.Count) issue(s):" -ForegroundColor Red
+
+              # Group by severity
+              $errors = $results | Where-Object { $_.Severity -eq 'Error' }
+              $warnings = $results | Where-Object { $_.Severity -eq 'Warning' }
+              $info = $results | Where-Object { $_.Severity -eq 'Information' }
+
+              if ($errors) {
+                  Write-Host "`n🔴 Errors ($($errors.Count)):" -ForegroundColor Red
+                  foreach ($error in $errors) {
+                      Write-Host "   $($error.ScriptName):$($error.Line) - $($error.RuleName)" -ForegroundColor Red
+                      Write-Host "      $($error.Message)" -ForegroundColor Yellow
+                  }
+              }
+
+              if ($warnings) {
+                  Write-Host "`n⚠️  Warnings ($($warnings.Count)):" -ForegroundColor Yellow
+                  foreach ($warning in $warnings) {
+                      Write-Host "   $($warning.ScriptName):$($warning.Line) - $($warning.RuleName)" -ForegroundColor Yellow
+                      Write-Host "      $($warning.Message)" -ForegroundColor Gray
+                  }
+              }
+
+              if ($info) {
+                  Write-Host "`nℹ️  Information ($($info.Count)):" -ForegroundColor Cyan
+                  foreach ($item in $info) {
+                      Write-Host "   $($item.ScriptName):$($item.Line) - $($item.RuleName)" -ForegroundColor Cyan
+                  }
+              }
+
+              # Fail if there are errors
+              if ($errors) {
+                  Write-Host "`n❌ PSScriptAnalyzer failed with $($errors.Count) error(s)" -ForegroundColor Red
+                  exit 1
+              } else {
+                  Write-Host "`n⚠️  PSScriptAnalyzer found warnings but no errors" -ForegroundColor Yellow
+                  Write-Host "   Consider fixing warnings before merging" -ForegroundColor Gray
+              }
+          } else {
+              Write-Host "`n✅ PSScriptAnalyzer found no issues!" -ForegroundColor Green
+          }
+
+  module-import-compliance:
+    name: Module Import Compliance
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check module import compliance
+        shell: pwsh
+        run: |
+          Write-Host "`n=== Checking Module Import Compliance ===" -ForegroundColor Cyan
+
+          $modulesPath = "scripts/modules"
+          $violations = @()
+
+          $moduleFiles = Get-ChildItem -Path $modulesPath -Filter "*.psm1" -ErrorAction SilentlyContinue
+
+          if (-not $moduleFiles) {
+              Write-Host "⚠️  No module files found in $modulesPath" -ForegroundColor Yellow
+              exit 0
+          }
+
+          foreach ($file in $moduleFiles) {
+              $content = Get-Content -Path $file.FullName -Raw
+              $lines = $content -split "`n"
+
+              for ($i = 0; $i -lt $lines.Count; $i++) {
+                  # Skip comment lines
+                  if ($lines[$i] -match '^\s*#') { continue }
+
+                  # Check for Import-Module statements (case-insensitive)
+                  if ($lines[$i] -match '^\s*Import-Module\s') {
+                      $violations += [PSCustomObject]@{
+                          File = $file.Name
+                          Line = $i + 1
+                          Content = $lines[$i].Trim()
+                      }
+                  }
+              }
+          }
+
+          if ($violations.Count -gt 0) {
+              Write-Host "`n❌ Module Import Compliance Check FAILED" -ForegroundColor Red
+              Write-Host "   Found $($violations.Count) violation(s):`n" -ForegroundColor Red
+
+              foreach ($violation in $violations) {
+                  Write-Host "   $($violation.File):$($violation.Line) - $($violation.Content)" -ForegroundColor Yellow
+              }
+
+              Write-Host "`n   Modules MUST NOT import other modules." -ForegroundColor Red
+              Write-Host "   All imports should be managed by the orchestrator." -ForegroundColor Red
+              Write-Host "   See .specify/memory/constitution.md - Module Import Rules`n" -ForegroundColor Cyan
+
+              exit 1
+          } else {
+              Write-Host "✅ Module import compliance check PASSED" -ForegroundColor Green
+              Write-Host "   No nested imports found in $($moduleFiles.Count) module(s)" -ForegroundColor Green
+          }
+
+  test:
+    name: Unit Tests with Coverage
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Write-Host "Installing Pester..." -ForegroundColor Cyan
+          Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0
+          Write-Host "Installed version: $(Get-Module Pester -ListAvailable | Select-Object -ExpandProperty Version -First 1)" -ForegroundColor Green
+
+      - name: Run unit tests with coverage
+        shell: pwsh
+        run: |
+          Write-Host "`n=== Running Unit Tests with Code Coverage ===" -ForegroundColor Cyan
+
+          Import-Module Pester -MinimumVersion 5.0
+
+          $config = New-PesterConfiguration
+          $config.Run.Path = "tests/unit"
+          $config.Output.Verbosity = 'Detailed'
+          $config.CodeCoverage.Enabled = $true
+          $config.CodeCoverage.Path = "scripts/**/*.ps1", "scripts/**/*.psm1"
+          $config.CodeCoverage.OutputPath = "tests/coverage/coverage.xml"
+          $config.CodeCoverage.OutputFormat = 'JaCoCo'
+
+          # Run tests
+          $result = Invoke-Pester -Configuration $config
+
+          # Display coverage summary
+          Write-Host "`n=== Code Coverage Summary ===" -ForegroundColor Cyan
+          Write-Host "Commands Executed: $($result.CodeCoverage.CommandsExecutedCount)" -ForegroundColor Green
+          Write-Host "Commands Analyzed: $($result.CodeCoverage.CommandsAnalyzedCount)" -ForegroundColor Yellow
+
+          if ($result.CodeCoverage.CommandsAnalyzedCount -gt 0) {
+              $coveragePercent = [math]::Round(($result.CodeCoverage.CommandsExecutedCount / $result.CodeCoverage.CommandsAnalyzedCount) * 100, 2)
+              Write-Host "Coverage Percentage: $coveragePercent%" -ForegroundColor $(if ($coveragePercent -ge 70) { 'Green' } else { 'Red' })
+
+              # Check coverage threshold
+              $threshold = 70.0
+              if ($coveragePercent -lt $threshold) {
+                  Write-Host "`n❌ Code coverage ($coveragePercent%) is below threshold ($threshold%)" -ForegroundColor Red
+                  Write-Host "   Please add tests to improve coverage" -ForegroundColor Yellow
+                  # Don't fail on coverage yet - this is informational for now
+                  # exit 1
+              } else {
+                  Write-Host "`n✅ Code coverage meets threshold ($threshold%)" -ForegroundColor Green
+              }
+          }
+
+          # Check test results
+          if ($result.FailedCount -gt 0) {
+              Write-Host "`n❌ $($result.FailedCount) test(s) failed" -ForegroundColor Red
+              exit 1
+          } else {
+              Write-Host "`n✅ All tests passed ($($result.PassedCount) passed)" -ForegroundColor Green
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/TestResults/
+          retention-days: 30
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: tests/coverage/
+          retention-days: 30
+
+  summary:
+    name: Quality Summary
+    needs: [lint, module-import-compliance, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check overall status
+        run: |
+          echo "### Quality Checks Summary"
+          echo "- **PSScriptAnalyzer**: ${{ needs.lint.result }}"
+          echo "- **Module Import Compliance**: ${{ needs.module-import-compliance.result }}"
+          echo "- **Unit Tests**: ${{ needs.test.result }}"
+
+          if [[ "${{ needs.lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.module-import-compliance.result }}" == "failure" ]] || \
+             [[ "${{ needs.test.result }}" == "failure" ]]; then
+            echo ""
+            echo "❌ Quality checks failed"
+            exit 1
+          else
+            echo ""
+            echo "✅ All quality checks passed"
+          fi
