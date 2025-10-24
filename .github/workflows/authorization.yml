@@ -1,0 +1,114 @@
+name: Authorization Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [ main, develop ]
+
+jobs:
+  authorize:
+    name: Check PR Authorization
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.check.outputs.authorized }}
+      actor: ${{ github.actor }}
+      association: ${{ steps.check.outputs.association }}
+      reason: ${{ steps.check.outputs.reason }}
+    steps:
+      - name: Checkout repository (for config file)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check user authorization
+        id: check
+        shell: bash
+        env:
+          ACTOR: ${{ github.actor }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "🔐 Step 1/6: Checking PR authorization for @$ACTOR..."
+          echo "Author Association: $AUTHOR_ASSOCIATION"
+
+          # Load config file
+          CONFIG_FILE=".github/claude-authorized-users.yml"
+
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ Config file not found: $CONFIG_FILE"
+            echo "authorized=false" >> $GITHUB_OUTPUT
+            echo "reason=Configuration file missing" >> $GITHUB_OUTPUT
+            exit 1  # Fail the workflow for missing config
+          fi
+
+          # Check emergency circuit breaker
+          EMERGENCY_DISABLE=$(grep -A 2 "^emergency:" "$CONFIG_FILE" | grep "disable_all:" | awk '{print $2}')
+          if [ "$EMERGENCY_DISABLE" == "true" ]; then
+            echo "🚨 Emergency circuit breaker enabled - all PR workflows disabled"
+            echo "authorized=false" >> $GITHUB_OUTPUT
+            echo "reason=Emergency circuit breaker enabled" >> $GITHUB_OUTPUT
+            exit 1  # Fail the workflow when circuit breaker is enabled
+          fi
+
+          # For PRs, we use a permissive policy for trusted contributors
+          # Allow: OWNER, COLLABORATOR, MEMBER by default
+          # Block: FIRST_TIME_CONTRIBUTOR, NONE, CONTRIBUTOR (unless in allowlist)
+
+          case "$AUTHOR_ASSOCIATION" in
+            OWNER)
+              echo "✅ PR author is repository owner - AUTHORIZED"
+              echo "authorized=true" >> $GITHUB_OUTPUT
+              echo "association=OWNER" >> $GITHUB_OUTPUT
+              echo "reason=Repository owner" >> $GITHUB_OUTPUT
+              exit 0
+              ;;
+            COLLABORATOR)
+              echo "✅ PR author is collaborator - AUTHORIZED"
+              echo "authorized=true" >> $GITHUB_OUTPUT
+              echo "association=COLLABORATOR" >> $GITHUB_OUTPUT
+              echo "reason=Collaborator with write access" >> $GITHUB_OUTPUT
+              exit 0
+              ;;
+            MEMBER)
+              echo "✅ PR author is org member - AUTHORIZED"
+              echo "authorized=true" >> $GITHUB_OUTPUT
+              echo "association=MEMBER" >> $GITHUB_OUTPUT
+              echo "reason=Organization member" >> $GITHUB_OUTPUT
+              exit 0
+              ;;
+          esac
+
+          # Check authorized_users list in config file
+          if grep -A 100 "^authorized_users:" "$CONFIG_FILE" | grep -E "^\s+-\s+$ACTOR\s*$" > /dev/null; then
+            echo "✅ PR author found in authorized_users list - AUTHORIZED"
+            echo "authorized=true" >> $GITHUB_OUTPUT
+            echo "association=ALLOWLIST" >> $GITHUB_OUTPUT
+            echo "reason=Explicitly authorized in config" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # User is NOT authorized
+          echo "🚫 PR author @$ACTOR is NOT authorized"
+          echo "   Association: $AUTHOR_ASSOCIATION"
+          echo "   Reason: Not in authorized users list and not a collaborator/owner/member"
+          echo "   Note: Maintainers can manually review and merge trusted contributions"
+          echo "authorized=false" >> $GITHUB_OUTPUT
+          echo "association=$AUTHOR_ASSOCIATION" >> $GITHUB_OUTPUT
+          echo "reason=Not authorized" >> $GITHUB_OUTPUT
+          exit 1  # Fail the workflow to block downstream jobs
+
+      - name: Log authorization result
+        if: always()
+        run: |
+          echo "### 🔐 Authorization Check - Step 1/6" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Authorized:** ${{ steps.check.outputs.authorized }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Association:** ${{ steps.check.outputs.association }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason:** ${{ steps.check.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check.outputs.authorized }}" == "true" ]; then
+            echo "✅ **Status:** Proceeding to guardrails check" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Workflow stopped (unauthorized user)" >> $GITHUB_STEP_SUMMARY
+          fi
