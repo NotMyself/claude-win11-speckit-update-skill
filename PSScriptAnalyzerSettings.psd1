@@ -59,10 +59,10 @@
         'PSUseSupportsShouldProcess',             # Functions modifying state should declare SupportsShouldProcess
         'PSUseBOMForUnicodeEncodedFile',          # Unicode files should have BOM (for compatibility)
 
-        # Compatibility
-        'PSUseCompatibleCmdlets',                 # Use cmdlets available in target PowerShell versions
-        'PSUseCompatibleSyntax',                  # Syntax compatible with target PowerShell versions
-        'PSUseCompatibleTypes'                    # Types available in target PowerShell versions
+        # Compatibility (commented out - requires complex profile configuration)
+        # 'PSUseCompatibleCmdlets',                 # Use cmdlets available in target PowerShell versions
+        # 'PSUseCompatibleSyntax',                  # Syntax compatible with target PowerShell versions
+        # 'PSUseCompatibleTypes'                    # Types available in target PowerShell versions
     )
 
     # Rules to exclude (disabled)
@@ -109,19 +109,19 @@
             Placement = 'before'      # Comment help should be before function definition
         }
 
-        # Compatibility targets
-        PSUseCompatibleCmdlets = @{
-            Compatibility = @('core-7.0.0-windows', 'core-7.0.0-linux')
-        }
-
-        PSUseCompatibleSyntax = @{
-            Enable = $true
-            TargetVersions = @('7.0')
-        }
-
-        PSUseCompatibleTypes = @{
-            Enable = $true
-            TargetVersions = @('7.0')
-        }
+        # Compatibility targets (commented out - requires complex profile configuration)
+        # PSUseCompatibleCmdlets = @{
+        #     Compatibility = @('core-7.0.0-windows', 'core-7.0.0-linux')
+        # }
+        #
+        # PSUseCompatibleSyntax = @{
+        #     Enable = $true
+        #     TargetVersions = @('7.0')
+        # }
+        #
+        # PSUseCompatibleTypes = @{
+        #     Enable = $true
+        #     TargetVersions = @('7.0')
+        # }
     }
 }
