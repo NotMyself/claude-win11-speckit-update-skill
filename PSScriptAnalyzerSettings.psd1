@@ -53,7 +53,7 @@
         'PSUseShouldProcessForStateChangingFunctions',  # State-changing functions should support -WhatIf
 
         # Best practices
-        'PSAvoidUsingWriteHost',                  # Use Write-Output instead (Write-Host bypasses pipeline)
+        # 'PSAvoidUsingWriteHost' is excluded (see ExcludeRules) - we use Write-Host intentionally
         'PSAvoidUsingEmptyCatchBlock',            # Catch blocks should have error handling
         'PSUseOutputTypeCorrectly',               # [OutputType()] should match actual output
         'PSUseSupportsShouldProcess'              # Functions modifying state should declare SupportsShouldProcess
