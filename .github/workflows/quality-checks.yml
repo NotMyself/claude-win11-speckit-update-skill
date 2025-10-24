@@ -160,55 +160,47 @@ jobs:
       - name: Run unit tests with coverage
         shell: pwsh
         run: |
-          Write-Host "`n=== Running Unit Tests with Code Coverage ===" -ForegroundColor Cyan
+          Write-Host "`n=== Running Unit Tests ===" -ForegroundColor Cyan
 
-          Import-Module Pester -MinimumVersion 5.0
+          try {
+              Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
 
-          $config = New-PesterConfiguration
-          $config.Run.Path = "tests/unit"
-          $config.Output.Verbosity = 'Detailed'
-          $config.CodeCoverage.Enabled = $true
-          $config.CodeCoverage.Path = "scripts\**\*.ps1", "scripts\**\*.psm1"  # Windows path separators
-          $config.CodeCoverage.OutputPath = "tests\coverage\coverage.xml"
-          $config.CodeCoverage.OutputFormat = 'JaCoCo'
+              $config = New-PesterConfiguration
+              $config.Run.Path = "tests/unit"
+              $config.Output.Verbosity = 'Detailed'
 
-          # Run tests
-          $result = Invoke-Pester -Configuration $config
+              # Disable code coverage for now to isolate test running issues
+              $config.CodeCoverage.Enabled = $false
 
-          # Check if Pester ran successfully
-          if (-not $result) {
-              Write-Host "`n❌ Pester failed to run tests" -ForegroundColor Red
-              exit 1
-          }
+              # Run tests
+              Write-Host "Running Pester with configuration..." -ForegroundColor Cyan
+              $result = Invoke-Pester -Configuration $config
 
-          # Display coverage summary
-          Write-Host "`n=== Code Coverage Summary ===" -ForegroundColor Cyan
-          Write-Host "Commands Executed: $($result.CodeCoverage.CommandsExecutedCount)" -ForegroundColor Green
-          Write-Host "Commands Analyzed: $($result.CodeCoverage.CommandsAnalyzedCount)" -ForegroundColor Yellow
-
-          if ($result.CodeCoverage.CommandsAnalyzedCount -gt 0) {
-              $coveragePercent = [math]::Round(($result.CodeCoverage.CommandsExecutedCount / $result.CodeCoverage.CommandsAnalyzedCount) * 100, 2)
-              Write-Host "Coverage Percentage: $coveragePercent%" -ForegroundColor $(if ($coveragePercent -ge 70) { 'Green' } else { 'Red' })
-
-              # Check coverage threshold
-              $threshold = 70.0
-              if ($coveragePercent -lt $threshold) {
-                  Write-Host "`n❌ Code coverage ($coveragePercent%) is below threshold ($threshold%)" -ForegroundColor Red
-                  Write-Host "   Please add tests to improve coverage" -ForegroundColor Yellow
-                  # Don't fail on coverage yet - this is informational for now
-                  # exit 1
-              } else {
-                  Write-Host "`n✅ Code coverage meets threshold ($threshold%)" -ForegroundColor Green
+              # Check if Pester returned a result
+              if (-not $result) {
+                  Write-Host "`n❌ Pester returned null result" -ForegroundColor Red
+                  exit 1
               }
-          }
 
-          # Check test results
-          if ($result.FailedCount -gt 0) {
-              Write-Host "`n❌ $($result.FailedCount) test(s) failed" -ForegroundColor Red
-              exit 1
-          } else {
-              Write-Host "`n✅ All tests passed ($($result.PassedCount) passed)" -ForegroundColor Green
+              # Check test results
+              Write-Host "`n=== Test Results ===" -ForegroundColor Cyan
+              Write-Host "Total: $($result.TotalCount)" -ForegroundColor White
+              Write-Host "Passed: $($result.PassedCount)" -ForegroundColor Green
+              Write-Host "Failed: $($result.FailedCount)" -ForegroundColor $(if ($result.FailedCount -gt 0) { 'Red' } else { 'Green' })
+              Write-Host "Skipped: $($result.SkippedCount)" -ForegroundColor Yellow
+
+              if ($result.FailedCount -gt 0) {
+                  Write-Host "`n❌ $($result.FailedCount) test(s) failed" -ForegroundColor Red
+                  exit 1
+              }
+
+              Write-Host "`n✅ All tests passed" -ForegroundColor Green
               exit 0
+          }
+          catch {
+              Write-Host "`n❌ Error running tests: $($_.Exception.Message)" -ForegroundColor Red
+              Write-Host $_.ScriptStackTrace -ForegroundColor Gray
+              exit 1
           }
 
       - name: Upload test results
