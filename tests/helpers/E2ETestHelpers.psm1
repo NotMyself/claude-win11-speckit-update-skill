@@ -662,7 +662,17 @@ function Add-DadJokesToFile {
     }
 
     # Read file content as lines
-    $lines = Get-Content -Path $FilePath
+    $lines = @(Get-Content -Path $FilePath -ErrorAction Stop)
+
+    # Handle empty files
+    if ($null -eq $lines -or $lines.Count -eq 0) {
+        Write-Warning "File is empty: $FilePath"
+        return @{
+            Jokes = @()
+            Locations = @()
+            Count = 0
+        }
+    }
 
     # Identify safe insertion points (avoid headers, code blocks, front matter, empty lines)
     $safeLines = @()
@@ -715,11 +725,11 @@ function Add-DadJokesToFile {
     }
 
     # Randomly select insertion points and jokes
-    $selectedLines = $safeLines | Get-Random -Count $jokeCount -SetSeed 42
-    $selectedJokes = $JokeDatabase | Get-Random -Count $jokeCount -SetSeed 42
+    $selectedLines = @($safeLines | Get-Random -Count $jokeCount -SetSeed 42)
+    $selectedJokes = @($JokeDatabase | Get-Random -Count $jokeCount -SetSeed 42)
 
     # Sort lines in descending order (insert from bottom to top to preserve line numbers)
-    $selectedLines = $selectedLines | Sort-Object -Descending
+    $selectedLines = @($selectedLines | Sort-Object -Descending)
 
     # Insert jokes into content
     $modifiedLines = [System.Collections.ArrayList]::new($lines)
