@@ -45,8 +45,8 @@
         'PSAvoidGlobalVars',                      # Avoid $global: scope (use parameters instead)
         'PSUseCmdletCorrectly',                   # Cmdlets should follow correct syntax
         'PSUseConsistentWhitespace',              # Enforce consistent whitespace
-        'PSUseConsistentIndentation',             # Enforce consistent indentation
-        'PSAlignAssignmentStatement',             # Align assignment statements for readability
+        'PSUseConsistentIndentation'              # Enforce consistent indentation
+        # 'PSAlignAssignmentStatement',           # Align assignment statements (disabled - too strict for JSON/hashtable alignment)
 
         # Error handling
         'PSAvoidShouldContinueWithoutForce',      # ShouldContinue requires -Force parameter

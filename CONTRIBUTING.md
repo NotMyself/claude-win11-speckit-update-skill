@@ -310,12 +310,70 @@ Describe how you tested your changes
 - [ ] CHANGELOG.md updated
 ```
 
+## Automated PR Validation
+
+When you submit a pull request, it automatically goes through a comprehensive 6-step validation workflow:
+
+### Step 1: Authorization (Blocking)
+- Verifies PR author is authorized to contribute
+- Checks: repository owner, collaborator, organization member, or explicit allowlist
+- **Blocking**: PRs from unauthorized users fail here
+
+### Step 2: PR Guardrails (Non-blocking)
+- **PR Size Check**: Warns if PR exceeds 2000 lines (owner bypass allowed)
+- **Description Check**: Warns if PR description is too short or missing
+- **Feedback**: Posted as PR comment (updates in place on new commits)
+
+### Step 3: Quality Checks (Non-blocking)
+- **PSScriptAnalyzer Linting**: Validates code against style rules
+- **Pester Unit Tests**: Runs `./tests/test-runner.ps1 -Unit`
+- **Feedback**: Aggregates lint and test results in PR comment
+- **Non-blocking**: Known Pester 5.x scoping issues won't fail PR
+
+### Step 4: Code Review (Optional)
+- **Claude Code Review**: Automated review if `CLAUDE_CODE_OAUTH_TOKEN` secret is configured
+- Checks: code quality, best practices, potential bugs, documentation
+
+### Step 5: Security Scan (Non-blocking)
+- **GitLeaks Secret Scanning**: Detects hardcoded API keys, tokens, passwords (100+ patterns)
+- **PSScriptAnalyzer Security Rules**: Checks for insecure PowerShell patterns
+- **Dependency Vulnerabilities**: Scans PowerShell modules for known vulnerabilities
+- **Path Traversal Detection**: Identifies unsafe path operations
+- **Feedback**: Posted as detailed PR comment with file:line references
+
+### Step 6: SpecKit Compliance (Non-blocking)
+- **Feature Branch Validation**: Parses branch name (format: `NNN-feature-name`)
+- **Spec Artifacts**: Validates `specs/NNN-feature-name/` directory structure
+  - Checks for `spec.md` with required sections (User Scenarios, Requirements, Success Criteria)
+  - Checks for `plan.md` and `tasks.md`
+- **CHANGELOG Validation**: Ensures `CHANGELOG.md` has `[Unreleased]` section
+- **Constitution Compliance**: Validates PowerShell module patterns
+  - All `.psm1` files must have `Export-ModuleMember`
+  - No nested `Import-Module` in modules
+- **Feedback**: Posted as PR comment with specific remediation guidance
+
+### Comment System
+- Each validation step posts a PR comment with unique marker (e.g., `<!-- pr-validation:step-5 -->`)
+- Comments **update in place** on new commits (no duplicate comments)
+- Status indicators: `[PASS]`, `[WARN]`, `[FAIL]`
+- Includes file locations, code snippets, and remediation guidance
+
+### What to Expect
+- **Non-blocking validation**: You can still merge PRs with warnings (except authorization)
+- **Actionable feedback**: Comments include specific fixes and file locations
+- **Progressive enhancement**: Fix issues incrementally, comments update automatically
+- **Performance**: Typical workflow completes in 4-6 minutes
+
+See [docs/workflows/pr-validation.md](docs/workflows/pr-validation.md) for detailed documentation, troubleshooting, and configuration options.
+
 ## Code Review Process
 
-1. Automated tests run via GitHub Actions
-2. Maintainer reviews code
-3. Address any feedback
-4. Once approved, maintainer merges PR
+1. Automated PR validation runs (6 steps above)
+2. Review automated feedback in PR comments
+3. Fix any security issues or critical errors
+4. Maintainer reviews code
+5. Address any feedback
+6. Once approved, maintainer merges PR
 
 ## Reporting Issues
 
