@@ -129,7 +129,10 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                     # Timeout wrapper for test execution (User Story 3 - T023)
                     $timeoutSeconds = 300  # 5 minutes
                     $testJob = Start-ThreadJob -ScriptBlock {
-                        param($testDir, $testPair, $dadJokes, $repoRoot)
+                        param($testDir, $testPair, $dadJokes, $repoRoot, $helperModulePath, $testRoot)
+
+                        # Import helper module in thread job context
+                        Import-Module $helperModulePath -Force -ErrorAction Stop
 
                         # Create isolated test project
                         $testDir = New-E2ETestProject -Version $testPair.From -Root $testRoot
@@ -180,7 +183,7 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                             Errors = $validationErrors
                             TestDirectory = $testDir
                         }
-                    } -ArgumentList $testDir, $testPair, $dadJokes, $repoRoot
+                    } -ArgumentList $testDir, $testPair, $dadJokes, $repoRoot, $helperModulePath, $testRoot
 
                     # Wait for job with timeout
                     $completed = Wait-Job -Job $testJob -Timeout $timeoutSeconds
@@ -273,7 +276,11 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
             $passedTests = ($testResults | Where-Object { $_.Status -eq 'Passed' }).Count
             $failedTests = ($testResults | Where-Object { $_.Status -eq 'Failed' }).Count
             $timeoutTests = ($testResults | Where-Object { $_.Status -eq 'Timeout' }).Count
-            $testDurations = $testResults | Measure-Object -Property Duration -Sum -Average -Maximum -Minimum
+
+            # Convert Duration TimeSpan to TotalSeconds for measurement
+            $durationSeconds = $testResults | ForEach-Object { $_.Duration.TotalSeconds }
+            $testDurations = $durationSeconds | Measure-Object -Sum -Average -Maximum -Minimum
+
             $totalJokes = ($testResults | Measure-Object -Property JokesInjected -Sum).Sum
             $preservedJokes = ($testResults | Measure-Object -Property JokesPreserved -Sum).Sum
 
@@ -284,9 +291,9 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
 
             Write-Host "`nPerformance:" -ForegroundColor Cyan
             Write-Host "Suite Duration:  $($suiteDuration.TotalMinutes.ToString('F1')) minutes" -ForegroundColor $(if ($suiteDuration.TotalMinutes -lt 15) { 'Green' } else { 'Yellow' })
-            Write-Host "Avg Test Time:   $($testDurations.Average.TotalSeconds.ToString('F1'))s" -ForegroundColor White
-            Write-Host "Fastest Test:    $($testDurations.Minimum.TotalSeconds.ToString('F1'))s" -ForegroundColor White
-            Write-Host "Slowest Test:    $($testDurations.Maximum.TotalSeconds.ToString('F1'))s" -ForegroundColor White
+            Write-Host "Avg Test Time:   $($testDurations.Average.ToString('F1'))s" -ForegroundColor White
+            Write-Host "Fastest Test:    $($testDurations.Minimum.ToString('F1'))s" -ForegroundColor White
+            Write-Host "Slowest Test:    $($testDurations.Maximum.ToString('F1'))s" -ForegroundColor White
 
             Write-Host "`nData Preservation:" -ForegroundColor Cyan
             Write-Host "Total Jokes:     $totalJokes" -ForegroundColor White
