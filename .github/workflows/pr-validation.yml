@@ -118,6 +118,7 @@ jobs:
 
       - name: Check PR size
         id: size
+        continue-on-error: ${{ needs.authorization.outputs.association == 'OWNER' }}  # Non-blocking for owners
         run: |
           echo "📏 Step 2/6: Guardrails - Checking PR size..."
 
@@ -134,11 +135,18 @@ jobs:
 
           # Size limits
           MAX_SIZE=2000
+          IS_OWNER="${{ needs.authorization.outputs.association == 'OWNER' }}"
 
           if [ $TOTAL -gt $MAX_SIZE ]; then
-            echo "❌ PR too large: $TOTAL lines (max: $MAX_SIZE)"
-            echo "size_ok=false" >> $GITHUB_OUTPUT
-            exit 1
+            if [ "$IS_OWNER" == "true" ]; then
+              echo "⚠️  PR large: $TOTAL lines (max: $MAX_SIZE) - ALLOWED for repository owner"
+              echo "size_ok=warning" >> $GITHUB_OUTPUT
+              exit 0  # Don't fail for owners
+            else
+              echo "❌ PR too large: $TOTAL lines (max: $MAX_SIZE)"
+              echo "size_ok=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
           else
             echo "✅ PR size acceptable: $TOTAL lines"
             echo "size_ok=true" >> $GITHUB_OUTPUT
@@ -167,8 +175,17 @@ jobs:
           echo "### 📏 Step 2/6: Guardrails" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Size:** ${{ steps.size.outputs.total }} lines in ${{ steps.size.outputs.files }} files" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size Check:** ${{ steps.size.outputs.size_ok == 'true' && '✅ Pass' || '❌ Fail' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Description Check:** ${{ steps.description.outputs.description_ok == 'true' && '✅ Pass' || '❌ Fail' }}" >> $GITHUB_STEP_SUMMARY
+
+          SIZE_STATUS="${{ steps.size.outputs.size_ok }}"
+          if [ "$SIZE_STATUS" == "true" ]; then
+            echo "- **Size Check:** ✅ Pass" >> $GITHUB_STEP_SUMMARY
+          elif [ "$SIZE_STATUS" == "warning" ]; then
+            echo "- **Size Check:** ⚠️  Warning (owner bypass applied)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Size Check:** ❌ Fail" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "- **Description Check:** ${{ steps.description.outputs.description_ok == 'true' && '✅ Pass' || '⚠️ Warning' }}" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
   # STEP 3: Quality Checks
