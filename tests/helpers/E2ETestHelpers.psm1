@@ -1157,8 +1157,129 @@ function Write-E2ETestReport {
 
     Write-Verbose "Generating E2E test report for $($TestResults.Count) tests"
 
-    # TODO: Implementation pending (Phase 7: User Story 5)
-    throw "Not implemented yet"
+    # Calculate aggregate statistics
+    $totalTests = $TestResults.Count
+    $passed = ($TestResults | Where-Object { $_.Status -eq 'Completed' }).Count
+    $failed = ($TestResults | Where-Object { $_.Status -eq 'Failed' }).Count
+    $skipped = ($TestResults | Where-Object { $_.Status -eq 'Skipped' }).Count
+    $timeout = ($TestResults | Where-Object { $_.Status -eq 'Timeout' }).Count
+
+    # Calculate joke preservation statistics
+    $totalJokes = ($TestResults | Measure-Object -Property TotalJokes -Sum).Sum
+    $preservedJokes = ($TestResults | Measure-Object -Property JokesPreserved -Sum).Sum
+    $lostJokes = $totalJokes - $preservedJokes
+    $preservationRate = if ($totalJokes -gt 0) { ($preservedJokes / $totalJokes) * 100 } else { 0 }
+
+    # Calculate performance metrics
+    $durations = $TestResults | Where-Object { $_.Duration -and $_.Duration.TotalSeconds -gt 0 } |
+                                Select-Object -ExpandProperty Duration
+
+    if ($durations.Count -gt 0) {
+        $avgDuration = [TimeSpan]::FromSeconds(($durations | Measure-Object -Property TotalSeconds -Average).Average)
+        $fastestTest = $TestResults | Where-Object { $_.Duration -and $_.Duration.TotalSeconds -gt 0 } |
+                                      Sort-Object -Property Duration | Select-Object -First 1
+        $slowestTest = $TestResults | Where-Object { $_.Duration -and $_.Duration.TotalSeconds -gt 0 } |
+                                      Sort-Object -Property Duration -Descending | Select-Object -First 1
+        $totalDuration = [TimeSpan]::FromSeconds(($durations | Measure-Object -Property TotalSeconds -Sum).Sum)
+    } else {
+        $avgDuration = [TimeSpan]::Zero
+        $fastestTest = $null
+        $slowestTest = $null
+        $totalDuration = [TimeSpan]::Zero
+    }
+
+    # Generate report header
+    Write-Host ""
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "End-to-End Smart Merge Test Report" -ForegroundColor Cyan
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    # Summary section
+    Write-Host "Summary:" -ForegroundColor White
+    Write-Host "  Total Tests: $totalTests" -ForegroundColor Gray
+    Write-Host "  Passed: $passed ($([math]::Round(($passed / $totalTests) * 100, 1))%)" -ForegroundColor $(if ($passed -eq $totalTests) { 'Green' } else { 'Yellow' })
+    Write-Host "  Failed: $failed" -ForegroundColor $(if ($failed -gt 0) { 'Red' } else { 'Gray' })
+    Write-Host "  Skipped: $skipped" -ForegroundColor $(if ($skipped -gt 0) { 'Yellow' } else { 'Gray' })
+    Write-Host "  Timeout: $timeout" -ForegroundColor $(if ($timeout -gt 0) { 'Red' } else { 'Gray' })
+
+    if ($totalDuration.TotalSeconds -gt 0) {
+        Write-Host "  Total Duration: $($totalDuration.ToString('mm\:ss'))" -ForegroundColor Gray
+    }
+    Write-Host ""
+
+    # Dad joke preservation section
+    Write-Host "Dad Joke Preservation:" -ForegroundColor White
+    Write-Host "  Total Injected: $($totalJokes.ToString('N0'))" -ForegroundColor Gray
+    Write-Host "  Total Preserved: $($preservedJokes.ToString('N0')) ($([math]::Round($preservationRate, 1))%)" -ForegroundColor $(if ($preservationRate -eq 100) { 'Green' } else { 'Red' })
+    Write-Host "  Data Loss: $lostJokes jokes" -ForegroundColor $(if ($lostJokes -eq 0) { 'Green' } else { 'Red' })
+    Write-Host ""
+
+    # Performance section
+    if ($avgDuration.TotalSeconds -gt 0) {
+        Write-Host "Performance:" -ForegroundColor White
+        Write-Host "  Average Merge Time: $($avgDuration.ToString('ss\.f'))s" -ForegroundColor Gray
+
+        if ($fastestTest) {
+            Write-Host "  Fastest: $($fastestTest.SourceVersion) → $($fastestTest.TargetVersion) ($($fastestTest.Duration.ToString('ss\.f'))s)" -ForegroundColor Gray
+        }
+
+        if ($slowestTest) {
+            Write-Host "  Slowest: $($slowestTest.SourceVersion) → $($slowestTest.TargetVersion) ($($slowestTest.Duration.ToString('ss\.f'))s)" -ForegroundColor Gray
+        }
+        Write-Host ""
+    }
+
+    # Per-merge details
+    Write-Host "Per-Merge Details:" -ForegroundColor White
+
+    $index = 1
+    foreach ($result in $TestResults) {
+        $statusColor = switch ($result.Status) {
+            'Completed' { 'Green' }
+            'Failed' { 'Red' }
+            'Timeout' { 'Red' }
+            'Skipped' { 'Yellow' }
+            default { 'Gray' }
+        }
+
+        $durationStr = if ($result.Duration) { $result.Duration.ToString('ss\.f') + "s" } else { "N/A" }
+        $filesStr = if ($result.PSObject.Properties.Name -contains 'FilesProcessed') { $result.FilesProcessed } else { "N/A" }
+        $jokesStr = if ($result.PSObject.Properties.Name -contains 'JokesPreserved' -and
+                         $result.PSObject.Properties.Name -contains 'TotalJokes') {
+            "$($result.JokesPreserved)/$($result.TotalJokes)"
+        } else {
+            "N/A"
+        }
+
+        $statusText = $result.Status.ToUpper()
+        Write-Host "  [$($index.ToString('D2'))/$($totalTests.ToString('D2'))] " -NoNewline -ForegroundColor Gray
+        Write-Host "$($result.SourceVersion) → $($result.TargetVersion): " -NoNewline -ForegroundColor Gray
+        Write-Host "$statusText " -NoNewline -ForegroundColor $statusColor
+        Write-Host "($durationStr) - Files: $filesStr, Jokes: $jokesStr" -ForegroundColor Gray
+
+        # Show error message if failed
+        if ($result.Status -in @('Failed', 'Timeout') -and $result.ErrorMessage) {
+            Write-Host "      Error: $($result.ErrorMessage)" -ForegroundColor Red
+        }
+
+        $index++
+    }
+    Write-Host ""
+
+    # Final result
+    Write-Host "============================================================" -ForegroundColor Cyan
+
+    if ($passed -eq $totalTests -and $lostJokes -eq 0) {
+        Write-Host "Result: ALL TESTS PASSED ✓" -ForegroundColor Green
+    } elseif ($failed -gt 0 -or $timeout -gt 0) {
+        Write-Host "Result: TESTS FAILED ✗" -ForegroundColor Red
+    } else {
+        Write-Host "Result: TESTS COMPLETED WITH WARNINGS" -ForegroundColor Yellow
+    }
+
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host ""
 }
 
 function Get-MergePairStatistics {
@@ -1185,10 +1306,53 @@ function Get-MergePairStatistics {
         [PSCustomObject]$TestResult
     )
 
-    Write-Verbose "Extracting statistics from test result"
+    Write-Verbose "Extracting statistics from test result: $($TestResult.SourceVersion) → $($TestResult.TargetVersion)"
 
-    # TODO: Implementation pending (Phase 7: User Story 5)
-    throw "Not implemented yet"
+    # Extract duration (ensure it's a TimeSpan)
+    $duration = if ($TestResult.Duration -is [TimeSpan]) {
+        $TestResult.Duration
+    } elseif ($TestResult.Duration -is [double] -or $TestResult.Duration -is [int]) {
+        [TimeSpan]::FromSeconds($TestResult.Duration)
+    } else {
+        [TimeSpan]::Zero
+    }
+
+    # Extract files processed
+    $filesProcessed = if ($TestResult.PSObject.Properties.Name -contains 'FilesProcessed') {
+        $TestResult.FilesProcessed
+    } else {
+        0
+    }
+
+    # Extract jokes preserved
+    $jokesPreserved = if ($TestResult.PSObject.Properties.Name -contains 'JokesPreserved') {
+        $TestResult.JokesPreserved
+    } else {
+        0
+    }
+
+    # Extract total jokes
+    $totalJokes = if ($TestResult.PSObject.Properties.Name -contains 'TotalJokes') {
+        $TestResult.TotalJokes
+    } else {
+        0
+    }
+
+    # Extract validation status
+    $validationsPassed = if ($TestResult.PSObject.Properties.Name -contains 'ValidationResults') {
+        $TestResult.ValidationResults.Valid -eq $true
+    } else {
+        $false
+    }
+
+    return @{
+        Duration = $duration
+        FilesProcessed = $filesProcessed
+        JokesPreserved = $jokesPreserved
+        TotalJokes = $totalJokes
+        ValidationsPassed = $validationsPassed
+        Status = $TestResult.Status
+    }
 }
 
 # ============================================================

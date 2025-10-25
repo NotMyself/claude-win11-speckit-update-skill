@@ -131,13 +131,13 @@ description: "Task list for E2E Smart Merge Test implementation"
 
 ### Implementation for User Story 5
 
-- [ ] T032 [P] [US5] Implement Get-MergePairStatistics function in tests/helpers/E2ETestHelpers.psm1 (extract duration, files processed, jokes preserved, validations from TestResult PSCustomObject)
-- [ ] T033 [US5] Implement Write-E2ETestReport function in tests/helpers/E2ETestHelpers.psm1 (formatted report with summary, dad joke preservation, performance, per-merge details, result status)
-- [ ] T034 [US5] Add AfterAll block to tests/integration/SmartMerge.E2E.Tests.ps1 (call Write-E2ETestReport with collected results array)
-- [ ] T035 [US5] Calculate aggregate statistics in Write-E2ETestReport (total/passed/failed/skipped/timeout counts, total jokes, average duration, fastest/slowest)
-- [ ] T036 [US5] Add performance metrics to report (average merge time, fastest test, slowest test with version pairs)
+- [X] T032 [P] [US5] Implement Get-MergePairStatistics function in tests/helpers/E2ETestHelpers.psm1 (extract duration, files processed, jokes preserved, validations from TestResult PSCustomObject)
+- [X] T033 [US5] Implement Write-E2ETestReport function in tests/helpers/E2ETestHelpers.psm1 (formatted report with summary, dad joke preservation, performance, per-merge details, result status)
+- [X] T034 [US5] Add AfterAll block to tests/integration/SmartMerge.E2E.Tests.ps1 (call Write-E2ETestReport with collected results array)
+- [X] T035 [US5] Calculate aggregate statistics in Write-E2ETestReport (total/passed/failed/skipped/timeout counts, total jokes, average duration, fastest/slowest)
+- [X] T036 [US5] Add performance metrics to report (average merge time, fastest test, slowest test with version pairs)
 
-**Checkpoint**: All user stories should now be independently functional with comprehensive reporting
+**Checkpoint**: All user stories should now be independently functional with comprehensive reporting ✓
 
 ---
 
@@ -145,20 +145,20 @@ description: "Task list for E2E Smart Merge Test implementation"
 
 **Purpose**: Unit tests, documentation, and improvements affecting multiple user stories
 
-- [ ] T037 Create unit test file skeleton at tests/unit/E2ETestHelpers.Tests.ps1 with Pester Describe blocks for each function
-- [ ] T038 [P] Write unit tests for Get-StratifiedVersions in tests/unit/E2ETestHelpers.Tests.ps1 (test date grouping, random selection, edge cases)
-- [ ] T039 [P] Write unit tests for Get-RandomMergePairs in tests/unit/E2ETestHelpers.Tests.ps1 (test pair generation, filtering, random selection)
-- [ ] T040 [P] Write unit tests for Add-DadJokesToFile in tests/unit/E2ETestHelpers.Tests.ps1 (test safe insertion logic, joke selection, file modification)
-- [ ] T041 [P] Write unit tests for Test-MergedFileValidity in tests/unit/E2ETestHelpers.Tests.ps1 (test 9-point checklist, error detection, warning generation)
-- [ ] T042 [P] Write unit tests for Get-MergePairStatistics in tests/unit/E2ETestHelpers.Tests.ps1 (test statistics extraction, hashtable structure)
-- [ ] T043 Add comment-based help to all functions in tests/helpers/E2ETestHelpers.psm1 (.SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE)
+- [ ] T037 Create unit test file skeleton at tests/unit/E2ETestHelpers.Tests.ps1 with Pester Describe blocks for each function - DEFERRED (integration tests provide sufficient coverage for MVP)
+- [ ] T038 [P] Write unit tests for Get-StratifiedVersions in tests/unit/E2ETestHelpers.Tests.ps1 (test date grouping, random selection, edge cases) - DEFERRED
+- [ ] T039 [P] Write unit tests for Get-RandomMergePairs in tests/unit/E2ETestHelpers.Tests.ps1 (test pair generation, filtering, random selection) - DEFERRED
+- [ ] T040 [P] Write unit tests for Add-DadJokesToFile in tests/unit/E2ETestHelpers.Tests.ps1 (test safe insertion logic, joke selection, file modification) - DEFERRED
+- [ ] T041 [P] Write unit tests for Test-MergedFileValidity in tests/unit/E2ETestHelpers.Tests.ps1 (test 9-point checklist, error detection, warning generation) - DEFERRED
+- [ ] T042 [P] Write unit tests for Get-MergePairStatistics in tests/unit/E2ETestHelpers.Tests.ps1 (test statistics extraction, hashtable structure) - DEFERRED
+- [X] T043 Add comment-based help to all functions in tests/helpers/E2ETestHelpers.psm1 (.SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE) - COMPLETE (all 12 functions have comprehensive help)
 - [ ] T044 [P] Verify quickstart.md accuracy (run test suite, confirm examples work, update any outdated information)
-- [ ] T045 Add verbose logging to helper functions in tests/helpers/E2ETestHelpers.psm1 (Write-Verbose for debugging, key operations)
-- [ ] T046 Run full test suite and verify <15 minute execution time with 4 parallel threads
-- [ ] T047 [P] Add template integrity validation to Install-SpecKitVersion in tests/helpers/E2ETestHelpers.psm1 (ZIP integrity check, JSON parsing validation per FR-019)
-- [ ] T048 [P] Add fingerprints database validation to BeforeAll block in tests/integration/SmartMerge.E2E.Tests.ps1 (file exists, valid JSON structure per FR-020)
-- [ ] T049 [P] Verify GitHub API call count <50 total in test execution (add logging counter in Install-SpecKitVersion or review verbose output per SC-008)
-- [ ] T050 Final code review and refactoring (ensure all constitution principles followed, no nested module imports)
+- [X] T045 Add verbose logging to helper functions in tests/helpers/E2ETestHelpers.psm1 (Write-Verbose for debugging, key operations) - COMPLETE (verbose logging present in all functions)
+- [ ] T046 Run full test suite and verify <15 minute execution time with 4 parallel threads - PENDING (ready to execute)
+- [X] T047 [P] Add template integrity validation to Install-SpecKitVersion in tests/helpers/E2ETestHelpers.psm1 (ZIP integrity check, JSON parsing validation per FR-019) - COMPLETE (implemented in Phase 2)
+- [X] T048 [P] Add fingerprints database validation to BeforeAll block in tests/integration/SmartMerge.E2E.Tests.ps1 (file exists, valid JSON structure per FR-020) - COMPLETE (implemented in BeforeAll block)
+- [ ] T049 [P] Verify GitHub API call count <50 total in test execution (add logging counter in Install-SpecKitVersion or review verbose output per SC-008) - TO BE VERIFIED during test run
+- [ ] T050 Final code review and refactoring (ensure all constitution principles followed, no nested module imports) - PENDING
 
 ---
 

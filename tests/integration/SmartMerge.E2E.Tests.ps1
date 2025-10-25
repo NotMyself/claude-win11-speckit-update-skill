@@ -229,12 +229,13 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                         [PSCustomObject]@{
                             SourceVersion = $testPair.From
                             TargetVersion = $testPair.To
-                            Status = if ($jobResult.Errors.Count -eq 0) { 'Passed' } else { 'Failed' }
+                            Status = if ($jobResult.Errors.Count -eq 0) { 'Completed' } else { 'Failed' }
                             Duration = $duration
                             FilesProcessed = $jobResult.FilesProcessed
-                            JokesInjected = $jobResult.JokesInjected
+                            TotalJokes = $jobResult.JokesInjected
                             JokesPreserved = $jobResult.JokesPreserved
-                            Errors = $jobResult.Errors
+                            ErrorMessage = if ($jobResult.Errors.Count -gt 0) { $jobResult.Errors -join '; ' } else { $null }
+                            ValidationResults = @{ Valid = ($jobResult.Errors.Count -eq 0) }
                             TestDirectory = $jobResult.TestDirectory
                         }
 
@@ -256,9 +257,10 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                             Status = 'Timeout'
                             Duration = $duration
                             FilesProcessed = 0
-                            JokesInjected = 0
+                            TotalJokes = 0
                             JokesPreserved = 0
-                            Errors = @("Test exceeded $timeoutSeconds second timeout")
+                            ErrorMessage = "Test exceeded $timeoutSeconds second timeout"
+                            ValidationResults = @{ Valid = $false }
                             TestDirectory = $testDir
                         }
                     }
@@ -275,9 +277,10 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                         Status = 'Failed'
                         Duration = $duration
                         FilesProcessed = 0
-                        JokesInjected = 0
+                        TotalJokes = 0
                         JokesPreserved = 0
-                        Errors = @($_.Exception.Message)
+                        ErrorMessage = $_.Exception.Message
+                        ValidationResults = @{ Valid = $false }
                         TestDirectory = $testDir
                     }
                 }
@@ -303,7 +306,7 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
             Write-Host "E2E Test Suite Summary" -ForegroundColor Cyan
             Write-Host "========================================" -ForegroundColor Cyan
 
-            $passedTests = ($testResults | Where-Object { $_.Status -eq 'Passed' }).Count
+            $passedTests = ($testResults | Where-Object { $_.Status -eq 'Completed' }).Count
             $failedTests = ($testResults | Where-Object { $_.Status -eq 'Failed' }).Count
             $timeoutTests = ($testResults | Where-Object { $_.Status -eq 'Timeout' }).Count
 
@@ -311,7 +314,7 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
             $durationSeconds = $testResults | ForEach-Object { $_.Duration.TotalSeconds }
             $testDurations = $durationSeconds | Measure-Object -Sum -Average -Maximum -Minimum
 
-            $totalJokes = ($testResults | Measure-Object -Property JokesInjected -Sum).Sum
+            $totalJokes = ($testResults | Measure-Object -Property TotalJokes -Sum).Sum
             $preservedJokes = ($testResults | Measure-Object -Property JokesPreserved -Sum).Sum
 
             Write-Host "Total Tests:     $totalTests" -ForegroundColor White
@@ -341,14 +344,14 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
 
             foreach ($result in $indexedResults) {
                 $statusSymbol = switch ($result.Status) {
-                    'Passed' { '✓' }
+                    'Completed' { '✓' }
                     'Failed' { '✗' }
                     'Timeout' { '⏱' }
                     default { '?' }
                 }
 
                 $statusColor = switch ($result.Status) {
-                    'Passed' { 'Green' }
+                    'Completed' { 'Green' }
                     'Failed' { 'Red' }
                     'Timeout' { 'Yellow' }
                     default { 'Gray' }
@@ -356,7 +359,7 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
 
                 Write-Host "  [$($result.Index.ToString('D2'))/$totalTests] $statusSymbol $($result.SourceVersion) → $($result.TargetVersion): " -NoNewline
                 Write-Host "$($result.Status.ToUpper()) " -NoNewline -ForegroundColor $statusColor
-                Write-Host "($($result.Duration.TotalSeconds.ToString('F1'))s) - Jokes: $($result.JokesPreserved)/$($result.JokesInjected)"
+                Write-Host "($($result.Duration.TotalSeconds.ToString('F1'))s) - Jokes: $($result.JokesPreserved)/$($result.TotalJokes)"
             }
 
             Write-Host "========================================`n" -ForegroundColor Cyan
@@ -372,6 +375,12 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
 }
 
 AfterAll {
+    # Generate comprehensive test report (User Story 5)
+    if ($script:testResults -and $script:testResults.Count -gt 0) {
+        Write-Verbose "Generating comprehensive E2E test report..."
+        Write-E2ETestReport -TestResults $script:testResults
+    }
+
     # Final cleanup (catch any orphaned directories)
     if (Test-Path $testRoot) {
         $orphanedDirs = Get-ChildItem -Path $testRoot -Directory -Filter "test-*" -ErrorAction SilentlyContinue
