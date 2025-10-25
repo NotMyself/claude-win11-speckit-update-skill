@@ -206,10 +206,54 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                             }
                         }
 
+                        # Semantic validation (9-point checklist)
+                        $semanticValidationPassed = 0
+                        $semanticValidationFailed = 0
+
+                        foreach ($file in $commandFiles) {
+                            try {
+                                $validationResult = Test-MergedFileValidity -FilePath $file.FullName
+                                if ($validationResult.IsValid) {
+                                    $semanticValidationPassed++
+                                } else {
+                                    $semanticValidationFailed++
+                                    $validationErrors += "Semantic validation failed for $($file.Name): $($validationResult.Failures -join '; ')"
+                                }
+                            }
+                            catch {
+                                $semanticValidationFailed++
+                                $validationErrors += "Semantic validation error for $($file.Name): $($_.Exception.Message)"
+                            }
+                        }
+
+                        # Command execution validation
+                        $commandValidationPassed = 0
+                        $commandValidationFailed = 0
+
+                        foreach ($file in $commandFiles) {
+                            try {
+                                $commandResult = Test-MergedCommandExecution -FilePath $file.FullName
+                                if ($commandResult.IsValid) {
+                                    $commandValidationPassed++
+                                } else {
+                                    $commandValidationFailed++
+                                    $validationErrors += "Command validation failed for $($file.Name): $($commandResult.Failures -join '; ')"
+                                }
+                            }
+                            catch {
+                                $commandValidationFailed++
+                                $validationErrors += "Command validation error for $($file.Name): $($_.Exception.Message)"
+                            }
+                        }
+
                         return @{
                             FilesProcessed = $commandFiles.Count
                             JokesInjected = $totalJokesInjected
                             JokesPreserved = $jokesPreserved
+                            SemanticValidationPassed = $semanticValidationPassed
+                            SemanticValidationFailed = $semanticValidationFailed
+                            CommandValidationPassed = $commandValidationPassed
+                            CommandValidationFailed = $commandValidationFailed
                             Errors = $validationErrors
                             TestDirectory = $testDir
                         }
@@ -234,8 +278,18 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
                             FilesProcessed = $jobResult.FilesProcessed
                             TotalJokes = $jobResult.JokesInjected
                             JokesPreserved = $jobResult.JokesPreserved
+                            SemanticValidationPassed = $jobResult.SemanticValidationPassed
+                            SemanticValidationFailed = $jobResult.SemanticValidationFailed
+                            CommandValidationPassed = $jobResult.CommandValidationPassed
+                            CommandValidationFailed = $jobResult.CommandValidationFailed
                             ErrorMessage = if ($jobResult.Errors.Count -gt 0) { $jobResult.Errors -join '; ' } else { $null }
-                            ValidationResults = @{ Valid = ($jobResult.Errors.Count -eq 0) }
+                            ValidationResults = @{
+                                Valid = ($jobResult.Errors.Count -eq 0)
+                                SemanticPassed = $jobResult.SemanticValidationPassed
+                                SemanticFailed = $jobResult.SemanticValidationFailed
+                                CommandPassed = $jobResult.CommandValidationPassed
+                                CommandFailed = $jobResult.CommandValidationFailed
+                            }
                             TestDirectory = $jobResult.TestDirectory
                         }
 

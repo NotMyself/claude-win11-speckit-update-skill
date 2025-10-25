@@ -14,6 +14,7 @@ The End-to-End Smart Merge Test suite validates the smart merge system across mu
 
 - ✅ Parallel execution (4 threads) completes in <15 minutes
 - ✅ 100% data preservation validation (zero tolerance for loss)
+- ✅ Advanced semantic validation (9-point checklist) and command execution validation
 - ✅ Deterministic test selection (reproducible with seed 42)
 - ✅ Comprehensive reporting (per-merge and aggregate statistics)
 
@@ -137,6 +138,12 @@ Dad Joke Preservation:
   Total Preserved: 1,234 (100.0%)
   Data Loss: 0 jokes
 
+Advanced Validation:
+  Semantic (9-point checklist):
+    Passed: 216 / 216 (100.0%)
+  Command Execution:
+    Passed: 216 / 216 (100.0%)
+
 Performance:
   Average Merge Time: 42.3s
   Fastest: v0.0.78 → v0.0.79 (28.1s)
@@ -158,8 +165,8 @@ Result: ALL TESTS PASSED ✓
 | Section | Meaning |
 |---------|---------|
 | **Total Tests** | Number of merge pairs tested (15-20) |
-| **Passed** | Tests with 100% dad joke preservation and valid merged files |
-| **Failed** | Tests with data loss, validation errors, or exceptions |
+| **Passed** | Tests with 100% dad joke preservation, semantic validation, and valid merged files |
+| **Failed** | Tests with data loss, semantic validation failures, or exceptions |
 | **Skipped** | Tests bypassed due to prerequisites (corrupted templates, disk space) |
 | **Timeout** | Tests exceeding 5-minute limit |
 | **Dad Joke Preservation** | Critical metric - must be 100% for test pass |

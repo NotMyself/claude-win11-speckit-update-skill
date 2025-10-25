@@ -1215,6 +1215,38 @@ function Write-E2ETestReport {
     Write-Host "  Data Loss: $lostJokes jokes" -ForegroundColor $(if ($lostJokes -eq 0) { 'Green' } else { 'Red' })
     Write-Host ""
 
+    # Semantic validation section (if results available)
+    $semanticPassed = ($TestResults | Measure-Object -Property SemanticValidationPassed -Sum).Sum
+    $semanticFailed = ($TestResults | Measure-Object -Property SemanticValidationFailed -Sum).Sum
+    $commandPassed = ($TestResults | Measure-Object -Property CommandValidationPassed -Sum).Sum
+    $commandFailed = ($TestResults | Measure-Object -Property CommandValidationFailed -Sum).Sum
+
+    if ($semanticPassed -gt 0 -or $semanticFailed -gt 0 -or $commandPassed -gt 0 -or $commandFailed -gt 0) {
+        Write-Host "Advanced Validation:" -ForegroundColor White
+
+        if ($semanticPassed -gt 0 -or $semanticFailed -gt 0) {
+            $semanticTotal = $semanticPassed + $semanticFailed
+            $semanticRate = if ($semanticTotal -gt 0) { ($semanticPassed / $semanticTotal) * 100 } else { 0 }
+            Write-Host "  Semantic (9-point checklist):" -ForegroundColor Gray
+            Write-Host "    Passed: $semanticPassed / $semanticTotal ($([math]::Round($semanticRate, 1))%)" -ForegroundColor $(if ($semanticRate -eq 100) { 'Green' } else { 'Yellow' })
+            if ($semanticFailed -gt 0) {
+                Write-Host "    Failed: $semanticFailed" -ForegroundColor Red
+            }
+        }
+
+        if ($commandPassed -gt 0 -or $commandFailed -gt 0) {
+            $commandTotal = $commandPassed + $commandFailed
+            $commandRate = if ($commandTotal -gt 0) { ($commandPassed / $commandTotal) * 100 } else { 0 }
+            Write-Host "  Command Execution:" -ForegroundColor Gray
+            Write-Host "    Passed: $commandPassed / $commandTotal ($([math]::Round($commandRate, 1))%)" -ForegroundColor $(if ($commandRate -eq 100) { 'Green' } else { 'Yellow' })
+            if ($commandFailed -gt 0) {
+                Write-Host "    Failed: $commandFailed" -ForegroundColor Red
+            }
+        }
+
+        Write-Host ""
+    }
+
     # Performance section
     if ($avgDuration.TotalSeconds -gt 0) {
         Write-Host "Performance:" -ForegroundColor White
