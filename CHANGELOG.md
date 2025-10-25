@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-10-25
+
+### Added
+- **End-to-End Smart Merge Test Suite (#27)**: Production-ready test infrastructure with parallel execution and comprehensive validation
+  - **Problem**: No automated testing for smart merge system across multiple SpecKit versions
+    - Manual testing time-consuming and error-prone
+    - No validation of data preservation during merges
+    - No performance baseline for merge operations
+    - Risk of regressions when modifying merge logic
+  - **Solution**: Comprehensive E2E test suite with parallel execution (Phases 1-8, 100% complete)
+  - **Core Features**:
+    - **Parallel Execution**: 4 concurrent threads, <15 minute completion (vs. 45-60 minutes sequential)
+    - **Version Stratification**: Date-based selection across old/middle/recent timeframes (10 versions)
+    - **Deterministic Testing**: Seed 42 for reproducible version/pair selection (18 merge pairs)
+    - **Triple-Layer Validation**:
+      1. Dad joke preservation (zero-tolerance data loss detection)
+      2. Semantic validation (9-point checklist: integrity, syntax, markers, encoding)
+      3. Command execution validation (structure and executability)
+    - **Comprehensive Reporting**: Performance metrics, preservation stats, validation pass rates, color-coded output
+  - **Implementation Phases**:
+    - **Phase 1**: Setup infrastructure (E2ETestHelpers.psm1 1,200+ lines, SmartMerge.E2E.Tests.ps1 370+ lines)
+    - **Phase 2**: Foundation (version stratification, merge pair generation, isolated test projects, GitHub API integration)
+    - **Phase 3**: MVP (dad joke injection, zero-tolerance validation)
+    - **Phase 4**: Multi-version testing (10 versions, 18 merge pairs, result tracking)
+    - **Phase 5**: Parallel execution (4 threads, mutex coordination, timeout handling, thread-safe collection)
+    - **Phase 6**: Semantic validation (9-point checklist, command execution validation, integration into parallel tests)
+    - **Phase 7**: Comprehensive reporting (statistics extraction, color-coded output, aggregate metrics)
+    - **Phase 8**: Polish & documentation (unit tests, verbose logging, integrity validation, quickstart guide)
+  - **GitHub API Integration**:
+    - Mutex coordination prevents rate limiting in parallel execution
+    - 500ms delay between requests
+    - 18 API calls per run (well under 50 call budget)
+    - Optional GitHub PAT support for higher limits
+  - **Files Added**:
+    - `tests/helpers/E2ETestHelpers.psm1` - 1,200+ lines with 12 exported functions
+    - `tests/integration/SmartMerge.E2E.Tests.ps1` - 450+ lines E2E orchestration
+    - `tests/unit/E2ETestHelpers.Tests.ps1` - 550+ lines, 31+ unit tests
+    - `specs/013-e2e-smart-merge-test/` - Complete specification (spec, plan, tasks, quickstart, contracts, checklists)
+    - `docs/PRDs/005-End-to-End-Smart-Merge-Test.md` - Feature PRD
+  - **Test Workflow**:
+    1. Version stratification (select 10 versions from fingerprints database)
+    2. Merge pair generation (18 random upgrade paths)
+    3. Parallel execution (4 threads with disk/timeout validation)
+    4. Content injection (5-10 dad jokes per file)
+    5. Merge validation (100% joke preservation required)
+    6. Semantic validation (9-point checklist per file)
+    7. Command validation (structure and executability)
+    8. Comprehensive report (metrics + validation + final assessment)
+  - **Benefits**:
+    - ✅ Automated regression testing for smart merge system
+    - ✅ Data preservation guarantee (zero-tolerance validation)
+    - ✅ Performance baseline (track merge execution times)
+    - ✅ Confidence for merge logic changes
+    - ✅ Production-ready quality (100% spec completion)
+  - **Prerequisites**: PowerShell 7.0+, Pester 5.x, 500MB disk space, internet connection
+  - **Test Coverage**: 31+ unit tests for E2E helpers, comprehensive integration testing across 18 version pairs
+
+### Fixed
+- **Version Comparison Bug (#12)**: Fixed `$matches` variable reuse in version parsing (Show-UpdateReport.ps1)
+  - Symptom: Incorrect version comparison when parsing current and target versions
+  - Root cause: PowerShell `$matches` variable overwritten between regex operations
+  - Solution: Split into separate parsing blocks with explicit variable assignments
+- **Manifest Corruption (#12)**: Added duplicate detection in Add-TrackedFile function (ManifestManager.psm1)
+  - Symptom: Repeated calls to Add-TrackedFile created duplicate entries in manifest
+  - Root cause: No existence check before appending to tracked_files array
+  - Solution: Check for existing entry before adding, log warning if duplicate found
+- **Incomplete Cleanup (#12)**: Fixed check-only mode leaving .specify/ directory behind (update-orchestrator.ps1)
+  - Symptom: Dry-run mode left orphaned .specify/ directory structure
+  - Root cause: Only manifest.json removed, not entire directory tree
+  - Solution: Remove entire .specify/ directory in check-only cleanup
+
+### Changed
+- **GitHub Workflows**: Added Claude Code automation and PR validation workflows (#28, #30)
+  - Claude Code workflow for automated AI-assisted development
+  - PR validation with size/description checks
+  - Repository owner bypass for size limits
+- **Dead Code Removal (#12)**: Removed ~350 lines of unused VSCode merge editor code
+  - Deleted `scripts/helpers/Invoke-ThreeWayMerge.ps1` (~200 LOC)
+  - Removed `Open-DiffView` and `Open-MergeEditor` from VSCodeIntegration.psm1 (~150 LOC)
+  - Updated module exports and orchestrator imports
+- **Code Standards**: Added PSScriptAnalyzer configuration (PSScriptAnalyzerSettings.psd1)
+
 ## [0.6.0] - 2025-10-23
 
 ### Added
