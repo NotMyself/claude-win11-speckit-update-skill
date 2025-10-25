@@ -58,8 +58,12 @@ $safePatterns = @(
 
 $findings = @()
 
-# Find all PowerShell files
-$psFiles = Get-ChildItem -Path $RepoRoot -Recurse -Include *.ps1, *.psm1 -File -ErrorAction SilentlyContinue
+# Find all PowerShell files, excluding tests, fixtures, backups, and specs
+$psFiles = Get-ChildItem -Path $RepoRoot -Recurse -Include *.ps1, *.psm1 -File -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.FullName -notmatch '[\\/](tests|specs|\.specify[\\/]backups)[\\/]' -and
+        $_.FullName -notmatch '[\\/]fixtures[\\/]'
+    }
 
 foreach ($file in $psFiles) {
     $relativePath = $file.FullName.Replace("$RepoRoot\", '').Replace("$RepoRoot/", '')

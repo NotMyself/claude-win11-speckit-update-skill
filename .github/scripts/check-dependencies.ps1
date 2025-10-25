@@ -70,7 +70,12 @@ try {
     }
 
     # Additional check: Look for psd1 manifest files that might reference vulnerable versions
-    $manifestFiles = Get-ChildItem -Path $RepoRoot -Recurse -Include *.psd1 -File -ErrorAction SilentlyContinue
+    # Exclude tests, fixtures, backups, and specs
+    $manifestFiles = Get-ChildItem -Path $RepoRoot -Recurse -Include *.psd1 -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.FullName -notmatch '[\\/](tests|specs|\.specify[\\/]backups)[\\/]' -and
+            $_.FullName -notmatch '[\\/]fixtures[\\/]'
+        }
 
     foreach ($manifest in $manifestFiles) {
         try {

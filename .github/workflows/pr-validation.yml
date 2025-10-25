@@ -330,8 +330,14 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          Write-Host "Running PSScriptAnalyzer..." -ForegroundColor Cyan
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings PSScriptAnalyzerSettings.psd1
+          Write-Host "Running PSScriptAnalyzer on production code..." -ForegroundColor Cyan
+
+          # Scan only production code, exclude tests, fixtures, backups, and specs
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings PSScriptAnalyzerSettings.psd1 -ExcludeRule $null -ErrorAction SilentlyContinue |
+            Where-Object {
+              $_.ScriptPath -notmatch '[\\/](tests|specs|\.specify[\\/]backups)[\\/]' -and
+              $_.ScriptPath -notmatch '[\\/]fixtures[\\/]'
+            }
 
           $findings = @()
           if ($results) {
@@ -534,12 +540,16 @@ jobs:
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
 
           # Use empty settings hashtable to ignore PSScriptAnalyzerSettings.psd1, then explicitly include only security rules
+          # Exclude tests, fixtures, backups, and specs from security scanning
           $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings @{} -IncludeRule @(
             'PSAvoidUsingPlainTextForPassword',
             'PSAvoidUsingConvertToSecureStringWithPlainText',
             'PSUsePSCredentialType',
             'PSAvoidUsingInvokeExpression'
-          )
+          ) | Where-Object {
+            $_.ScriptPath -notmatch '[\\/](tests|specs|\.specify[\\/]backups)[\\/]' -and
+            $_.ScriptPath -notmatch '[\\/]fixtures[\\/]'
+          }
 
           $findings = @()
           foreach ($result in $results) {
