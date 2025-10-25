@@ -198,8 +198,8 @@ jobs:
 
               if ($errors) {
                   Write-Host "❌ Found $($errors.Count) error(s)" -ForegroundColor Red
-                  foreach ($error in $errors) {
-                      Write-Host "  $($error.ScriptName):$($error.Line) - $($error.RuleName)" -ForegroundColor Red
+                  foreach ($err in $errors) {
+                      Write-Host "  $($err.ScriptName):$($err.Line) - $($err.RuleName)" -ForegroundColor Red
                   }
                   exit 1
               }
