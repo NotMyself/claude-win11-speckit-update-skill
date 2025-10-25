@@ -411,7 +411,7 @@ function Update-ManifestVersion {
     Add-TrackedFile -ProjectRoot $PWD -FilePath ".claude/commands/new.md" -Hash "sha256:ABC..." -IsOfficial $true
 
 .NOTES
-    Does not check for duplicates - caller should verify file is not already tracked.
+    Checks for duplicates before adding. If file path already exists, logs warning and returns without adding.
 #>
 function Add-TrackedFile {
     [CmdletBinding()]
@@ -439,6 +439,13 @@ function Add-TrackedFile {
         }
 
         Write-Verbose "Adding tracked file: $FilePath"
+
+        # Check for duplicate before adding
+        $existingEntry = $manifest.tracked_files | Where-Object { $_.path -eq $FilePath }
+        if ($existingEntry) {
+            Write-Warning "File already tracked in manifest: $FilePath (skipping duplicate)"
+            return
+        }
 
         # Create new tracked file entry
         $newEntry = @{

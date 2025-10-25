@@ -162,7 +162,6 @@ try {
     . (Join-Path $helpersPath "Show-UpdateReport.ps1")
     . (Join-Path $helpersPath "Get-UpdateConfirmation.ps1")
     . (Join-Path $helpersPath "Invoke-ConflictResolutionWorkflow.ps1")
-    . (Join-Path $helpersPath "Invoke-ThreeWayMerge.ps1")
     . (Join-Path $helpersPath "Invoke-RollbackWorkflow.ps1")
 
     Write-Verbose "Helpers loaded successfully"
@@ -424,12 +423,12 @@ try {
 
         Show-UpdateReport -FileStates $fileStates -CurrentVersion $manifest.speckit_version -TargetVersion $targetRelease.tag_name -CustomFiles $customFiles
 
-        # Clean up temporary manifest if we created one (don't leave repo in dirty state)
+        # Clean up temporary files and directories if we created them (don't leave repo in dirty state)
         if ($needsManifestCreation) {
-            $manifestPath = Join-Path $projectRoot ".specify/manifest.json"
-            if (Test-Path $manifestPath) {
-                Write-Verbose "Removing temporary manifest created for check-only mode"
-                Remove-Item $manifestPath -Force
+            $specifyDir = Join-Path $projectRoot ".specify"
+            if (Test-Path $specifyDir) {
+                Write-Verbose "Removing temporary .specify directory created for check-only mode"
+                Remove-Item $specifyDir -Recurse -Force -ErrorAction SilentlyContinue
             }
         }
 
