@@ -10,7 +10,7 @@ jobs:
   # STEP 1: Authorization Check
   # ============================================================================
   authorization:
-    name: "1️⃣ Verify PR Author is Authorized"
+    name: "1️⃣ Verify Authorization"
     runs-on: ubuntu-latest
     outputs:
       authorized: ${{ steps.check.outputs.authorized }}
@@ -107,7 +107,7 @@ jobs:
   # STEP 2: PR Guardrails
   # ============================================================================
   guardrails:
-    name: "2️⃣ Validate PR Size and Description"
+    name: "2️⃣ Validate Size and Description"
     needs: authorization
     runs-on: ubuntu-latest
     steps:
@@ -174,7 +174,7 @@ jobs:
   # STEP 3: Quality Checks
   # ============================================================================
   quality-checks:
-    name: "3️⃣ Run Linting and Unit Tests"
+    name: "3️⃣ Linting and Unit Tests"
     needs: guardrails
     runs-on: windows-latest
     steps:
@@ -236,7 +236,7 @@ jobs:
   # STEP 4: Code Review
   # ============================================================================
   code-review:
-    name: "4️⃣ Automated Claude Code Review"
+    name: "4️⃣ Claude Code Review"
     needs: quality-checks
     runs-on: ubuntu-latest
     continue-on-error: true  # Optional - requires CLAUDE_CODE_OAUTH_TOKEN secret
@@ -306,7 +306,7 @@ jobs:
   # FINAL SUMMARY
   # ============================================================================
   validation-complete:
-    name: "✅ All PR Validation Steps Complete"
+    name: "✅ PR Validated"
     needs: [authorization, guardrails, quality-checks, code-review, security-review, spec-review]
     if: always()
     runs-on: ubuntu-latest
