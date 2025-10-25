@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **PR Validation Workflow Enhancement (#14)**: Comprehensive automated PR validation with intelligent comment-based feedback
+  - **Security Scanning (Step 5)**:
+    - GitLeaks secret detection (API keys, tokens, passwords)
+    - PSScriptAnalyzer security rules (Invoke-Expression, plain-text passwords)
+    - Dependency vulnerability scanning (checks PowerShell modules against known CVEs)
+    - Path traversal detection (unsafe string concatenation, missing Join-Path)
+  - **SpecKit Compliance Validation (Step 6)**:
+    - Spec directory structure validation (spec.md, plan.md, tasks.md)
+    - Required section checking (User Scenarios, Requirements, Success Criteria)
+    - CHANGELOG [Unreleased] detection
+    - Constitution compliance (Export-ModuleMember, no nested Import-Module)
+  - **PR Guardrails Enhancement (Step 2)**:
+    - PR size validation (2000 line limit with owner bypass)
+    - Description quality check (minimum 20 characters)
+  - **Quality Checks Enhancement (Step 3)**:
+    - Linting results aggregation
+    - Test status reporting
+  - **Intelligent PR Comments**:
+    - Update-in-place behavior (no duplicate comments)
+    - HTML markers for reliable comment identification
+    - Structured findings with file:line references
+    - Remediation guidance for each issue
+    - Separate comments for each validation step (Steps 2-6)
+  - **Performance Optimizations**:
+    - Concurrency control (cancels in-progress runs on new commits)
+    - PSScriptAnalyzer module caching
+    - Timeout limits per step (prevents runaway jobs)
+  - **Non-blocking Design**: All validations are informational, allowing PRs to merge despite warnings
+  - **Test Coverage**: Unit tests for all validation scripts (FormatPRComment, CheckPathSecurity, CheckDependencies, CheckSpecCompliance)
+  - **Documentation**: Complete workflow documentation in `docs/workflows/pr-validation.md`
+
 ## [0.7.0] - 2025-10-25
 
 ### Added
