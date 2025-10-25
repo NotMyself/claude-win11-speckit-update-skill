@@ -244,6 +244,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      id-token: write  # Required for Claude Code OIDC authentication
+      actions: read    # Required for Claude to read CI results
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
