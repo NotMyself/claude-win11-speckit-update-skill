@@ -249,7 +249,6 @@ jobs:
 
       - name: Run Claude Code Review
         continue-on-error: true
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -261,10 +260,6 @@ jobs:
             - PowerShell conventions
             - Potential bugs or issues
             - Documentation completeness
-
-      - name: Code review skipped
-        if: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' }}
-        run: echo "⚠️  Claude Code Review skipped (CLAUDE_CODE_OAUTH_TOKEN not configured)"
 
   # ============================================================================
   # STEP 5: Security Review
