@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2025-10-25
+
 ### Added
-- **PR Validation Workflow Enhancement (#14)**: Comprehensive automated PR validation with intelligent comment-based feedback
+- **PR Validation Workflow Enhancement (#32)**: Comprehensive automated PR validation with intelligent comment-based feedback
   - **Security Scanning (Step 5)**:
     - GitLeaks secret detection (API keys, tokens, passwords)
     - PSScriptAnalyzer security rules (Invoke-Expression, plain-text passwords)
