@@ -1,5 +1,5 @@
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot "../../.github/scripts/check-dependencies.ps1"
+    $scriptPath = Join-Path $PSScriptRoot "../../../../.github/scripts/check-dependencies.ps1"
 }
 
 Describe "check-dependencies" {

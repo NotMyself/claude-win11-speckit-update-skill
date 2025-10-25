@@ -1,5 +1,5 @@
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot "../../.github/scripts/check-path-security.ps1"
+    $scriptPath = Join-Path $PSScriptRoot "../../../../.github/scripts/check-path-security.ps1"
 }
 
 Describe "check-path-security" {
