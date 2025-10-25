@@ -24,9 +24,12 @@
 .PARAMETER MaxFindings
     Maximum number of findings to display before truncating (default: 100)
 
+.PARAMETER RunUrl
+    GitHub Actions run URL for linking to full logs (optional)
+
 .EXAMPLE
     $json = Get-Content result.json -Raw
-    .\format-pr-comment.ps1 -InputJson $json -StepNumber 5 -StepName "Security Scan" -Emoji "LOCK"
+    .\format-pr-comment.ps1 -InputJson $json -StepNumber 5 -StepName "Security Scan" -Emoji "LOCK" -RunUrl "https://github.com/..."
 
 .OUTPUTS
     Markdown-formatted PR comment body with HTML marker
@@ -47,7 +50,10 @@ param(
     [string]$Emoji,
 
     [Parameter()]
-    [int]$MaxFindings = 100
+    [int]$MaxFindings = 100,
+
+    [Parameter()]
+    [string]$RunUrl = $null
 )
 
 $ErrorActionPreference = 'Stop'
@@ -104,7 +110,12 @@ if ($totalFindings -gt 0) {
     if ($isTruncated) {
         $comment += "`n"
         $comment += "> [WARN] **Output Truncated**: Showing first $MaxFindings of $totalFindings findings. "
-        $comment += "View full output in workflow logs: [View Full Log](\$\{GITHUB_SERVER_URL}/\$\{GITHUB_REPOSITORY}/actions/runs/\$\{GITHUB_RUN_ID})`n"
+        if ($RunUrl) {
+            $comment += "View full output in workflow logs: [View Full Log]($RunUrl)`n"
+        }
+        else {
+            $comment += "View full output in workflow logs.`n"
+        }
     }
 
     $comment += "`n"

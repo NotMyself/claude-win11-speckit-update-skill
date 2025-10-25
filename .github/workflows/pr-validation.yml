@@ -252,7 +252,8 @@ jobs:
         shell: pwsh
         run: |
           $json = Get-Content guardrails-result.json -Raw
-          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 2 -StepName "PR Guardrails" -Emoji "RULER"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 2 -StepName "PR Guardrails" -Emoji "RULER" -RunUrl $runUrl
           $comment | Out-File -FilePath guardrails-comment.md
           $comment | Out-File -FilePath $env:GITHUB_STEP_SUMMARY
 
@@ -435,7 +436,8 @@ jobs:
         shell: pwsh
         run: |
           $json = Get-Content quality-result.json -Raw
-          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 3 -StepName "Quality Checks" -Emoji "CHECK"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 3 -StepName "Quality Checks" -Emoji "CHECK" -RunUrl $runUrl
           $comment | Out-File -FilePath quality-comment.md
           $comment | Out-File -FilePath $env:GITHUB_STEP_SUMMARY
 
@@ -675,7 +677,8 @@ jobs:
           }
 
           $json = Get-Content security-combined-result.json -Raw
-          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 5 -StepName "Security Scan" -Emoji "LOCK"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 5 -StepName "Security Scan" -Emoji "LOCK" -RunUrl $runUrl
           $comment | Out-File -FilePath security-comment.md
 
           # Save for GitHub Actions
@@ -783,7 +786,8 @@ jobs:
           }
 
           $json = Get-Content spec-compliance-result.json -Raw
-          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 6 -StepName "SpecKit Compliance" -Emoji "CHECKLIST"
+          $runUrl = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          $comment = & .github/scripts/format-pr-comment.ps1 -InputJson $json -StepNumber 6 -StepName "SpecKit Compliance" -Emoji "CHECKLIST" -RunUrl $runUrl
           $comment | Out-File -FilePath spec-comment.md
 
           # Save for GitHub Actions
