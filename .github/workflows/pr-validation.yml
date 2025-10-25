@@ -538,7 +538,7 @@ jobs:
             'PSAvoidUsingConvertToSecureStringWithPlainText',
             'PSUsePSCredentialType',
             'PSAvoidUsingInvokeExpression'
-          ) -Severity Error,Warning
+          )
 
           $findings = @()
           foreach ($result in $results) {
