@@ -70,12 +70,12 @@ catch {
 # Generate HTML marker
 $marker = "<!-- pr-validation:step-$StepNumber -->"
 
-# Map status to emoji indicators (using text for compatibility)
+# Map status to emoji indicators
 $statusEmoji = switch ($validationResult.status) {
-    'pass' { '[PASS]' }
-    'warning' { '[WARN]' }
-    'failed' { '[FAIL]' }
-    default { '[INFO]' }
+    'pass' { '✅' }
+    'warning' { '⚠️' }
+    'failed' { '❌' }
+    default { 'ℹ️' }
 }
 
 # Build comment header
@@ -109,7 +109,7 @@ if ($totalFindings -gt 0) {
     # Truncation notice
     if ($isTruncated) {
         $comment += "`n"
-        $comment += "> [WARN] **Output Truncated**: Showing first $MaxFindings of $totalFindings findings. "
+        $comment += "> ⚠️ **Output Truncated**: Showing first $MaxFindings of $totalFindings findings. "
         if ($RunUrl) {
             $comment += "View full output in workflow logs: [View Full Log]($RunUrl)`n"
         }
@@ -154,9 +154,9 @@ if ($totalFindings -gt 0) {
             }
             # Severity indicator
             $severityIcon = switch ($finding.severity) {
-                'error' { '[ERROR]' }
-                'warning' { '[WARN]' }
-                'info' { '[INFO]' }
+                'error' { '🔴' }
+                'warning' { '🟡' }
+                'info' { '🔵' }
                 default { '-' }
             }
 
