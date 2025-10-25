@@ -66,10 +66,10 @@ $marker = "<!-- pr-validation:step-$StepNumber -->"
 
 # Map status to emoji indicators (using text for compatibility)
 $statusEmoji = switch ($validationResult.status) {
-    'pass'    { '[PASS]' }
+    'pass' { '[PASS]' }
     'warning' { '[WARN]' }
-    'failed'  { '[FAIL]' }
-    default   { '[INFO]' }
+    'failed' { '[FAIL]' }
+    default { '[INFO]' }
 }
 
 # Build comment header
@@ -143,10 +143,10 @@ if ($totalFindings -gt 0) {
             }
             # Severity indicator
             $severityIcon = switch ($finding.severity) {
-                'error'   { '[ERROR]' }
+                'error' { '[ERROR]' }
                 'warning' { '[WARN]' }
-                'info'    { '[INFO]' }
-                default   { '-' }
+                'info' { '[INFO]' }
+                default { '-' }
             }
 
             # Build finding entry
@@ -186,6 +186,7 @@ if ($totalFindings -gt 0) {
 }
 
 # Add footer
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '', Justification = 'Variable is used in string interpolation on line 197')]
 $timestamp = if ($validationResult.timestamp) {
     $validationResult.timestamp
 }
