@@ -148,13 +148,43 @@ Describe "End-to-End Smart Merge Test" -Tag 'Integration', 'E2E', 'SmartMerge' {
 
                         # Inject dad jokes into all command files
                         $jokeResults = @{}
-                        $commandFiles = Get-ChildItem -Path (Join-Path $testDir ".claude\commands") -Filter "*.md" -ErrorAction SilentlyContinue
+                        $commandPath = Join-Path $testDir ".claude\commands"
+
+                        if (-not (Test-Path $commandPath)) {
+                            throw "Commands directory not found: $commandPath"
+                        }
+
+                        $commandFiles = Get-ChildItem -Path $commandPath -Filter "*.md" -ErrorAction Stop
 
                         $totalJokesInjected = 0
                         foreach ($file in $commandFiles) {
                             $result = Add-DadJokesToFile -FilePath $file.FullName -JokeDatabase $dadJokes
                             $jokeResults[$file.FullName] = $result
                             $totalJokesInjected += $result.Count
+                        }
+
+                        Write-Verbose "Injected $totalJokesInjected jokes across $($commandFiles.Count) files"
+
+                        # Execute merge to target version using update-orchestrator.ps1
+                        Write-Verbose "  Executing merge: $($testPair.From) → $($testPair.To)..."
+                        $orchestratorPath = Join-Path $repoRoot "scripts\update-orchestrator.ps1"
+
+                        # Change to test directory to run orchestrator
+                        Push-Location $testDir
+
+                        try {
+                            # Run orchestrator with -Proceed flag (non-interactive mode)
+                            $mergeResult = & $orchestratorPath -Version $testPair.To -Proceed -ErrorAction SilentlyContinue 2>&1
+
+                            # Check if merge succeeded (exit code should be 0)
+                            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) {
+                                throw "Merge failed with exit code $LASTEXITCODE"
+                            }
+
+                            Write-Verbose "  Merge completed successfully"
+                        }
+                        finally {
+                            Pop-Location
                         }
 
                         # Validate all jokes are present
