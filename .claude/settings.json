@@ -10,7 +10,10 @@
       "Bash(docker *)",         // Docker (for containerized testing environments)
       "Bash(npm *)",            // npm (if SpecKit or tools need Node dependencies)
       "Bash(wget *)",           // Download files (GitHub releases, templates)
-      "Bash(curl *)"            // HTTP requests (API testing, downloads)
+      "Bash(curl *)",           // HTTP requests (API testing, downloads)
+      "WebFetch(github.com/*)", // GitHub (repositories, issues, PRs, releases)
+      "WebFetch(api.github.com/*)", // GitHub API
+      "WebFetch(raw.githubusercontent.com/*)" // GitHub raw content
     ],
     "deny": [],
     "ask": [
