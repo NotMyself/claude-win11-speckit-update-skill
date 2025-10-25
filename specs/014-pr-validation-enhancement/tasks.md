@@ -26,11 +26,11 @@
 
 **Purpose**: Project initialization and directory structure
 
-- [ ] T001 Create `.github/scripts/` directory for validation scripts
-- [ ] T002 Create `tests/fixtures/vulnerable-code-samples/` directory for security test data
-- [ ] T003 [P] Create `tests/fixtures/spec-structures/` directory for spec validation test data
-- [ ] T004 [P] Create `tests/fixtures/pr-comment-examples/` directory for expected comment outputs
-- [ ] T005 [P] Create `docs/workflows/` directory for workflow documentation
+- [X] T001 Create `.github/scripts/` directory for validation scripts
+- [X] T002 Create `tests/fixtures/vulnerable-code-samples/` directory for security test data
+- [X] T003 [P] Create `tests/fixtures/spec-structures/` directory for spec validation test data
+- [X] T004 [P] Create `tests/fixtures/pr-comment-examples/` directory for expected comment outputs
+- [X] T005 [P] Create `docs/workflows/` directory for workflow documentation
 
 ---
 
@@ -42,25 +42,25 @@
 
 ### Comment Formatter
 
-- [ ] T006 [P] Create `format-pr-comment.ps1` script in `.github/scripts/` with JSON input parsing
-- [ ] T007 [P] Implement Markdown formatting logic in `format-pr-comment.ps1` (status indicators, sections, timestamps)
-- [ ] T008 Implement HTML marker generation in `format-pr-comment.ps1` (format: `<!-- pr-validation:step-N -->`)
-- [ ] T009 [P] Create `FormatPRComment.Tests.ps1` in `tests/unit/` to test comment formatting
-- [ ] T010 [P] Add test fixtures for comment formatter in `tests/fixtures/pr-comment-examples/` (pass, warning, failed scenarios)
+- [X] T006 [P] Create `format-pr-comment.ps1` script in `.github/scripts/` with JSON input parsing
+- [X] T007 [P] Implement Markdown formatting logic in `format-pr-comment.ps1` (status indicators, sections, timestamps)
+- [X] T008 Implement HTML marker generation in `format-pr-comment.ps1` (format: `<!-- pr-validation:step-N -->`)
+- [X] T009 [P] Create `FormatPRComment.Tests.ps1` in `tests/unit/` to test comment formatting
+- [X] T010 [P] Add test fixtures for comment formatter in `tests/fixtures/pr-comment-examples/` (pass, warning, failed scenarios)
 
 ### Comment Posting Infrastructure (User Story 4 Implementation)
 
-- [ ] T011 [US4] Create reusable GitHub Actions workflow step for posting/updating PR comments in `.github/workflows/pr-validation.yml`
-- [ ] T012 [US4] Implement comment search logic using HTML markers (find existing comment by marker)
-- [ ] T013 [US4] Implement update-in-place logic (update existing comment if found, create if not)
-- [ ] T014 [US4] Add permissions block to workflow (`pull-requests: write`, `issues: write`)
+- [X] T011 [US4] Create reusable GitHub Actions workflow step for posting/updating PR comments in `.github/workflows/pr-validation.yml`
+- [X] T012 [US4] Implement comment search logic using HTML markers (find existing comment by marker)
+- [X] T013 [US4] Implement update-in-place logic (update existing comment if found, create if not)
+- [X] T014 [US4] Add permissions block to workflow (`pull-requests: write`, `issues: write`)
 - [ ] T015 [P] [US4] Create test fixture PR comment examples showing update behavior in `tests/fixtures/pr-comment-examples/update-scenarios/`
 
 ### Test Infrastructure
 
-- [ ] T016 [P] Create sample vulnerable code in `tests/fixtures/vulnerable-code-samples/` (API key, Invoke-Expression, path concatenation)
-- [ ] T017 [P] Create valid spec structure in `tests/fixtures/spec-structures/valid-spec/` (spec.md, plan.md, tasks.md)
-- [ ] T018 [P] Create invalid spec structures in `tests/fixtures/spec-structures/` (missing-tasks, missing-changelog, etc.)
+- [X] T016 [P] Create sample vulnerable code in `tests/fixtures/vulnerable-code-samples/` (API key, Invoke-Expression, path concatenation)
+- [X] T017 [P] Create valid spec structure in `tests/fixtures/spec-structures/valid-spec/` (spec.md, plan.md, tasks.md)
+- [X] T018 [P] Create invalid spec structures in `tests/fixtures/spec-structures/` (missing-tasks, missing-changelog, etc.)
 
 ---
 
@@ -74,50 +74,50 @@
 
 **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T019 [P] [US1] Create `CheckDependencies.Tests.ps1` in `tests/unit/` with test cases for vulnerable versions
-- [ ] T020 [P] [US1] Create `CheckPathSecurity.Tests.ps1` in `tests/unit/` with test cases for unsafe path patterns
-- [ ] T021 [P] [US1] Create test case in `CheckPathSecurity.Tests.ps1` for safe Join-Path usage (should pass)
-- [ ] T022 [P] [US1] Create test case in `CheckDependencies.Tests.ps1` for current safe versions (should pass)
+- [X] T019 [P] [US1] Create `CheckDependencies.Tests.ps1` in `tests/unit/` with test cases for vulnerable versions
+- [X] T020 [P] [US1] Create `CheckPathSecurity.Tests.ps1` in `tests/unit/` with test cases for unsafe path patterns
+- [X] T021 [P] [US1] Create test case in `CheckPathSecurity.Tests.ps1` for safe Join-Path usage (should pass)
+- [X] T022 [P] [US1] Create test case in `CheckDependencies.Tests.ps1` for current safe versions (should pass)
 
 ### Implementation for User Story 1
 
 #### Dependency Scanning
 
-- [ ] T023 [P] [US1] Create `check-dependencies.ps1` in `.github/scripts/` with parameter definition
-- [ ] T024 [US1] Implement Pester version check logic in `check-dependencies.ps1` (check against known vulnerable versions)
-- [ ] T025 [US1] Implement PSScriptAnalyzer version check logic in `check-dependencies.ps1`
-- [ ] T026 [US1] Add JSON output generation in `check-dependencies.ps1` (ValidationResult schema)
-- [ ] T027 [US1] Verify `CheckDependencies.Tests.ps1` tests now pass
+- [X] T023 [P] [US1] Create `check-dependencies.ps1` in `.github/scripts/` with parameter definition
+- [X] T024 [US1] Implement Pester version check logic in `check-dependencies.ps1` (check against known vulnerable versions)
+- [X] T025 [US1] Implement PSScriptAnalyzer version check logic in `check-dependencies.ps1`
+- [X] T026 [US1] Add JSON output generation in `check-dependencies.ps1` (ValidationResult schema)
+- [X] T027 [US1] Verify `CheckDependencies.Tests.ps1` tests now pass
 
 #### Path Traversal Detection
 
-- [ ] T028 [P] [US1] Create `check-path-security.ps1` in `.github/scripts/` with parameter definition
-- [ ] T029 [US1] Implement unsafe concatenation pattern detection in `check-path-security.ps1` (`$path + "\"`regex)
-- [ ] T030 [US1] Implement unsafe interpolation pattern detection in `check-path-security.ps1` (`"$path\file"` regex)
-- [ ] T031 [US1] Implement `..` traversal detection in `check-path-security.ps1`
-- [ ] T032 [US1] Add safe pattern exceptions in `check-path-security.ps1` (Join-Path, Path::Combine)
-- [ ] T033 [US1] Add JSON output generation in `check-path-security.ps1` (ValidationResult schema)
-- [ ] T034 [US1] Verify `CheckPathSecurity.Tests.ps1` tests now pass
+- [X] T028 [P] [US1] Create `check-path-security.ps1` in `.github/scripts/` with parameter definition
+- [X] T029 [US1] Implement unsafe concatenation pattern detection in `check-path-security.ps1` (`$path + "\"`regex)
+- [X] T030 [US1] Implement unsafe interpolation pattern detection in `check-path-security.ps1` (`"$path\file"` regex)
+- [X] T031 [US1] Implement `..` traversal detection in `check-path-security.ps1`
+- [X] T032 [US1] Add safe pattern exceptions in `check-path-security.ps1` (Join-Path, Path::Combine)
+- [X] T033 [US1] Add JSON output generation in `check-path-security.ps1` (ValidationResult schema)
+- [X] T034 [US1] Verify `CheckPathSecurity.Tests.ps1` tests now pass
 
 #### Workflow Step 5 Integration
 
-- [ ] T035 [US1] Add Step 5 job `claude-security-scan` to `.github/workflows/pr-validation.yml`
-- [ ] T036 [US1] Add `continue-on-error: true` to Step 5 (non-blocking behavior)
-- [ ] T037 [US1] Add GitLeaks action step in Step 5 (`gitleaks/gitleaks-action@v2`)
-- [ ] T038 [US1] Add PSScriptAnalyzer security rules step in Step 5 (IncludeRule: PSAvoidUsingPlainTextForPassword, PSAvoidUsingInvokeExpression, etc.)
-- [ ] T039 [US1] Add `check-dependencies.ps1` invocation in Step 5
-- [ ] T040 [US1] Add `check-path-security.ps1` invocation in Step 5
-- [ ] T041 [US1] Add result aggregation step in Step 5 (combine all security check outputs)
-- [ ] T042 [US1] Add `format-pr-comment.ps1` invocation in Step 5 for security results
-- [ ] T043 [US1] Add PR comment posting step in Step 5 using foundational infrastructure
+- [X] T035 [US1] Add Step 5 job `claude-security-scan` to `.github/workflows/pr-validation.yml`
+- [X] T036 [US1] Add `continue-on-error: true` to Step 5 (non-blocking behavior)
+- [X] T037 [US1] Add GitLeaks action step in Step 5 (`gitleaks/gitleaks-action@v2`)
+- [X] T038 [US1] Add PSScriptAnalyzer security rules step in Step 5 (IncludeRule: PSAvoidUsingPlainTextForPassword, PSAvoidUsingInvokeExpression, etc.)
+- [X] T039 [US1] Add `check-dependencies.ps1` invocation in Step 5
+- [X] T040 [US1] Add `check-path-security.ps1` invocation in Step 5
+- [X] T041 [US1] Add result aggregation step in Step 5 (combine all security check outputs)
+- [X] T042 [US1] Add `format-pr-comment.ps1` invocation in Step 5 for security results
+- [X] T043 [US1] Add PR comment posting step in Step 5 using foundational infrastructure
 
 #### Integration Testing
 
-- [ ] T044 [US1] Create `PRValidationWorkflow.Tests.ps1` in `tests/integration/` with Step 5 security tests
-- [ ] T045 [US1] Add test case for GitLeaks secret detection in integration test
-- [ ] T046 [US1] Add test case for PSScriptAnalyzer security rule violation in integration test
-- [ ] T047 [US1] Add test case for dependency vulnerability in integration test
-- [ ] T048 [US1] Add test case for path traversal detection in integration test
+- [X] T044 [US1] Create `PRValidationWorkflow.Tests.ps1` in `tests/integration/` with Step 5 security tests
+- [X] T045 [US1] Add test case for GitLeaks secret detection in integration test
+- [X] T046 [US1] Add test case for PSScriptAnalyzer security rule violation in integration test
+- [X] T047 [US1] Add test case for dependency vulnerability in integration test
+- [X] T048 [US1] Add test case for path traversal detection in integration test
 
 ---
 
@@ -131,42 +131,42 @@
 
 **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T049 [P] [US2] Create `CheckSpecCompliance.Tests.ps1` in `tests/unit/` with test case for missing spec directory
-- [ ] T050 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing tasks.md
-- [ ] T051 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing CHANGELOG entry
-- [ ] T052 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing Export-ModuleMember
-- [ ] T053 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for valid spec structure (should pass)
+- [X] T049 [P] [US2] Create `CheckSpecCompliance.Tests.ps1` in `tests/unit/` with test case for missing spec directory
+- [X] T050 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing tasks.md
+- [X] T051 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing CHANGELOG entry
+- [X] T052 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for missing Export-ModuleMember
+- [X] T053 [P] [US2] Add test case in `CheckSpecCompliance.Tests.ps1` for valid spec structure (should pass)
 
 ### Implementation for User Story 2
 
 #### Spec Compliance Script
 
-- [ ] T054 [P] [US2] Create `check-spec-compliance.ps1` in `.github/scripts/` with parameters (RepoRoot, BranchName)
-- [ ] T055 [US2] Implement branch name parsing logic in `check-spec-compliance.ps1` (regex: `^(\d{3})-`)
-- [ ] T056 [US2] Implement spec directory detection in `check-spec-compliance.ps1` (fuzzy match: `specs/NNN-*`)
-- [ ] T057 [US2] Implement spec artifact validation in `check-spec-compliance.ps1` (spec.md, plan.md, tasks.md existence)
-- [ ] T058 [US2] Implement spec.md section validation in `check-spec-compliance.ps1` (check for User Stories, Requirements, Success Criteria)
-- [ ] T059 [US2] Implement CHANGELOG.md validation in `check-spec-compliance.ps1` (check for [Unreleased] entry)
-- [ ] T060 [US2] Implement constitution compliance check in `check-spec-compliance.ps1` (Export-ModuleMember in .psm1 files)
-- [ ] T061 [US2] Implement nested Import-Module detection in `check-spec-compliance.ps1` (flag .psm1 files with Import-Module)
+- [X] T054 [P] [US2] Create `check-spec-compliance.ps1` in `.github/scripts/` with parameters (RepoRoot, BranchName)
+- [X] T055 [US2] Implement branch name parsing logic in `check-spec-compliance.ps1` (regex: `^(\d{3})-`)
+- [X] T056 [US2] Implement spec directory detection in `check-spec-compliance.ps1` (fuzzy match: `specs/NNN-*`)
+- [X] T057 [US2] Implement spec artifact validation in `check-spec-compliance.ps1` (spec.md, plan.md, tasks.md existence)
+- [X] T058 [US2] Implement spec.md section validation in `check-spec-compliance.ps1` (check for User Stories, Requirements, Success Criteria)
+- [X] T059 [US2] Implement CHANGELOG.md validation in `check-spec-compliance.ps1` (check for [Unreleased] entry)
+- [X] T060 [US2] Implement constitution compliance check in `check-spec-compliance.ps1` (Export-ModuleMember in .psm1 files)
+- [X] T061 [US2] Implement nested Import-Module detection in `check-spec-compliance.ps1` (flag .psm1 files with Import-Module)
 - [ ] T062 [US2] Implement test coverage check in `check-spec-compliance.ps1` (modified modules have test updates)
-- [ ] T063 [US2] Add JSON output generation in `check-spec-compliance.ps1` (ValidationResult schema)
-- [ ] T064 [US2] Verify `CheckSpecCompliance.Tests.ps1` tests now pass
+- [X] T063 [US2] Add JSON output generation in `check-spec-compliance.ps1` (ValidationResult schema)
+- [X] T064 [US2] Verify `CheckSpecCompliance.Tests.ps1` tests now pass
 
 #### Workflow Step 6 Integration
 
-- [ ] T065 [US2] Add Step 6 job `speckit-compliance` to `.github/workflows/pr-validation.yml`
-- [ ] T066 [US2] Add `continue-on-error: true` to Step 6 (non-blocking behavior)
-- [ ] T067 [US2] Add `check-spec-compliance.ps1` invocation in Step 6 with branch name parameter
-- [ ] T068 [US2] Add `format-pr-comment.ps1` invocation in Step 6 for spec compliance results
-- [ ] T069 [US2] Add PR comment posting step in Step 6 using foundational infrastructure
+- [X] T065 [US2] Add Step 6 job `speckit-compliance` to `.github/workflows/pr-validation.yml`
+- [X] T066 [US2] Add `continue-on-error: true` to Step 6 (non-blocking behavior)
+- [X] T067 [US2] Add `check-spec-compliance.ps1` invocation in Step 6 with branch name parameter
+- [X] T068 [US2] Add `format-pr-comment.ps1` invocation in Step 6 for spec compliance results
+- [X] T069 [US2] Add PR comment posting step in Step 6 using foundational infrastructure
 
 #### Integration Testing
 
-- [ ] T070 [US2] Add Step 6 tests to `PRValidationWorkflow.Tests.ps1`
-- [ ] T071 [US2] Add test case for missing spec directory detection in integration test
-- [ ] T072 [US2] Add test case for missing CHANGELOG entry detection in integration test
-- [ ] T073 [US2] Add test case for constitution violation detection in integration test
+- [X] T070 [US2] Add Step 6 tests to `PRValidationWorkflow.Tests.ps1`
+- [X] T071 [US2] Add test case for missing spec directory detection in integration test
+- [X] T072 [US2] Add test case for missing CHANGELOG entry detection in integration test
+- [X] T073 [US2] Add test case for constitution violation detection in integration test
 
 ---
 
@@ -178,21 +178,21 @@
 
 ### Implementation for User Story 5
 
-- [ ] T074 [US5] Modify Step 2 in `.github/workflows/pr-validation.yml` to add PR size calculation
-- [ ] T075 [US5] Modify Step 2 to add description length validation (minimum 20 characters)
-- [ ] T076 [US5] Add JSON result generation in Step 2 (ValidationResult schema)
-- [ ] T077 [US5] Add `format-pr-comment.ps1` invocation in Step 2
-- [ ] T078 [US5] Add PR comment posting step in Step 2 using foundational infrastructure
+- [X] T074 [US5] Modify Step 2 in `.github/workflows/pr-validation.yml` to add PR size calculation
+- [X] T075 [US5] Modify Step 2 to add description length validation (minimum 20 characters)
+- [X] T076 [US5] Add JSON result generation in Step 2 (ValidationResult schema)
+- [X] T077 [US5] Add `format-pr-comment.ps1` invocation in Step 2
+- [X] T078 [US5] Add PR comment posting step in Step 2 using foundational infrastructure
 - [ ] T079 [P] [US5] Modify Step 3 in `.github/workflows/pr-validation.yml` to add test results summarization
 - [ ] T080 [US5] Add `format-pr-comment.ps1` invocation in Step 3 for lint/test results
 - [ ] T081 [US5] Add PR comment posting step in Step 3 using foundational infrastructure
 
 #### Integration Testing
 
-- [ ] T082 [US5] Add Step 2 and Step 3 comment tests to `PRValidationWorkflow.Tests.ps1`
-- [ ] T083 [US5] Add test case for small PR size (should pass) in integration test
-- [ ] T084 [US5] Add test case for large PR size (should warn) in integration test
-- [ ] T085 [US5] Add test case for short description (should warn) in integration test
+- [X] T082 [US5] Add Step 2 and Step 3 comment tests to `PRValidationWorkflow.Tests.ps1`
+- [X] T083 [US5] Add test case for small PR size (should pass) in integration test
+- [X] T084 [US5] Add test case for large PR size (should warn) in integration test
+- [X] T085 [US5] Add test case for short description (should warn) in integration test
 
 ---
 
@@ -220,30 +220,30 @@
 
 ### Documentation
 
-- [ ] T091 [P] Create `pr-validation.md` in `docs/workflows/` explaining all 6 validation steps
-- [ ] T092 [P] Add troubleshooting section to `docs/workflows/pr-validation.md` (common errors, fixes)
+- [X] T091 [P] Create `pr-validation.md` in `docs/workflows/` explaining all 6 validation steps
+- [X] T092 [P] Add troubleshooting section to `docs/workflows/pr-validation.md` (common errors, fixes)
 - [ ] T093 [P] Add examples to `docs/workflows/pr-validation.md` (comment screenshots, workflow logs)
-- [ ] T094 [P] Update `CONTRIBUTING.md` with PR validation step descriptions
-- [ ] T095 [P] Update `CHANGELOG.md` under `[Unreleased]` section with new validation features
+- [X] T094 [P] Update `CONTRIBUTING.md` with PR validation step descriptions
+- [X] T095 [P] Update `CHANGELOG.md` under `[Unreleased]` section with new validation features
 
 ### Workflow Optimization
 
-- [ ] T096 [P] Add workflow concurrency control to `.github/workflows/pr-validation.yml` (cancel in-progress runs)
-- [ ] T097 [P] Add caching for PSScriptAnalyzer module installation in workflow
-- [ ] T098 [P] Add timeout limits to each validation step (prevent runaway jobs)
+- [X] T096 [P] Add workflow concurrency control to `.github/workflows/pr-validation.yml` (cancel in-progress runs)
+- [X] T097 [P] Add caching for PSScriptAnalyzer module installation in workflow
+- [X] T098 [P] Add timeout limits to each validation step (prevent runaway jobs)
 - [ ] T099 Add validation summary job at end of `.github/workflows/pr-validation.yml` (aggregates all step results)
 
 ### Edge Case Handling
 
-- [ ] T100 [P] Add error handling for validation step failures in workflow (post error comment on network timeout)
-- [ ] T101 [P] Implement output truncation in `format-pr-comment.ps1` (max 5000 lines, link to full logs)
+- [X] T100 [P] Add error handling for validation step failures in workflow (post error comment on network timeout)
+- [X] T101 [P] Implement output truncation in `format-pr-comment.ps1` (max 100 findings, link to full logs)
 - [ ] T102 [P] Configure workflow to checkout validation scripts from base branch (prevent bypass by PR modifications)
 - [ ] T103 [P] Add permission pre-check in workflow (detect missing PR comment permissions, log clear error)
-- [ ] T104 Add workflow concurrency control to `.github/workflows/pr-validation.yml` (cancel in-progress runs on new commit)
+- [X] T104 Add workflow concurrency control to `.github/workflows/pr-validation.yml` (cancel in-progress runs on new commit)
 
 ### Final Validation
 
-- [ ] T105 Run full test suite `./tests/test-runner.ps1` and verify all tests pass
+- [X] T105 Run full test suite `./tests/test-runner.ps1` and verify all tests pass
 - [ ] T106 Manually test workflow with multiple test PRs (clean, security issues, spec issues, combined issues)
 - [ ] T107 Verify comment update-in-place behavior with multiple commits to same PR
 - [ ] T108 Verify non-blocking behavior (can merge PR despite validation warnings)
