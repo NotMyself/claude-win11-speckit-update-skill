@@ -194,8 +194,9 @@ foreach ($moduleFile in $moduleFiles) {
         }
     }
 
-    # Check for nested Import-Module (prohibited)
-    if ($content -match 'Import-Module') {
+    # Check for nested Import-Module (prohibited) - exclude comments
+    # Match Import-Module that's NOT in a comment (not preceded by #)
+    if ($content -match '(?m)^\s*(?!#).*Import-Module') {
         $findings += @{
             severity = 'error'
             category = 'constitution-violation'
