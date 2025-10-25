@@ -533,7 +533,8 @@ jobs:
         run: |
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
 
-          $results = Invoke-ScriptAnalyzer -Path . -Recurse -IncludeRule @(
+          # Use empty settings hashtable to ignore PSScriptAnalyzerSettings.psd1, then explicitly include only security rules
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings @{} -IncludeRule @(
             'PSAvoidUsingPlainTextForPassword',
             'PSAvoidUsingConvertToSecureStringWithPlainText',
             'PSUsePSCredentialType',
