@@ -268,7 +268,7 @@ jobs:
   # STEP 5: Security Review
   # ============================================================================
   security-review:
-    name: "5️⃣ Security Scanning and Vulnerability Check"
+    name: "5️⃣ Security Check"
     needs: code-review
     runs-on: ubuntu-latest
     steps:
