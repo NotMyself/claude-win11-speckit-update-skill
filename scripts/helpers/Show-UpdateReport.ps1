@@ -59,24 +59,37 @@ function Show-UpdateReport {
     Write-Host "Latest Version:   $TargetVersion" -ForegroundColor Green
 
     # Calculate version difference
-    if ($CurrentVersion -match 'v?(\d+)\.(\d+)\.(\d+)' -and $TargetVersion -match 'v?(\d+)\.(\d+)\.(\d+)') {
+    # Parse current version explicitly
+    if ($CurrentVersion -match 'v?(\d+)\.(\d+)\.(\d+)') {
         $currentParts = @([int]$matches[1], [int]$matches[2], [int]$matches[3])
-        $targetParts = @([int]$matches[1], [int]$matches[2], [int]$matches[3])
+    }
+    else {
+        Write-Warning "Could not parse current version: $CurrentVersion"
+        return
+    }
 
-        # Simple version comparison (assumes semantic versioning)
-        if ($currentParts[2] -lt $targetParts[2]) {
-            $patchDiff = $targetParts[2] - $currentParts[2]
-            Write-Host "Available Update: $patchDiff patch version(s) behind" -ForegroundColor Yellow
-        }
-        elseif ($currentParts[1] -lt $targetParts[1]) {
-            Write-Host "Available Update: Minor version update available" -ForegroundColor Yellow
-        }
-        elseif ($currentParts[0] -lt $targetParts[0]) {
-            Write-Host "Available Update: Major version update available" -ForegroundColor Red
-        }
-        else {
-            Write-Host "Status: Up to date" -ForegroundColor Green
-        }
+    # Parse target version explicitly (separate from current)
+    if ($TargetVersion -match 'v?(\d+)\.(\d+)\.(\d+)') {
+        $targetParts = @([int]$matches[1], [int]$matches[2], [int]$matches[3])
+    }
+    else {
+        Write-Warning "Could not parse target version: $TargetVersion"
+        return
+    }
+
+    # Simple version comparison (assumes semantic versioning)
+    if ($currentParts[2] -lt $targetParts[2]) {
+        $patchDiff = $targetParts[2] - $currentParts[2]
+        Write-Host "Available Update: $patchDiff patch version(s) behind" -ForegroundColor Yellow
+    }
+    elseif ($currentParts[1] -lt $targetParts[1]) {
+        Write-Host "Available Update: Minor version update available" -ForegroundColor Yellow
+    }
+    elseif ($currentParts[0] -lt $targetParts[0]) {
+        Write-Host "Available Update: Major version update available" -ForegroundColor Red
+    }
+    else {
+        Write-Host "Status: Up to date" -ForegroundColor Green
     }
 
     Write-Host ""
