@@ -206,7 +206,7 @@ else {
 }
 
 $comment += "---`n"
-$comment += "_Last updated: $timestamp_`n"
+$comment += "_Last updated: ${timestamp}_`n"
 
 # Output the formatted comment
 Write-Output $comment
