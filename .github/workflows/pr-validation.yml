@@ -45,7 +45,7 @@ jobs:
           fi
 
           # Check emergency circuit breaker
-          EMERGENCY_DISABLE=$(grep -A 2 "^emergency:" "$CONFIG_FILE" | grep "disable_all:" | awk '{print $2}')
+          EMERGENCY_DISABLE=$(grep -A 2 "^emergency:" "$CONFIG_FILE" | grep "disable_all:" | awk '{print $2}' || echo "false")
           if [ "$EMERGENCY_DISABLE" == "true" ]; then
             echo "🚨 Emergency circuit breaker enabled"
             echo "authorized=false" >> $GITHUB_OUTPUT
@@ -79,7 +79,7 @@ jobs:
           esac
 
           # Check allowlist
-          if grep -A 100 "^authorized_users:" "$CONFIG_FILE" | grep -E "^\s+-\s+$ACTOR\s*$" > /dev/null; then
+          if grep -A 100 "^authorized_users:" "$CONFIG_FILE" | grep -E "^\s+-\s+$ACTOR\s*$" > /dev/null 2>&1; then
             echo "✅ Found in allowlist - AUTHORIZED"
             echo "authorized=true" >> $GITHUB_OUTPUT
             echo "association=ALLOWLIST" >> $GITHUB_OUTPUT
