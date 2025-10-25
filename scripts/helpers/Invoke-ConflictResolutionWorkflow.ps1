@@ -82,20 +82,8 @@ function Invoke-ConflictResolutionWorkflow {
     Write-Host "========================================" -ForegroundColor Yellow
     Write-Host ""
 
-    # Import helper for 3-way merge
-    $mergeHelperPath = Join-Path $PSScriptRoot "Invoke-ThreeWayMerge.ps1"
-    if (Test-Path $mergeHelperPath) {
-        . $mergeHelperPath
-    }
-    else {
-        Write-Warning "Invoke-ThreeWayMerge.ps1 not found. Merge editor will not be available."
-    }
-
-    # Import VSCode integration
-    $vscodeModulePath = Join-Path $PSScriptRoot "..\modules\VSCodeIntegration.psm1"
-    if (Test-Path $vscodeModulePath) {
-        Import-Module $vscodeModulePath -Force
-    }
+    # Note: This workflow is legacy and not currently used by the main orchestrator
+    # The orchestrator uses automatic conflict resolution via MarkdownMerger and Write-SmartConflictResolution
 
     # Process each conflict (Flow A: one at a time)
     foreach ($conflict in $Conflicts) {

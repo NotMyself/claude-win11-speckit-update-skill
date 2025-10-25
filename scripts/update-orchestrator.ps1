@@ -118,15 +118,14 @@ try {
     # All imports are managed here in dependency order to ensure functions are available in orchestrator scope
     #
     # Dependency Graph:
-    # - TIER 0 (no dependencies): HashUtils, GitHubApiClient, VSCodeIntegration
-    # - TIER 1 (depends on Tier 0): ManifestManager (uses HashUtils, GitHubApiClient)
+    # - TIER 0 (no dependencies): HashUtils, GitHubApiClient, MarkdownMerger
+    # - TIER 1 (depends on Tier 0): ManifestManager (uses HashUtils, GitHubApiClient), FingerprintDetector (uses HashUtils)
     # - TIER 2 (depends on Tier 1): BackupManager (uses ManifestManager), ConflictDetector (uses HashUtils, ManifestManager)
 
     # TIER 0: Foundation modules (no dependencies)
     # These must be imported first as other modules depend on them
     Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
-    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "MarkdownMerger.psm1") -Force -WarningAction SilentlyContinue
 
     # TIER 1: Modules depending on Tier 0

@@ -49,13 +49,21 @@ function New-SpecKitBackup {
         throw "Not a SpecKit project: .specify directory not found at $ProjectRoot"
     }
 
-    # Generate timestamp
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    # Generate timestamp with milliseconds to avoid collisions
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
     Write-Verbose "Using timestamp: $timestamp"
 
     # Create backup directory
     $backupDir = Join-Path $ProjectRoot ".specify/backups/$timestamp"
     Write-Verbose "Creating backup directory: $backupDir"
+
+    # Ensure unique directory (in case of microsecond collision)
+    $counter = 0
+    $originalBackupDir = $backupDir
+    while ((Test-Path $backupDir) -and $counter -lt 100) {
+        $counter++
+        $backupDir = "${originalBackupDir}-${counter}"
+    }
 
     try {
         New-Item -ItemType Directory -Path $backupDir -Force -ErrorAction Stop | Out-Null
@@ -216,9 +224,10 @@ function Restore-SpecKitBackup {
 
         # Restore .claude/ directory if exists in backup
         $claudeBackup = Join-Path $BackupPath ".claude"
+        $claudeDest = Join-Path $ProjectRoot ".claude"
+
         if (Test-Path $claudeBackup) {
             Write-Verbose "Restoring .claude/ directory..."
-            $claudeDest = Join-Path $ProjectRoot ".claude"
 
             # Remove current .claude/ directory if exists
             if (Test-Path $claudeDest) {
@@ -231,7 +240,15 @@ function Restore-SpecKitBackup {
             Write-Verbose "Restored .claude/ from backup"
         }
         else {
-            Write-Verbose ".claude/ directory not found in backup, skipping"
+            # Backup doesn't have .claude/, so remove it from project if it exists
+            if (Test-Path $claudeDest) {
+                Write-Verbose ".claude/ not in backup, removing from project..."
+                Remove-Item -Path $claudeDest -Recurse -Force -ErrorAction Stop
+                Write-Verbose "Removed .claude/ directory (not in backup)"
+            }
+            else {
+                Write-Verbose ".claude/ directory not found in backup or project, skipping"
+            }
         }
 
         Write-Host "Successfully restored from backup: $BackupPath"
@@ -287,7 +304,18 @@ function Get-SpecKitBackups {
             return @()
         }
 
-        $backups = @($backupDirs | ForEach-Object {
+        # Filter to only valid backups (must contain .specify directory)
+        $validBackups = @($backupDirs | Where-Object {
+            $specifyPath = Join-Path $_.FullName ".specify"
+            Test-Path $specifyPath
+        })
+
+        if ($validBackups.Count -eq 0) {
+            Write-Verbose "No valid backups found (no .specify directories)"
+            return @()
+        }
+
+        $backups = @($validBackups | ForEach-Object {
             $size = 0
             try {
                 $size = (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue |
@@ -307,7 +335,7 @@ function Get-SpecKitBackups {
             }
         } | Sort-Object CreatedAt -Descending)
 
-        Write-Verbose "Found $($backups.Count) backup(s)"
+        Write-Verbose "Found $($backups.Count) valid backup(s)"
         return ,$backups  # Force array return with comma operator
     }
     catch {
