@@ -318,8 +318,8 @@ function Invoke-PreUpdateValidation {
     if ($errors.Count -gt 0) {
         Write-Host ""
         Write-Host "Prerequisites not met:" -ForegroundColor Red
-        foreach ($error in $errors) {
-            Write-Host "  X $error" -ForegroundColor Red
+        foreach ($err in $errors) {
+            Write-Host "  X $err" -ForegroundColor Red
         }
         Write-Host ""
         throw "Prerequisites validation failed. Please fix the issues above and try again."
