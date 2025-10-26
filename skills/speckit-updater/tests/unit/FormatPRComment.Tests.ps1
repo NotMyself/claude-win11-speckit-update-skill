@@ -1,5 +1,5 @@
 BeforeAll {
-    $scriptPath = Join-Path $PSScriptRoot "../../.github/scripts/format-pr-comment.ps1"
+    $scriptPath = Join-Path $PSScriptRoot "../../../../.github/scripts/format-pr-comment.ps1"
 }
 
 Describe "format-pr-comment" {

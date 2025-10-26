@@ -18,10 +18,11 @@ BeforeAll {
     # TIER 0: Foundation modules (no dependencies)
     Import-Module (Join-Path $modulesPath "HashUtils.psm1") -Force -WarningAction SilentlyContinue
     Import-Module (Join-Path $modulesPath "GitHubApiClient.psm1") -Force -WarningAction SilentlyContinue
-    Import-Module (Join-Path $modulesPath "VSCodeIntegration.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "MarkdownMerger.psm1") -Force -WarningAction SilentlyContinue
 
     # TIER 1: Modules depending on Tier 0
     Import-Module (Join-Path $modulesPath "ManifestManager.psm1") -Force -WarningAction SilentlyContinue
+    Import-Module (Join-Path $modulesPath "FingerprintDetector.psm1") -Force -WarningAction SilentlyContinue
 
     # TIER 2: Modules depending on Tier 1
     Import-Module (Join-Path $modulesPath "BackupManager.psm1") -Force -WarningAction SilentlyContinue
@@ -43,9 +44,16 @@ Describe "Module Dependency Integration Tests" {
             # We're just verifying functions are exported, not their names
         }
 
-        It "All VSCodeIntegration functions should be accessible" {
-            $commands = Get-Command -Module VSCodeIntegration -ErrorAction SilentlyContinue
+        It "All MarkdownMerger functions should be accessible" {
+            $commands = Get-Command -Module MarkdownMerger -ErrorAction SilentlyContinue
             $commands.Count | Should -BeGreaterThan 0
+            $commands.Name | Should -Contain "Merge-MarkdownFiles"
+        }
+
+        It "All FingerprintDetector functions should be accessible" {
+            $commands = Get-Command -Module FingerprintDetector -ErrorAction SilentlyContinue
+            $commands.Count | Should -BeGreaterThan 0
+            $commands.Name | Should -Contain "Get-InstalledSpecKitVersion"
         }
 
         It "All ManifestManager functions should be accessible" {
@@ -125,8 +133,8 @@ Describe "Module Dependency Integration Tests" {
     Context "Module Import Order Validation" {
         It "Modules should be imported in dependency order (Tier 0 → Tier 1 → Tier 2)" {
             # Verify all modules are loaded
-            $loadedModules = Get-Module | Where-Object { $_.Name -in @('HashUtils', 'GitHubApiClient', 'VSCodeIntegration', 'ManifestManager', 'BackupManager', 'ConflictDetector') }
-            $loadedModules.Count | Should -Be 6
+            $loadedModules = Get-Module | Where-Object { $_.Name -in @('HashUtils', 'GitHubApiClient', 'MarkdownMerger', 'ManifestManager', 'FingerprintDetector', 'BackupManager', 'ConflictDetector') }
+            $loadedModules.Count | Should -Be 7
         }
 
         It "Attempting to use module function without import should fail (negative test)" {

@@ -52,7 +52,23 @@ See [CLAUDE.md](CLAUDE.md#using-github-tokens) for complete token setup, team co
 
 ## Installation
 
-Skills must be installed manually to the Claude Code skills directory:
+### Plugin Installation (Recommended)
+
+Install via the NotMyself plugin marketplace:
+
+```bash
+# Add the marketplace
+/plugin marketplace add NotMyself/claude-plugins
+
+# Install the skill
+/plugin install speckit-updater
+```
+
+The skill will be automatically available - no restart required!
+
+### Manual Installation (Alternative)
+
+For advanced users or development:
 
 ```powershell
 # Navigate to Claude Code skills directory
@@ -64,7 +80,9 @@ git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit
 # Restart VSCode to load the skill
 ```
 
-**Verify installation**: After restarting VSCode, the `/speckit-updater` command should be available in Claude Code.
+**Verify installation**: The `/speckit-update` command should be available in Claude Code.
+
+**Migration**: Already using manual installation? See [Migration Guide](docs/migration-guide-plugin.md) for upgrading to plugin-based installation (optional).
 
 ## Usage
 

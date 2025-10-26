@@ -38,7 +38,7 @@ Describe "PowerShell Code Standards" {
             }
         }
 
-        It "All 7 helper scripts exist and have valid syntax" {
+        It "All 6 helper scripts exist and have valid syntax" {
             $helpersPath = Join-Path $ProjectRoot "scripts\helpers"
             $expectedHelpers = @(
                 "Invoke-PreUpdateValidation.ps1",
@@ -46,7 +46,6 @@ Describe "PowerShell Code Standards" {
                 "Show-UpdateReport.ps1",
                 "Get-UpdateConfirmation.ps1",
                 "Invoke-ConflictResolutionWorkflow.ps1",
-                "Invoke-ThreeWayMerge.ps1",
                 "Invoke-RollbackWorkflow.ps1"
             )
 
@@ -59,13 +58,14 @@ Describe "PowerShell Code Standards" {
             }
         }
 
-        It "All 6 module files exist and have valid syntax" {
+        It "All 7 module files exist and have valid syntax" {
             $modulesPath = Join-Path $ProjectRoot "scripts\modules"
             $expectedModules = @(
                 "HashUtils.psm1",
-                "VSCodeIntegration.psm1",
                 "GitHubApiClient.psm1",
+                "MarkdownMerger.psm1",
                 "ManifestManager.psm1",
+                "FingerprintDetector.psm1",
                 "BackupManager.psm1",
                 "ConflictDetector.psm1"
             )

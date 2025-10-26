@@ -42,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Load current database
-          $dbPath = "data/speckit-fingerprints.json"
+          $dbPath = "skills/speckit-updater/data/speckit-fingerprints.json"
           $database = Get-Content -Path $dbPath -Raw | ConvertFrom-Json
           $currentLatest = $database.latest_version
 
@@ -92,7 +92,7 @@ jobs:
           Write-Host "Regenerating fingerprint database..."
 
           # Run the fingerprint generation script
-          & ./scripts/generate-fingerprints.ps1 -Verbose
+          & ./skills/speckit-updater/scripts/generate-fingerprints.ps1 -Verbose
 
           if ($LASTEXITCODE -ne 0) {
               Write-Error "Fingerprint generation failed with exit code $LASTEXITCODE"
@@ -107,17 +107,17 @@ jobs:
         shell: pwsh
         run: |
           # Check if database file changed
-          $status = git status --porcelain data/speckit-fingerprints.json
+          $status = git status --porcelain skills/speckit-updater/data/speckit-fingerprints.json
 
           if ($status) {
               Write-Host "✓ Database file has changes"
               "has_changes=true" >> $env:GITHUB_OUTPUT
 
               # Get stats
-              $db = Get-Content -Path data/speckit-fingerprints.json -Raw | ConvertFrom-Json
+              $db = Get-Content -Path skills/speckit-updater/data/speckit-fingerprints.json -Raw | ConvertFrom-Json
               "total_versions=$($db.total_versions)" >> $env:GITHUB_OUTPUT
               "latest_version=$($db.latest_version)" >> $env:GITHUB_OUTPUT
-              "file_size=$([math]::Round((Get-Item data/speckit-fingerprints.json).Length / 1KB, 1))" >> $env:GITHUB_OUTPUT
+              "file_size=$([math]::Round((Get-Item skills/speckit-updater/data/speckit-fingerprints.json).Length / 1KB, 1))" >> $env:GITHUB_OUTPUT
           }
           else {
               Write-Host "⚠ No changes detected in database"
