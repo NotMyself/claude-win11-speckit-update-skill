@@ -739,14 +739,40 @@ function Get-Example {
 
 ## Distribution Model
 
-**This skill is NOT published to npm or PowerShell Gallery.** Users install by cloning the Git repository:
+This skill is distributed via **Claude Code's plugin system** and Git clone (manual installation).
+
+### Plugin Installation (Primary Method)
+
+Users install via the NotMyself plugin marketplace:
+
+```bash
+/plugin marketplace add NotMyself/claude-plugins
+/plugin install speckit-updater
+```
+
+**How It Works:**
+1. Claude Code fetches marketplace manifest from `NotMyself/claude-plugins` repository
+2. Plugin manifest (`.claude-plugin/plugin.json`) specifies `skills/` directory location
+3. Claude Code copies `skills/speckit-updater/` content to `$env:USERPROFILE\.claude\skills\speckit-updater`
+4. Skill is automatically discovered via `SKILL.md` and `/speckit-update` becomes available
+
+**Repository Structure:**
+- `.claude-plugin/plugin.json` - Plugin metadata (name, version, skills path, etc.)
+- `skills/speckit-updater/` - All skill content (scripts, tests, data, specs)
+- Marketplace repository: `NotMyself/claude-plugins` with `marketplace.json`
+
+### Manual Installation (Alternative)
+
+For development or advanced users:
 
 ```powershell
 cd $env:USERPROFILE\.claude\skills
 git clone https://github.com/NotMyself/claude-win11-speckit-update-skill speckit-updater
 ```
 
-Claude Code automatically discovers [SKILL.md](SKILL.md) and makes `/speckit-update` available.
+Claude Code discovers the skill via `skills/speckit-updater/SKILL.md` and makes `/speckit-update` available.
+
+**Backward Compatibility:** Both installation methods work identically - the skill functions the same way regardless of installation method.
 
 ## Important Files
 

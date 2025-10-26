@@ -2,6 +2,8 @@
 
 This skill provides safe update capabilities for GitHub SpecKit installations, preserving customizations while applying template updates.
 
+**Installation**: Available via plugin (`/plugin marketplace add NotMyself/claude-plugins` then `/plugin install speckit-updater`) or manual Git clone. See [README.md](../../README.md#installation) for details.
+
 ## What to do when this skill is invoked
 
 When the user invokes `/speckit-updater`, you should:
