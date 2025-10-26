@@ -10,6 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] - 2025-10-25
 
 ### Added
+- **Plugin-Based Distribution (#14)**: Professional plugin distribution system via Claude Code's plugin marketplace
+  - **Plugin Installation**: Primary installation method via `/plugin marketplace add NotMyself/claude-plugins` then `/plugin install speckit-updater`
+  - **Marketplace Repository**: Created `NotMyself/claude-plugins` with marketplace manifest and documentation
+  - **Repository Restructuring**: Moved skill content to `skills/speckit-updater/` subdirectory (preserves Git history)
+  - **Plugin Manifest**: Added `.claude-plugin/plugin.json` with metadata (name, version, skills path, requirements)
+  - **100% Backward Compatibility**: Manual Git clone installations continue working identically
+  - **Integration Tests**: 15 test scenarios validating manual installation, plugin installation, migration, and path resolution
+  - **Migration Guide**: Comprehensive optional migration documentation for existing users
+  - **Marketplace Scalability**: Documentation for adding future plugins and contribution guidelines
+  - **Technical Details**:
+    - Updated GitHub Actions workflows for new directory structure
+    - Path resolution verification across all modules
+    - Side-by-side installation detection and handling
+    - Marketplace validation against JSON schema
+
 - **PR Validation Workflow Enhancement (#32)**: Comprehensive automated PR validation with intelligent comment-based feedback
   - **Security Scanning (Step 5)**:
     - GitLeaks secret detection (API keys, tokens, passwords)
